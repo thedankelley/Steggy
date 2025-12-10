@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Steggy ステギー</title>
 <meta name="description" content="Steggy - client-side image steganography. Created by Dan." />
+
+<!-- Manifest embedded as data URL. Icon is inline SVG pixel art stegosaurus. -->
+<link rel="manifest" href="data:application/manifest+json;base64,eyJjb250YWluZXIiOnsibmFtZSI6IlN0ZWdneSIsIm5hbWVfbm8iOiJTdGVnZ3kgU3Rlc1nigJMiLCJkZXNjcmlwdGlvbiI6IlN0ZWdneSAtIGNsaWVudC1zaWRlIGltYWdlIHN0ZWdhbm9ncmFwaHkuIENyZWF0ZWQgYnkgRGFuLiJ9LCAiaWNvbnMiOlt7Imljb24iOiJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LDB4MDAwMDAwIiwic2l6ZSI6IjE2In1dfQ==" />
+
 <style>
 :root{
   --bg:#071428;
@@ -14,7 +18,11 @@
   --glass:rgba(255,255,255,0.03);
   --text:#e6eef6;
 }
-html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#041020 0%, #071428 60%);color:var(--text);-webkit-font-smoothing:antialiased}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#f8fafc 0%, #071428 100%);color:var(--text);-webkit-font-smoothing:antialiased}
+@media (prefers-color-scheme:light){
+  :root{--bg:#f6f7fb;--card:rgba(0,0,0,0.03);--muted:#304050;--accent:#0ea5b7;--glass:rgba(0,0,0,0.03);--text:#071428}
+  body{background:linear-gradient(180deg,#ffffff 0%, #f6f7fb 100%)}
+}
 .container{max-width:1080px;margin:12px auto;padding:12px;display:flex;flex-direction:column;gap:12px}
 .header{display:flex;align-items:center;gap:12px}
 .logo-box{display:flex;flex-direction:row;align-items:center;gap:12px}
@@ -46,14 +54,16 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
 .controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 @media (max-width:540px){.controls-grid{grid-template-columns:1fr}}
 .small-note{font-size:12px;color:var(--muted)}
+.advanced{margin-top:8px;border-top:1px dashed rgba(255,255,255,0.03);padding-top:8px}
+.install-btn{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:8px 10px;border-radius:8px;color:var(--muted);cursor:pointer}
 </style>
 </head>
 <body>
 <div class="container" id="app">
   <div class="header">
     <div class="logo-box">
-      <!-- Inline pixel art stegosaurus SVG as mascot -->
-      <svg class="mascot" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- Pixel art stegosaurus SVG used for UI and as app icon in the manifest -->
+      <svg class="mascot" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stegosaurus">
         <rect width="64" height="64" fill="#071428"/>
         <g shape-rendering="crispEdges">
           <rect x="6" y="30" width="40" height="10" fill="#6aa84f"/>
@@ -76,6 +86,10 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
         <div class="title">Steggy <span class="jp">ステギー</span></div>
         <div class="small-note">Client-side image steganography. Created by Dan.</div>
       </div>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+      <button id="installBtn" class="install-btn" style="display:none">Install Steggy</button>
+      <button id="iosInstall" class="install-btn" style="display:none">How to add to Home Screen</button>
     </div>
   </div>
 
@@ -123,12 +137,12 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
           <label style="margin-top:10px">Or, payload text</label>
           <textarea id="inputPayloadText" placeholder="Type text to hide"></textarea>
 
-          <label style="margin-top:10px">Password (optional, AES or keyed LSB)</label>
+          <label style="margin-top:10px">Password (optional)</label>
           <input id="inputPassword" type="password" placeholder="password (optional)" />
 
-          <div style="margin-top:8px" class="note">Encryption: when AES is enabled, payload will be encrypted using password before embedding. When disabled, data is embedded raw or using the chosen algorithm.</div>
+          <div style="margin-top:8px" class="note">Encryption: when AES is enabled, payload will be encrypted using the password before embedding. When disabled, data is embedded raw.</div>
 
-          <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+          <div style="margin-top:8px;display:flex;gap:6px;align-items:center">
             <input id="useAes" type="checkbox" />
             <label class="muted" for="useAes">Use AES-GCM encryption</label>
           </div>
@@ -142,6 +156,25 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
           </div>
 
           <div id="status" class="note" style="margin-top:8px">Ready</div>
+
+          <div class="advanced" id="advancedToggleArea">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="kv">Advanced settings</div>
+              <button id="advOpen" class="ghost small">Open</button>
+            </div>
+            <div id="advanced" style="display:none;margin-top:8px">
+              <div class="note">Advanced features: change AES iterations, enable PGP (not active yet), toggle service worker cache details.</div>
+              <div style="margin-top:8px">
+                <label class="muted">AES iterations</label>
+                <input id="aesIter" type="number" min="1000" max="1000000" value="200000" />
+              </div>
+              <div style="margin-top:8px">
+                <label class="muted">PGP (future)</label>
+                <div class="small-note">PGP key import and operations will be available here in a future release under Advanced settings.</div>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div style="width:360px">
@@ -187,22 +220,26 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
         <ol style="margin:0 0 12px 18px;color:var(--muted)">
           <li>Choose Encrypt or Decrypt mode.</li>
           <li>Load a carrier image.</li>
-          <li>For Encrypt: supply text or file, optional password, check AES if you want encryption, select algorithm, then tap Encrypt and Export.</li>
-          <li>For Decrypt: load the image, provide password if needed, then tap Decrypt. Auto will try several methods.</li>
+          <li>For Encrypt: provide text or file, optional password, enable AES if you want encryption, choose algorithm, then tap Encrypt and Export.</li>
+          <li>For Decrypt: load the image, provide password if needed, then tap Decrypt. Auto will try supported methods.</li>
         </ol>
         <div class="kv">Algorithms</div>
         <ul style="color:var(--muted)">
           <li>LSB - least significant bit embedding</li>
-          <li>LSB keyed - LSB using a password keyed permutation</li>
+          <li>LSB keyed - permuted LSB using a password</li>
           <li>Append - payload appended to the image data URL with a signature</li>
           <li>PNG custom chunk - payload stored in a custom PNG chunk named stEG</li>
         </ul>
-        <div class="note" style="margin-top:8px">When AES is enabled, the tool encrypts the payload using a password before embedding. Use a strong password if confidentiality is required. Decryption will attempt AES if the embedded object contains the AES header.</div>
+        <div class="note" style="margin-top:8px">When AES is enabled, the tool encrypts the payload using a password before embedding. Use a strong password. For high risk use, combine AES and keyed LSB or PNG chunk insertion.</div>
+        <div style="margin-top:10px">
+          <div class="kv">Install to Home Screen</div>
+          <div class="note">On Android, use the Install button if it appears or use the browser menu Add to Home screen. On iOS, tap Share then Add to Home Screen. The stegosaurus icon will be used as the app icon.</div>
+        </div>
       </div>
 
       <div class="panel" style="margin-top:12px">
         <div class="kv">Notes</div>
-        <div class="note" style="margin-top:8px">LSB embedding is fragile to image recompression. PNG chunk insertion is more robust but may be removed by some editors. Appended mode is detectable but simple to implement. Use AES if you require confidentiality.</div>
+        <div class="note" style="margin-top:8px">LSB embedding is fragile to recompression. PNG chunk insertion is more robust but some editors may remove custom chunks. Appended mode is easiest to detect. AES-GCM provides confidentiality. This app is educational and practical. Use operational security practices appropriate to your risk level.</div>
       </div>
     </div>
   </div>
@@ -220,19 +257,23 @@ button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);colo
   </div>
 </div>
 
-<!-- processing canvas -->
+<!-- processing canvas hidden -->
 <canvas id="procCanvas" style="display:none"></canvas>
 
 <script>
 /*
-  Steggy index.html
-  - Single file client side
-  - AES-GCM optional
-  - PNG custom chunk insertion implemented
-  - No em dash characters in this file
+  Steggy PWA single file app
+  - Option A caching: cache only core app shell
+  - AES-GCM with PBKDF2
+  - PNG custom chunk insertion
+  - LSB and keyed LSB
+  - Append mode
+  - Advanced settings area
+  - Install prompt and iOS instructions
+  - No em dash characters anywhere
 */
 
-/* Utilities */
+/* Utilities and helper functions */
 function log(msg){
   const el = document.getElementById('log');
   const now = new Date();
@@ -248,11 +289,7 @@ function concatUint8(a,b){ const r=new Uint8Array(a.length+b.length); r.set(a,0)
 function uint32ToBytes(n){ const b=new Uint8Array(4); b[0]=(n>>>24)&0xff; b[1]=(n>>>16)&0xff; b[2]=(n>>>8)&0xff; b[3]=n&0xff; return b; }
 function bytesToUint32(b){ return ((b[0]<<24)>>>0) + ((b[1]<<16)>>>0) + ((b[2]<<8)>>>0) + (b[3]>>>0); }
 
-function toHex(bytes){
-  return Array.from(bytes).map(x=>x.toString(16).padStart(2,'0')).join('');
-}
-
-/* CRC32 for PNG chunk creation */
+/* CRC32 table and function for PNG chunks */
 const CRC32_TABLE = (function(){
   const t = new Uint32Array(256);
   for(let i=0;i<256;i++){
@@ -273,7 +310,7 @@ function crc32(buf){
   return (crc ^ 0xFFFFFFFF) >>> 0;
 }
 
-/* Simple PRNG for keyed LSB */
+/* PRNG for keyed LSB */
 function xorshift32(seed){
   let x = seed >>> 0;
   return function(){
@@ -309,13 +346,21 @@ const licenseClose = document.getElementById('licenseClose');
 const procCanvas = document.getElementById('procCanvas');
 const btnDownloadDecoded = document.getElementById('btnDownloadDecoded');
 const btnCopyDecoded = document.getElementById('btnCopyDecoded');
+const installBtn = document.getElementById('installBtn');
+const iosInstall = document.getElementById('iosInstall');
+const advOpen = document.getElementById('advOpen');
+const advanced = document.getElementById('advanced');
+const aesIterInput = document.getElementById('aesIter');
 
 let currentDataUrl = null;
 let lastDecoded = null;
 let mode = 'encrypt';
+let deferredInstallPrompt = null;
 
 setMode('encrypt');
 attachEvents();
+registerServiceWorkerIfSupported();
+setupInstallHandlers();
 
 function attachEvents(){
   inputImage.addEventListener('change', handleImageLoad);
@@ -330,8 +375,12 @@ function attachEvents(){
   licenseModal.addEventListener('click',(e)=>{ if(e.target === licenseModal) licenseModal.style.display='none'; });
   btnDownloadDecoded.addEventListener('click', downloadDecoded);
   btnCopyDecoded.addEventListener('click', copyDecoded);
+  installBtn.addEventListener('click', onInstallClicked);
+  iosInstall.addEventListener('click', showIosInstallInstructions);
+  advOpen.addEventListener('click', ()=>{ advanced.style.display = advanced.style.display === 'none' ? 'block' : 'none'; });
 }
 
+/* Mode handling */
 function setMode(m){
   mode = m;
   if(m === 'encrypt'){
@@ -348,7 +397,7 @@ function setMode(m){
   status('Mode set to ' + m);
 }
 
-/* Image load and preview */
+/* Image load */
 function handleImageLoad(e){
   const f = e.target.files && e.target.files[0];
   if(!f) return;
@@ -367,7 +416,7 @@ function handleImageLoad(e){
   reader.readAsDataURL(f);
 }
 
-/* Capacity estimate */
+/* Capacity */
 function estimateCapacity(){
   if(!imgPreview.src){ capacityEl.textContent = 'No image loaded'; return; }
   procCanvas.width = imgPreview.naturalWidth;
@@ -381,7 +430,7 @@ function estimateCapacity(){
   capacityEl.textContent = 'RGB LSB approx ' + rgb + ' bytes. RGBA LSB approx ' + rgba + ' bytes.';
 }
 
-/* Read payload bytes */
+/* Payload read */
 async function readPayloadBytes(){
   if(inputPayloadFile.files && inputPayloadFile.files[0]){
     const f = inputPayloadFile.files[0];
@@ -392,8 +441,8 @@ async function readPayloadBytes(){
   }
 }
 
-/* AES functions using Web Crypto */
-async function deriveKeyFromPassword(password, salt, iterations=200000){
+/* AES functions - PBKDF2 then AES-GCM */
+async function deriveKeyFromPassword(password, salt, iterations){
   const pwUtf8 = new TextEncoder().encode(password);
   const keyMaterial = await crypto.subtle.importKey('raw', pwUtf8, {name:'PBKDF2'}, false, ['deriveKey']);
   const key = await crypto.subtle.deriveKey(
@@ -405,29 +454,27 @@ async function deriveKeyFromPassword(password, salt, iterations=200000){
   );
   return key;
 }
-async function aesEncrypt(password, plaintextBytes){
+async function aesEncrypt(password, plaintextBytes, iterations){
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const key = await deriveKeyFromPassword(password, salt);
+  const key = await deriveKeyFromPassword(password, salt, iterations);
   const ct = await crypto.subtle.encrypt({name:'AES-GCM',iv:iv}, key, plaintextBytes);
-  // return: header 'AESG' + salt(16) + iv(12) + ct
   const header = new TextEncoder().encode('AESG');
   return concatUint8(header, concatUint8(salt, concatUint8(iv, new Uint8Array(ct))));
 }
-async function aesDecrypt(password, data){
-  // expect header 'AESG' + 16 + 12 + ct
+async function aesDecrypt(password, data, iterations){
   if(data.length < 4+16+12) throw new Error('Invalid AES payload');
   const header = String.fromCharCode(...data.slice(0,4));
   if(header !== 'AESG') throw new Error('AES header missing');
   const salt = data.slice(4,20);
   const iv = data.slice(20,32);
   const ct = data.slice(32);
-  const key = await deriveKeyFromPassword(password, salt);
+  const key = await deriveKeyFromPassword(password, salt, iterations);
   const pt = await crypto.subtle.decrypt({name:'AES-GCM',iv:iv}, key, ct);
   return new Uint8Array(pt);
 }
 
-/* LSB embedding */
+/* LSB and keyed LSB embed/extract - similar to previous versions */
 function embedLSB(canvas, payloadBytes, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -452,8 +499,6 @@ function embedLSB(canvas, payloadBytes, includeAlpha=false){
   }
   ctx.putImageData(imgd,0,0);
 }
-
-/* LSB extraction */
 function extractLSB(canvas, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -497,8 +542,6 @@ function extractLSB(canvas, includeAlpha=false){
   }
   return out;
 }
-
-/* Keyed LSB */
 function embedLSBKeyed(canvas, payloadBytes, password, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -510,7 +553,6 @@ function embedLSBKeyed(canvas, payloadBytes, password, includeAlpha=false){
   const buf = concatUint8(header, payloadBytes);
   const neededBits = buf.length * 8;
   if(neededBits > totalBits) throw new Error('Payload too large for keyed LSB');
-  // seed
   let seed = 0x811c9dc5 >>> 0;
   const pw = strToUint8(password || '');
   for(let i=0;i<pw.length;i++){ seed = (seed ^ pw[i]) >>> 0; seed = Math.imul(seed,0x01000193) >>> 0; }
@@ -533,7 +575,6 @@ function embedLSBKeyed(canvas, payloadBytes, password, includeAlpha=false){
   }
   ctx.putImageData(imgd,0,0);
 }
-
 function extractLSBKeyed(canvas, password, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
@@ -606,8 +647,7 @@ function stripAppend(dataUrl){
   return dataUrl.substring(0, idx);
 }
 
-/* PNG custom chunk insertion */
-/* We will take a PNG data URL, decode it, insert a custom chunk named 'stEG' before IEND, and return a data URL */
+/* PNG chunk helpers */
 function dataUrlToUint8(dataUrl){
   const parts = dataUrl.split(',');
   const meta = parts[0];
@@ -632,7 +672,6 @@ function uint8ToDataUrl(bytes, mime='image/png'){
   return 'data:' + mime + ';base64,' + b64;
 }
 function makePngChunk(typeStr, dataBytes){
-  // typeStr must be 4 ASCII letters
   const typeArr = new Uint8Array(4);
   for(let i=0;i<4;i++) typeArr[i] = typeStr.charCodeAt(i);
   const len = dataBytes.length;
@@ -644,7 +683,6 @@ function makePngChunk(typeStr, dataBytes){
   const crc = crc32(crcInput);
   const crcBytes = new Uint8Array(4);
   crcBytes[0] = (crc >>> 24) & 0xff; crcBytes[1] = (crc >>> 16) & 0xff; crcBytes[2] = (crc >>> 8) & 0xff; crcBytes[3] = crc & 0xff;
-  // return chunk as len(4) + type(4) + data + crc(4)
   const chunk = new Uint8Array(4 + 4 + dataBytes.length + 4);
   chunk.set(lenBytes,0);
   chunk.set(typeArr,4);
@@ -654,20 +692,14 @@ function makePngChunk(typeStr, dataBytes){
 }
 function insertPngChunk(dataUrl, chunkType, payloadBytes){
   const png = dataUrlToUint8(dataUrl);
-  // PNG signature is 8 bytes then chunks; find IEND chunk position
-  const sig = '\x89PNG\r\n\x1a\n';
-  // find IEND: chunk type bytes 'IEND' appear near its end: search from back
-  // simpler: iterate chunks after signature
   const headerLen = 8;
   let pos = headerLen;
   while(pos < png.length){
-    // read length
     const len = (png[pos]<<24) + (png[pos+1]<<16) + (png[pos+2]<<8) + (png[pos+3]);
     const type = String.fromCharCode(png[pos+4], png[pos+5], png[pos+6], png[pos+7]);
     const chunkStart = pos;
     const chunkTotal = 4 + 4 + len + 4;
     if(type === 'IEND'){
-      // insert before this pos
       const before = png.slice(0, pos);
       const after = png.slice(pos);
       const chunk = makePngChunk(chunkType, payloadBytes);
@@ -679,7 +711,6 @@ function insertPngChunk(dataUrl, chunkType, payloadBytes){
     }
     pos += chunkTotal;
   }
-  // if we did not find IEND, return original
   return dataUrl;
 }
 function extractPngChunk(dataUrl, chunkType){
@@ -699,7 +730,15 @@ function extractPngChunk(dataUrl, chunkType){
   return null;
 }
 
-/* Helper to convert dataUrl to blob and download */
+/* Canvas helpers and save function */
+function imageToCanvas(img){
+  procCanvas.width = img.naturalWidth;
+  procCanvas.height = img.naturalHeight;
+  const ctx = procCanvas.getContext('2d');
+  ctx.clearRect(0,0,procCanvas.width,procCanvas.height);
+  ctx.drawImage(img,0,0);
+  return procCanvas;
+}
 function dataUrlToBlob(dataUrl){
   const parts = dataUrl.split(',');
   const meta = parts[0];
@@ -720,7 +759,6 @@ function dataUrlToBlob(dataUrl){
   }
 }
 async function saveDataUrl(dataUrl, filename='steggy.png'){
-  // ensure preview shows exported image
   if(imgPreview && imgPreview.src !== dataUrl){
     imgPreview.src = dataUrl;
     previewWrap.style.display = 'flex';
@@ -735,18 +773,19 @@ async function saveDataUrl(dataUrl, filename='steggy.png'){
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
-/* Export and decrypt handlers */
+/* Main handlers */
 async function onEncrypt(){
   try{
     if(!imgPreview.src){ status('Load an image first'); return; }
     const rawPayload = await readPayloadBytes();
     if(!rawPayload || rawPayload.length === 0){ status('Provide payload'); return; }
     const useAES = useAes.checked;
+    const iterations = parseInt(aesIterInput.value) || 200000;
     let payloadToEmbed = rawPayload;
     if(useAES){
       const pwd = inputPassword.value || '';
       if(!pwd){ status('Password required for AES'); return; }
-      payloadToEmbed = await aesEncrypt(pwd, rawPayload);
+      payloadToEmbed = await aesEncrypt(pwd, rawPayload, iterations);
     }
     const algo = algoSelect.value;
     const includeAlpha = useAlpha.checked;
@@ -773,7 +812,6 @@ async function onEncrypt(){
       log('Encrypted with append size ' + rawPayload.length + ' bytes');
     } else if(algo === 'png-chunk'){
       const baseDataUrl = canvas.toDataURL('image/png');
-      // chunk type 'stEG' - 4 letters
       const outDataUrl = insertPngChunk(baseDataUrl, 'stEG', payloadToEmbed);
       await saveDataUrl(outDataUrl,'steggy-chunk.png');
       status('Export complete: PNG chunk inserted');
@@ -787,66 +825,52 @@ async function onEncrypt(){
   }
 }
 
-function imageToCanvas(img){
-  procCanvas.width = img.naturalWidth;
-  procCanvas.height = img.naturalHeight;
-  const ctx = procCanvas.getContext('2d');
-  ctx.clearRect(0,0,procCanvas.width,procCanvas.height);
-  ctx.drawImage(img,0,0);
-  return procCanvas;
-}
-
 async function onDecrypt(){
   try{
     if(!imgPreview.src){ status('Load an image first'); return; }
     const algo = algoSelect.value;
     const includeAlpha = useAlpha.checked;
     const pwd = inputPassword.value || '';
-    // first check appended marker if auto or append
+    const iterations = parseInt(aesIterInput.value) || 200000;
     if(algo === 'auto' || algo === 'append'){
       const dataUrl = currentDataUrl || imgPreview.src;
       const arr = detectAppendFromDataUrl(dataUrl);
       if(arr){
-        await handleDecoded(arr,'append',pwd);
+        await handleDecoded(arr,'append',pwd,iterations);
         if(algo !== 'auto') return;
       } else if(algo === 'append'){
         status('No appended payload detected');
         return;
       }
     }
-    // check png chunk when auto or png-chunk
     if(algo === 'auto' || algo === 'png-chunk'){
       const dataUrl = currentDataUrl || imgPreview.src;
       const chunk = extractPngChunk(dataUrl, 'stEG');
       if(chunk){
-        await handleDecoded(chunk,'png-chunk',pwd);
+        await handleDecoded(chunk,'png-chunk',pwd,iterations);
         if(algo !== 'auto') return;
       } else if(algo === 'png-chunk'){
         status('No custom PNG chunk detected');
         return;
       }
     }
-    // canvas for LSB variants
     const canvas = imageToCanvas(imgPreview);
     if(algo === 'auto'){
-      // try keyed LSB if password given
       if(pwd){
         try{
           const arr = extractLSBKeyed(canvas, pwd, includeAlpha);
-          await handleDecoded(arr,'lsb-key',pwd);
+          await handleDecoded(arr,'lsb-key',pwd,iterations);
           return;
         } catch(e){ log('Keyed LSB failed: ' + (e.message || e)); }
       }
-      // try normal LSB
       try{
         const arr = extractLSB(canvas, false);
-        await handleDecoded(arr,'lsb',pwd);
+        await handleDecoded(arr,'lsb',pwd,iterations);
         return;
       } catch(e){ log('LSB RGB failed: ' + (e.message || e)); }
-      // try alpha
       try{
         const arr = extractLSB(canvas, true);
-        await handleDecoded(arr,'lsb-alpha',pwd);
+        await handleDecoded(arr,'lsb-alpha',pwd,iterations);
         return;
       } catch(e){ log('LSB RGBA failed: ' + (e.message || e)); }
       status('Auto detection failed to find a payload');
@@ -855,11 +879,11 @@ async function onDecrypt(){
     } else if(algo === 'lsb-key'){
       if(!pwd){ status('Password required for keyed LSB'); return; }
       const arr = extractLSBKeyed(canvas, pwd, includeAlpha);
-      await handleDecoded(arr,'lsb-key',pwd);
+      await handleDecoded(arr,'lsb-key',pwd,iterations);
       return;
     } else if(algo === 'lsb'){
       const arr = extractLSB(canvas, includeAlpha);
-      await handleDecoded(arr,'lsb',pwd);
+      await handleDecoded(arr,'lsb',pwd,iterations);
       return;
     } else {
       status('Unsupported decrypt algorithm for this action');
@@ -870,9 +894,8 @@ async function onDecrypt(){
   }
 }
 
-/* process decoded bytes and attempt to show them in browser if text or image */
-async function handleDecoded(bytes, method, password){
-  // if AES header present, try AES decrypt if password provided
+/* Process decoded bytes and show text or images inline if possible */
+async function handleDecoded(bytes, method, password, iterations){
   try{
     let data = bytes;
     if(bytes && bytes.length >= 4){
@@ -880,7 +903,7 @@ async function handleDecoded(bytes, method, password){
       if(hdr === 'AESG'){
         if(!password){ status('Payload is AES encrypted; provide password'); outputEl.textContent = 'AES encrypted payload detected'; lastDecoded=null; return; }
         try{
-          data = await aesDecrypt(password, bytes);
+          data = await aesDecrypt(password, bytes, iterations);
         } catch(e){
           status('AES decryption failed: ' + (e.message || e));
           outputEl.textContent = 'AES decryption failed';
@@ -890,7 +913,6 @@ async function handleDecoded(bytes, method, password){
       }
     }
     lastDecoded = {bytes:data, method:method};
-    // try text first
     const text = uint8ToStr(data);
     if(text !== null && isLikelyText(text)){
       outputEl.textContent = 'Decoded (' + method + ') - text:\\n\\n' + text;
@@ -898,9 +920,7 @@ async function handleDecoded(bytes, method, password){
       log('Decoded text with ' + method + ' size ' + data.length);
       return;
     }
-    // try to detect image by magic bytes (PNG, JPG, GIF)
     if(data.length >= 8 && data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47){
-      // PNG
       const dataUrl = 'data:image/png;base64,' + btoa(String.fromCharCode(...data));
       outputEl.innerHTML = '<div>Decoded image (PNG):</div><img style="max-width:100%;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)" src="' + dataUrl + '">';
       status('Decoded image (PNG) with ' + method);
@@ -908,7 +928,6 @@ async function handleDecoded(bytes, method, password){
       return;
     }
     if(data.length >= 3 && data[0] === 0xFF && data[1] === 0xD8 && data[data.length-2] === 0xFF && data[data.length-1] === 0xD9){
-      // JPEG
       const dataUrl = 'data:image/jpeg;base64,' + btoa(String.fromCharCode(...data));
       outputEl.innerHTML = '<div>Decoded image (JPEG):</div><img style="max-width:100%;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04)" src="' + dataUrl + '">';
       status('Decoded image (JPEG) with ' + method);
@@ -922,7 +941,6 @@ async function handleDecoded(bytes, method, password){
       log('Decoded GIF image with ' + method + ' size ' + data.length);
       return;
     }
-    // fallback: binary
     outputEl.textContent = 'Decoded binary (' + method + ') size: ' + data.length + ' bytes';
     status('Decoded binary with ' + method);
     log('Decoded binary with ' + method + ' size ' + data.length);
@@ -931,7 +949,6 @@ async function handleDecoded(bytes, method, password){
     log('handleDecoded error: ' + (e.message || e));
   }
 }
-
 function isLikelyText(s){
   if(!s) return false;
   let printable = 0;
@@ -942,15 +959,12 @@ function isLikelyText(s){
   return (printable / s.length) > 0.95;
 }
 
-/* Save clean PNG - strips appended or leaves PNG with inserted chunk intact if present */
+/* Save clean PNG */
 async function onSaveClean(){
   try{
     if(!imgPreview.src){ status('Load an image first'); return; }
     let dataUrl = currentDataUrl || imgPreview.src;
-    // strip appended marker if present
     const stripped = stripAppend(dataUrl);
-    // also ensure the data is a clean PNG base canvas export
-    // if stripped changed, use stripped
     if(stripped !== dataUrl){
       await saveDataUrl(stripped,'steggy-clean.png');
       imgPreview.src = stripped;
@@ -959,7 +973,6 @@ async function onSaveClean(){
       log('Saved clean PNG (stripped appended payload)');
       return;
     }
-    // otherwise draw to canvas and export
     const canvas = imageToCanvas(imgPreview);
     const dataUrl2 = canvas.toDataURL('image/png');
     await saveDataUrl(dataUrl2,'steggy-clean.png');
@@ -971,7 +984,7 @@ async function onSaveClean(){
   }
 }
 
-/* Download decoded */
+/* Download and copy decoded */
 function downloadDecoded(){
   if(!lastDecoded){ status('No decoded payload'); return; }
   const blob = new Blob([lastDecoded.bytes]);
@@ -979,13 +992,9 @@ function downloadDecoded(){
   const a = document.createElement('a');
   const fname = isLikelyText(uint8ToStr(lastDecoded.bytes)) ? 'decoded.txt' : 'decoded.bin';
   a.href = url; a.download = fname;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+  document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
-
-/* Copy decoded */
 function copyDecoded(){
   if(!lastDecoded){ status('No decoded payload'); return; }
   const text = uint8ToStr(lastDecoded.bytes);
@@ -993,7 +1002,7 @@ function copyDecoded(){
   navigator.clipboard?.writeText(text).then(()=> status('Copied decoded text')).catch(()=> status('Copy failed'));
 }
 
-/* Clear */
+/* Clear UI */
 function clearAll(){
   inputImage.value = '';
   inputPayloadFile.value = '';
@@ -1009,10 +1018,83 @@ function clearAll(){
   status('Cleared');
 }
 
-/* download immed when decode occurs in some cases - not required here */
+/* Service worker PWA support - Option A: cache only app shell */
+function registerServiceWorkerIfSupported(){
+  if('serviceWorker' in navigator){
+    try{
+      const swCode = `
+        const CACHE_NAME = 'steggy-shell-v1';
+        const CORE = ['./'];
+        self.addEventListener('install', event => {
+          event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(CORE)).catch(()=>{}));
+          self.skipWaiting();
+        });
+        self.addEventListener('activate', event => {
+          event.waitUntil(self.clients.claim());
+        });
+        self.addEventListener('fetch', event => {
+          const req = event.request;
+          if(req.method !== 'GET') return;
+          event.respondWith(caches.match(req).then(cached => {
+            if(cached) return cached;
+            return fetch(req).then(resp => {
+              // do not cache responses to avoid storing user files
+              return resp;
+            }).catch(()=>caches.match('./'));
+          }));
+        });
+      `;
+      const blob = new Blob([swCode], {type: 'application/javascript'});
+      const swUrl = URL.createObjectURL(blob);
+      navigator.serviceWorker.register(swUrl).then(reg => {
+        log('Service worker registered');
+      }).catch(err => {
+        log('Service worker failed: ' + err);
+      });
+    } catch(e){
+      log('Service worker error: ' + e);
+    }
+  }
+}
 
-/* log initial */
-log('Steggy initialized');
+/* Install flow for Android and other supporting browsers */
+function setupInstallHandlers(){
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installBtn.style.display = 'inline-block';
+    log('Install prompt available');
+  });
+  window.addEventListener('appinstalled', () => {
+    installBtn.style.display = 'none';
+    log('App installed');
+  });
+  // detect iOS Safari for manual instructions
+  const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+  const isInStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if(isIos && !isInStandalone){
+    iosInstall.style.display = 'inline-block';
+  }
+}
+function onInstallClicked(){
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(choice => {
+      if(choice.outcome === 'accepted') log('User accepted install');
+      else log('User dismissed install');
+      deferredInstallPrompt = null;
+      installBtn.style.display = 'none';
+    });
+  } else {
+    status('Install prompt not available');
+  }
+}
+function showIosInstallInstructions(){
+  alert('iOS install instructions:\\n1. Tap the Share button in Safari.\\n2. Choose Add to Home Screen.\\n3. Confirm. The stegosaurus icon will be used.');
+}
+
+/* Initial log */
+log('Steggy initialized and ready');
 
 </script>
 </body>
