@@ -4,170 +4,176 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Steggy ステギー - client steganography</title>
+<meta name="description" content="Steggy - client-side image steganography. Encrypt text or files into images and decrypt them. Credit: Dan."/>
 <style>
-  :root{
-    --bg:#0b1220;
-    --card:#0f1724;
-    --accent:#7dd3fc;
-    --muted:#9aa4b2;
-    --glass: rgba(255,255,255,0.03);
-    --success:#10b981;
-  }
-  html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-  body{background:linear-gradient(180deg,#041020 0%, #071428 60%);color:#e6eef6;display:flex;align-items:flex-start;justify-content:center;padding:24px;}
-  .app{width:980px;max-width:96%;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border:1px solid rgba(255,255,255,0.03);border-radius:12px;padding:18px;box-shadow:0 8px 30px rgba(2,6,23,0.7);}
-  header{display:flex;gap:12px;align-items:center;margin-bottom:12px}
-  .logo{display:flex;align-items:center;gap:12px}
-  .brand{font-weight:700;font-size:20px;display:flex;align-items:center;gap:8px}
-  .jp{font-weight:400;color:var(--muted);font-size:14px}
-  .mascot{width:64px;height:64px;display:block}
-  .row{display:flex;gap:12px}
-  .col{flex:1}
-  .panel{background:var(--card);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02)}
-  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-  input[type="file"],input[type="text"],input[type="password"],textarea,select{width:100%;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px;box-sizing:border-box}
-  textarea{min-height:140px;resize:vertical}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  button{background:var(--accent);border:none;padding:10px 12px;border-radius:8px;color:#012;cursor:pointer;font-weight:600}
-  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
-  .small{padding:8px 10px;font-size:13px}
-  .muted{color:var(--muted);font-size:13px}
-  .footer{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--muted);font-size:13px}
-  .chip{display:inline-flex;align-items:center;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02)}
-  .status{margin-top:10px;font-size:13px}
-  .preview{margin-top:10px;display:flex;gap:8px;align-items:center}
-  img#previewImg{max-width:220px;border-radius:8px;border:1px solid rgba(255,255,255,0.03)}
-  .algo-row{display:flex;gap:8px;align-items:center}
-  .about{font-size:13px;color:var(--muted);margin-top:8px}
-  .license-modal{position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6)}
-  .license-card{background:#071425;padding:18px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);width:min(720px,94%);color:#e6eef6}
-  .grid{display:grid;grid-template-columns:1fr 320px;gap:12px}
-  @media(max-width:880px){.grid{grid-template-columns:1fr}}
-  .note{font-size:12px;color:var(--muted)}
-  .danger{color:#ffb4b4}
-  .footer a{color:var(--accent);text-decoration:none}
+:root{
+  --bg: #071428;
+  --card: rgba(255,255,255,0.03);
+  --muted: #9aa4b2;
+  --accent: #7dd3fc;
+  --glass: rgba(255,255,255,0.03);
+}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial; background:linear-gradient(180deg,#041020 0%, #071428 60%);color:#e6eef6;}
+.container{max-width:1080px;margin:12px auto;padding:12px;display:flex;flex-direction:column;gap:12px;}
+.header{display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.logo-box{display:flex;flex-direction:row;align-items:center;gap:12px}
+.mascot{width:56px;height:56px}
+.title{font-weight:700;font-size:20px}
+.jp{font-size:14px;color:var(--muted)}
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:12px;padding:12px;border:1px solid rgba(255,255,255,0.03)}
+.grid{display:grid;grid-template-columns:1fr 360px;gap:12px}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.row{display:flex;gap:12px;flex-wrap:wrap}
+.col{flex:1;min-width:0}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type="file"],input[type="text"],input[type="password"],select,textarea{width:100%;padding:10px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.02);color:inherit;font-size:14px;box-sizing:border-box}
+textarea{min-height:120px;resize:vertical}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+button{background:var(--accent);border:none;padding:10px 12px;border-radius:10px;color:#012;cursor:pointer;font-weight:700}
+button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+.small{padding:8px 10px;font-size:14px}
+.muted{color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted)}
+.preview{display:flex;gap:12px;align-items:center;margin-top:10px}
+.preview img{max-width:240px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+.footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin-top:8px}
+.log{font-size:13px;color:var(--muted);max-height:220px;overflow:auto;padding:8px;background:rgba(255,255,255,0.01);border-radius:8px;border:1px solid rgba(255,255,255,0.02)}
+.top-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.kv{font-size:13px;color:var(--muted)}
+.toggle{display:inline-flex;gap:8px}
+.badge{background:rgba(255,255,255,0.02);padding:6px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.02);font-size:13px}
+.license-modal{position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(2,6,23,0.6);z-index:40}
+.license-card{background:#071425;padding:18px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);width:min(920px,96%);color:#e6eef6}
+.footer-note{font-size:12px;color:var(--muted);margin-top:8px}
+.small-note{font-size:12px;color:var(--muted);}
+.center{display:flex;justify-content:center;align-items:center}
+.controls-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:540px){.controls-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="app" role="application" aria-label="Steggy Steganography app">
-  <header>
-    <div class="logo">
-      <!-- pixel art stegosaurus, SNES-style -->
+<div class="container" id="app">
+  <div class="header">
+    <div class="logo-box">
+      <!-- SNES-style stegosaurus pixel art -->
       <svg class="mascot" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect width="64" height="64" fill="#071428"/>
-        <!-- pixel art built with rectangles -->
         <g shape-rendering="crispEdges">
-          <!-- body -->
           <rect x="6" y="30" width="40" height="10" fill="#6aa84f"/>
           <rect x="4" y="28" width="2" height="6" fill="#6aa84f"/>
           <rect x="46" y="28" width="8" height="6" fill="#6aa84f"/>
           <rect x="14" y="26" width="22" height="4" fill="#6aa84f"/>
-          <!-- plates -->
           <rect x="12" y="20" width="4" height="6" fill="#f28b3b"/>
           <rect x="18" y="18" width="4" height="8" fill="#f28b3b"/>
           <rect x="24" y="16" width="4" height="10" fill="#f28b3b"/>
           <rect x="30" y="18" width="4" height="8" fill="#f28b3b"/>
           <rect x="36" y="20" width="4" height="6" fill="#f28b3b"/>
-          <!-- legs -->
           <rect x="10" y="38" width="4" height="6" fill="#4b7b34"/>
           <rect x="22" y="38" width="4" height="6" fill="#4b7b34"/>
           <rect x="32" y="38" width="4" height="6" fill="#4b7b34"/>
           <rect x="42" y="38" width="4" height="6" fill="#4b7b34"/>
-          <!-- eye -->
           <rect x="48" y="28" width="2" height="2" fill="#000"/>
         </g>
       </svg>
       <div>
-        <div class="brand">Steggy <span class="jp">ステギー</span></div>
-        <div class="muted">Client-side image steganography - Credit: Dan</div>
+        <div class="title">Steggy <span class="jp">ステギー</span></div>
+        <div class="small-note">Client-side image steganography. Credit: Dan.</div>
       </div>
     </div>
-  </header>
+  </div>
 
   <div class="grid">
     <div class="panel">
-      <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
-        <div>
-          <label class="muted">Mode</label>
-          <div style="display:flex;gap:8px">
-            <button id="modeEncrypt" class="small">Encrypt</button>
-            <button id="modeDecrypt" class="ghost small">Decrypt</button>
+      <div class="top-row" style="justify-content:space-between">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="kv">Mode</div>
+          <div class="toggle">
+            <button id="btnModeEncrypt" class="small">Encrypt</button>
+            <button id="btnModeDecrypt" class="ghost small">Decrypt</button>
           </div>
         </div>
-        <div>
-          <label class="muted">Algorithm</label>
-          <select id="algoSelect" aria-label="algorithm select">
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="kv">Algorithm</div>
+          <select id="algo" style="padding:8px;border-radius:10px;background:var(--glass);border:1px solid rgba(255,255,255,0.02);color:inherit">
             <option value="auto">Auto detect (Decrypt only)</option>
-            <option value="lsb">LSB (per-channel LSB)</option>
-            <option value="lsb-key">LSB with password (keyed)</option>
+            <option value="lsb">LSB - per-channel LSB</option>
+            <option value="lsb-key">LSB keyed (password)</option>
             <option value="append">Append payload</option>
           </select>
         </div>
       </div>
 
-      <hr style="border:none;height:10px">
+      <hr style="border:none;height:12px">
 
-      <div class="row" style="gap:12px">
+      <div class="row">
         <div class="col">
-          <label>Image file</label>
-          <input id="imageInput" type="file" accept="image/*" />
-          <div class="preview">
-            <img id="previewImg" alt="preview" src="" />
-            <div>
-              <div class="muted">Image info</div>
+          <label>Carrier image</label>
+          <input id="inputImage" type="file" accept="image/*" />
+          <div class="preview" id="previewWrap" style="display:none">
+            <img id="imgPreview" alt="carrier preview" />
+            <div style="flex:1">
+              <div class="kv">Image info</div>
               <div id="imgInfo" class="note">No image loaded</div>
+              <div class="kv" style="margin-top:8px">Capacity</div>
+              <div id="capacity" class="note">Load an image to estimate capacity</div>
             </div>
           </div>
 
-          <label style="margin-top:10px">Payload</label>
-          <input id="payloadFile" type="file" />
-          <div style="margin:8px 0" class="muted">Or paste text below. If both file and text are provided, file takes priority.</div>
-          <textarea id="payloadText" placeholder="Type the text you want hidden here"></textarea>
+          <label style="margin-top:10px">Payload file (optional)</label>
+          <input id="inputPayloadFile" type="file" />
 
-          <label style="margin-top:8px">Password (optional)</label>
-          <input id="password" type="password" placeholder="Password for keyed LSB" />
+          <label style="margin-top:10px">Or, payload text</label>
+          <textarea id="inputPayloadText" placeholder="Type text to hide"></textarea>
 
-          <div class="controls">
+          <label style="margin-top:10px">Password (for keyed LSB)</label>
+          <input id="inputPassword" type="password" placeholder="password (optional)" />
+
+          <div class="controls" style="margin-top:8px">
             <button id="btnEncrypt" class="small">Encrypt and Export</button>
             <button id="btnDecrypt" class="ghost small">Decrypt</button>
+            <button id="btnSaveClean" class="ghost small" title="Save a clean PNG without appended payload marker">Save clean PNG</button>
             <button id="btnClear" class="ghost small">Clear</button>
             <button id="btnLicense" class="ghost small">License</button>
           </div>
 
-          <div class="status" id="status">Ready</div>
+          <div id="status" class="note" style="margin-top:8px">Ready</div>
         </div>
 
-        <div style="width:320px">
-          <div class="panel">
-            <label class="muted">Decrypt options</label>
-            <div class="algo-row" style="margin-bottom:8px">
-              <input id="tryAlpha" type="checkbox" /><label for="tryAlpha" style="margin-left:6px" class="muted">use alpha channel in LSB</label>
+        <div style="width:360px">
+          <div class="panel" style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div class="kv">Decrypt options</div>
+              <div class="note">Use Auto to probe methods</div>
             </div>
-            <div>
-              <label class="muted">Output</label>
-              <div id="outputBox" style="background:var(--glass);padding:8px;border-radius:6px;min-height:120px;overflow:auto"></div>
+            <div style="margin-top:8px">
+              <label class="muted">Include alpha channel for LSB</label>
+              <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+                <input id="useAlpha" type="checkbox" />
+                <div class="small-note">If enabled, alpha channel is used in LSB and keyed LSB</div>
+              </div>
             </div>
-            <div class="about">
-              Notes: LSB method stores a 32-bit payload length header before the payload. Appended mode uses a clear signature. Keyed LSB uses a seeded PRNG order.
+            <div style="margin-top:10px">
+              <div class="kv">Decoded output</div>
+              <div id="output" class="log"></div>
+              <div style="display:flex;gap:8px;margin-top:8px">
+                <button id="btnDownloadDecoded" class="small ghost">Download last decoded</button>
+                <button id="btnCopyDecoded" class="small ghost">Copy text</button>
+              </div>
             </div>
           </div>
 
-          <div style="margin-top:12px" class="panel">
-            <div class="muted">Quick capacity estimate</div>
-            <div id="capacity" class="note">Load an image to see capacity</div>
-            <div style="margin-top:8px">
-              <button id="btnEstimate" class="ghost small">Re-estimate</button>
-              <button id="downloadPayload" class="ghost small">Download last decoded file</button>
-            </div>
+          <div class="panel">
+            <div class="kv">Log</div>
+            <div id="log" class="log">No actions yet</div>
+            <div class="footer-note">This app runs entirely in your browser. No server upload.</div>
           </div>
         </div>
       </div>
 
-      <div class="footer">
-        <div class="muted">Built for Dan - Steggy</div>
-        <div>
-          <span class="chip">Client-side only</span>
-        </div>
+      <div style="margin-top:8px" class="footer">
+        <div class="kv">Built for Dan</div>
+        <div><span class="badge">Client-side only</span></div>
       </div>
     </div>
 
@@ -177,349 +183,309 @@
         <ol style="margin:0 0 12px 18px;color:var(--muted)">
           <li>Choose Encrypt or Decrypt mode.</li>
           <li>Load an image to act as carrier.</li>
-          <li>For Encrypt: supply text or a file, choose algorithm and optional password, then Export.</li>
-          <li>For Decrypt: load the image and click Decrypt. Use Auto algorithm to try all methods.</li>
+          <li>For Encrypt: supply text or a file, choose algorithm and optional password, then tap Encrypt and Export.</li>
+          <li>For Decrypt: load the image and tap Decrypt. Use Auto to try multiple methods.</li>
         </ol>
-        <div class="muted">Algorithms included</div>
+        <div class="kv">Algorithms included</div>
         <ul style="color:var(--muted)">
-          <li>LSB - modifies least significant bit of RGB channels</li>
-          <li>LSB with password - uses seeded PRNG to permute bit locations</li>
-          <li>Append payload - payload appended at end of image data URL with signature</li>
+          <li>LSB - modifies least significant bit of channels</li>
+          <li>Keyed LSB - permutes bit positions using password-seeded PRNG</li>
+          <li>Append - payload appended to the data URL with a signature</li>
         </ul>
-        <div class="note">This tool is educational. Use responsibly. The license below restricts unauthorized use. See license modal for details.</div>
+        <div style="margin-top:8px" class="note">Save clean PNG will save a PNG without any appended signature. Appended mode survives many edits but is detectable. LSB is fragile to recompression.</div>
       </div>
 
-      <div style="margin-top:12px" class="panel">
-        <div class="muted">Last actions</div>
-        <div id="log" class="note" style="margin-top:8px;max-height:240px;overflow:auto">none</div>
+      <div class="panel" style="margin-top:12px">
+        <div class="kv">Repository notes</div>
+        <div class="note" style="margin-top:8px">
+          Drop this file as index.html into a GitHub Pages branch or any static host. This single file contains the full UI and logic. For a repo, include a README and example images if desired.
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- License modal -->
+<!-- license modal -->
 <div id="licenseModal" class="license-modal" role="dialog" aria-modal="true" aria-label="License">
   <div class="license-card">
     <h3>License and usage</h3>
     <p>This software is provided as-is for educational and personal use. Unauthorized use of software is forbidden. Redistribution without explicit permission is forbidden. Credit: Dan.</p>
     <p class="note">By using this software you agree not to use it for illegal activity. The author is not responsible for misuse.</p>
-    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:12px">
-      <button id="closeLicense" class="small">Close</button>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button id="licenseClose" class="small">Close</button>
     </div>
   </div>
 </div>
 
+<!-- hidden canvas for processing -->
+<canvas id="procCanvas" style="display:none"></canvas>
+
 <script>
 /*
-  Steggy single-file app
-  - No server side
+  Steggy - single file
+  - No server
   - Algorithms: lsb, lsb-key, append
-  - Avoid em dash characters anywhere in this file
+  - Mobile-friendly download flow
+  - Save clean PNG removes appended signature
+  - Credit: Dan
+  - No em dash characters in this file
 */
 
 /* Utilities */
-// small PRNG: xorshift32
-function xorshift32(seed) {
-  let x = seed >>> 0;
-  return function() {
-    x ^= x << 13; x = x >>> 0;
-    x ^= x >>> 17; x = x >>> 0;
-    x ^= x << 5;  x = x >>> 0;
+function log(msg){
+  const el = document.getElementById('log');
+  const now = new Date();
+  const stamp = now.toISOString().replace('T',' ').split('.')[0];
+  el.textContent = stamp + ' - ' + msg + '\\n' + el.textContent;
+}
+function strToUint8(s){ return new TextEncoder().encode(s); }
+function uint8ToStr(b){
+  try{ return new TextDecoder().decode(b); } catch(e){ return null; }
+}
+function concatUint8(a,b){ const r=new Uint8Array(a.length+b.length); r.set(a,0); r.set(b,a.length); return r; }
+function uint32ToBytes(n){ const b=new Uint8Array(4); b[0]=(n>>>24)&0xff; b[1]=(n>>>16)&0xff; b[2]=(n>>>8)&0xff; b[3]=n&0xff; return b; }
+function bytesToUint32(b){ return ((b[0]<<24)>>>0) + ((b[1]<<16)>>>0) + ((b[2]<<8)>>>0) + (b[3]>>>0); }
+
+/* small xorshift32 PRNG */
+function xorshift32(seed){
+  let x = seed>>>0;
+  return function(){
+    x ^= (x << 13) >>> 0; x = x >>> 0;
+    x ^= (x >>> 17) >>> 0; x = x >>> 0;
+    x ^= (x << 5) >>> 0; x = x >>> 0;
     return x >>> 0;
   };
 }
-function strToUint8(str) {
-  return new TextEncoder().encode(str);
-}
-function uint8ToStr(buf) {
-  try {
-    return new TextDecoder().decode(buf);
-  } catch(e) {
-    return null;
-  }
-}
-function concatUint8(a,b){
-  const r = new Uint8Array(a.length + b.length);
-  r.set(a,0); r.set(b,a.length); return r;
-}
-function uint32ToBytes(n){
-  const b = new Uint8Array(4);
-  b[0] = (n >>> 24) & 0xff;
-  b[1] = (n >>> 16) & 0xff;
-  b[2] = (n >>> 8) & 0xff;
-  b[3] = (n) & 0xff;
-  return b;
-}
-function bytesToUint32(b){
-  return ((b[0]<<24)>>>0) + ((b[1]<<16)>>>0) + ((b[2]<<8)>>>0) + (b[3]>>>0);
-}
-function log(msg){
-  const el = document.getElementById('log');
-  const time = new Date().toLocaleTimeString();
-  el.innerText = time + ' - ' + msg + '\\n' + el.innerText;
-}
 
-/* DOM */
-const imageInput = document.getElementById('imageInput');
-const previewImg = document.getElementById('previewImg');
+/* DOM refs */
+const inputImage = document.getElementById('inputImage');
+const imgPreview = document.getElementById('imgPreview');
+const previewWrap = document.getElementById('previewWrap');
 const imgInfo = document.getElementById('imgInfo');
-const payloadFile = document.getElementById('payloadFile');
-const payloadText = document.getElementById('payloadText');
-const passwordInput = document.getElementById('password');
-const modeEncryptBtn = document.getElementById('modeEncrypt');
-const modeDecryptBtn = document.getElementById('modeDecrypt');
-const algoSelect = document.getElementById('algoSelect');
+const capacityEl = document.getElementById('capacity');
+const inputPayloadFile = document.getElementById('inputPayloadFile');
+const inputPayloadText = document.getElementById('inputPayloadText');
+const inputPassword = document.getElementById('inputPassword');
 const btnEncrypt = document.getElementById('btnEncrypt');
 const btnDecrypt = document.getElementById('btnDecrypt');
+const btnSaveClean = document.getElementById('btnSaveClean');
 const btnClear = document.getElementById('btnClear');
-const btnLicense = document.getElementById('btnLicense');
+const btnModeEncrypt = document.getElementById('btnModeEncrypt');
+const btnModeDecrypt = document.getElementById('btnModeDecrypt');
+const algoSelect = document.getElementById('algo');
+const statusEl = document.getElementById('status');
+const outputEl = document.getElementById('output');
+const logEl = document.getElementById('log');
+const useAlpha = document.getElementById('useAlpha');
+const btnLicense = document.getElementById('btnLicense') || document.getElementById('btnLicense');
 const licenseModal = document.getElementById('licenseModal');
-const closeLicense = document.getElementById('closeLicense');
-const tryAlpha = document.getElementById('tryAlpha');
-const status = document.getElementById('status');
-const outputBox = document.getElementById('outputBox');
-const capacityEl = document.getElementById('capacity');
-const btnEstimate = document.getElementById('btnEstimate');
-const downloadPayloadBtn = document.getElementById('downloadPayload');
+const licenseClose = document.getElementById('licenseClose');
+const procCanvas = document.getElementById('procCanvas');
+const btnDownloadDecoded = document.getElementById('btnDownloadDecoded');
+const btnCopyDecoded = document.getElementById('btnCopyDecoded');
 
-let currentImage = null;
-let lastDecodedFile = null;
-let mode = 'encrypt';
+let currentDataUrl = null;
+let lastDecoded = null;
+let mode = 'encrypt'; // or decrypt
 
-/* UI wiring */
-modeEncryptBtn.addEventListener('click', ()=>setMode('encrypt'));
-modeDecryptBtn.addEventListener('click', ()=>setMode('decrypt'));
-btnLicense.addEventListener('click', ()=>licenseModal.style.display='flex');
-closeLicense.addEventListener('click', ()=>licenseModal.style.display='none');
-btnClear.addEventListener('click', clearAll);
-imageInput.addEventListener('change', handleImageFile);
-btnEncrypt.addEventListener('click', encryptHandler);
-btnDecrypt.addEventListener('click', decryptHandler);
-btnEstimate.addEventListener('click', estimateCapacity);
-downloadPayloadBtn.addEventListener('click', downloadLastDecoded);
-
-/* initial */
+/* Init */
 setMode('encrypt');
+attachEvents();
 
+function attachEvents(){
+  inputImage.addEventListener('change', handleImageLoad);
+  btnEncrypt.addEventListener('click', onEncrypt);
+  btnDecrypt.addEventListener('click', onDecrypt);
+  btnSaveClean.addEventListener('click', onSaveClean);
+  btnClear.addEventListener('click', clearAll);
+  btnModeEncrypt.addEventListener('click', ()=>setMode('encrypt'));
+  btnModeDecrypt.addEventListener('click', ()=>setMode('decrypt'));
+  document.getElementById('btnLicense').addEventListener('click', ()=>licenseModal.style.display='flex');
+  licenseClose.addEventListener('click', ()=>licenseModal.style.display='none');
+  licenseModal.addEventListener('click',(e)=>{ if(e.target === licenseModal) licenseModal.style.display='none'; });
+  btnDownloadDecoded.addEventListener('click', downloadDecoded);
+  btnCopyDecoded.addEventListener('click', copyDecoded);
+}
+
+/* Mode */
 function setMode(m){
   mode = m;
   if(m === 'encrypt'){
-    modeEncryptBtn.classList.remove('ghost');
-    modeEncryptBtn.classList.add('small');
-    modeDecryptBtn.classList.add('ghost');
-    modeDecryptBtn.classList.remove('small');
-    algoSelect.value = 'lsb';
+    btnModeEncrypt.classList.remove('ghost');
+    btnModeDecrypt.classList.add('ghost');
     algoSelect.querySelector('option[value="auto"]').disabled = true;
+    algoSelect.value = 'lsb';
   } else {
-    modeDecryptBtn.classList.remove('ghost');
-    modeDecryptBtn.classList.add('small');
-    modeEncryptBtn.classList.add('ghost');
-    modeEncryptBtn.classList.remove('small');
-    algoSelect.value = 'auto';
+    btnModeEncrypt.classList.add('ghost');
+    btnModeDecrypt.classList.remove('ghost');
     algoSelect.querySelector('option[value="auto"]').disabled = false;
+    algoSelect.value = 'auto';
   }
-  status.innerText = 'Mode set to ' + m;
+  status('Mode set to ' + m);
 }
 
-function clearAll(){
-  imageInput.value = '';
-  payloadFile.value = '';
-  payloadText.value = '';
-  passwordInput.value = '';
-  previewImg.src = '';
-  imgInfo.innerText = 'No image loaded';
-  currentImage = null;
-  outputBox.innerText = '';
-  capacityEl.innerText = 'Load an image to see capacity';
-  status.innerText = 'Cleared';
-}
-
-/* Image load */
-function handleImageFile(e){
+/* File load */
+function handleImageLoad(e){
   const f = e.target.files && e.target.files[0];
   if(!f) return;
   const reader = new FileReader();
   reader.onload = function(evt){
-    previewImg.src = evt.target.result;
-    currentImage = evt.target.result; // data URL
-    previewImg.onload = function(){
-      imgInfo.innerText = `Dimensions: ${previewImg.naturalWidth} x ${previewImg.naturalHeight} px`;
+    currentDataUrl = evt.target.result;
+    imgPreview.src = currentDataUrl;
+    previewWrap.style.display = 'flex';
+    imgPreview.onload = function(){
+      imgInfo.textContent = imgPreview.naturalWidth + ' x ' + imgPreview.naturalHeight + ' px';
       estimateCapacity();
-      log('Image loaded: ' + f.name + ' (' + previewImg.naturalWidth + 'x' + previewImg.naturalHeight + ')');
+      status('Image loaded: ' + f.name);
+      log('Image loaded: ' + f.name + ' (' + imgPreview.naturalWidth + 'x' + imgPreview.naturalHeight + ')');
     };
   };
   reader.readAsDataURL(f);
 }
 
-/* Canvas helpers */
-function imgToCanvas(img){
-  const c = document.createElement('canvas');
-  c.width = img.naturalWidth;
-  c.height = img.naturalHeight;
-  const ctx = c.getContext('2d');
-  ctx.drawImage(img,0,0);
-  return c;
+/* Capacity estimate */
+function estimateCapacity(){
+  if(!imgPreview.src) { capacityEl.textContent = 'No image loaded'; return; }
+  procCanvas.width = imgPreview.naturalWidth;
+  procCanvas.height = imgPreview.naturalHeight;
+  const ctx = procCanvas.getContext('2d');
+  ctx.drawImage(imgPreview,0,0);
+  const w = procCanvas.width, h = procCanvas.height;
+  const rgbBytes = Math.floor(w*h*3/8);
+  const rgbaBytes = Math.floor(w*h*4/8);
+  capacityEl.textContent = 'RGB LSB capacity approx ' + rgbBytes + ' bytes. RGBA LSB approx ' + rgbaBytes + ' bytes. Append mode limited by data URL size.';
 }
 
-function canvasToDataURL(canvas,type='image/png'){
-  return canvas.toDataURL(type);
-}
-
-/* Payload helpers */
-async function readPayload(){
-  if(payloadFile.files && payloadFile.files[0]){
-    const f = payloadFile.files[0];
-    return new Promise((res,rej)=>{
-      const r = new FileReader();
-      r.onload = ()=>res(new Uint8Array(r.result));
-      r.onerror = ()=>rej(r.error);
-      r.readAsArrayBuffer(f);
-    });
+/* Read payload - file has priority over text */
+async function readPayloadBytes(){
+  if(inputPayloadFile.files && inputPayloadFile.files[0]){
+    const f = inputPayloadFile.files[0];
+    return await f.arrayBuffer().then(b=>new Uint8Array(b));
   } else {
-    const text = payloadText.value || '';
-    return strToUint8(text);
+    const txt = inputPayloadText.value || '';
+    return strToUint8(txt);
   }
 }
 
-/* Encoding: LSB */
-function embedLSB(canvas, payloadBytes, useAlpha=false){
+/* LSB embed */
+function embedLSBCanvas(canvas, payloadBytes, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
-  let imgdata = ctx.getImageData(0,0,w,h);
+  const imgdata = ctx.getImageData(0,0,w,h);
   const data = imgdata.data; // RGBA
-  const capacityBits = data.length * (useAlpha ? 1 : 3); // not quite; we'll count per channel
-  const payloadLen = payloadBytes.length;
-  const totalBitsNeeded = (4 + payloadLen) * 8; // 32-bit length + payload bytes
-  // estimate number of usable bits: channels per pixel * pixels
-  const channelsPerPixel = useAlpha ? 4 : 3;
-  const usableBits = (w*h) * channelsPerPixel;
-  if(totalBitsNeeded > usableBits){
-    throw new Error('Payload too large for image using LSB. Need ' + totalBitsNeeded + ' bits but only ' + usableBits + ' bits available.');
-  }
-  // prepare buffer: 4-byte length big-endian + payload
-  const header = uint32ToBytes(payloadLen);
-  let buf = concatUint8(header, payloadBytes);
-  // write bits into LSB of channels in RGBA order
+  const channels = includeAlpha ? 4 : 3;
+  const usableBits = w*h*channels;
+  const header = uint32ToBytes(payloadBytes.length);
+  const buf = concatUint8(header, payloadBytes);
+  const neededBits = buf.length * 8;
+  if(neededBits > usableBits) throw new Error('Payload too large for image using LSB');
   let bitIndex = 0;
-  for(let i=0; i<data.length && bitIndex < buf.length*8; i+=4){
-    // channels order R,G,B,(A)
-    for(let ch=0; ch< (useAlpha?4:3); ch++){
+  for(let p=0;p<w*h && bitIndex < neededBits; p++){
+    const base = p*4;
+    for(let ch=0; ch<channels && bitIndex < neededBits; ch++){
       const byteIndex = Math.floor(bitIndex/8);
       const bitInByte = 7 - (bitIndex % 8);
       const bit = (buf[byteIndex] >> bitInByte) & 1;
-      data[i+ch] = (data[i+ch] & 0xFE) | bit;
+      data[base + ch] = (data[base + ch] & 0xFE) | bit;
       bitIndex++;
-      if(bitIndex >= buf.length*8) break;
     }
   }
   ctx.putImageData(imgdata,0,0);
-  return canvas;
 }
 
-/* Decoding: LSB */
-function extractLSB(canvas, tryAlpha=false){
+/* LSB extract */
+function extractLSBCanvas(canvas, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
   const imgdata = ctx.getImageData(0,0,w,h);
   const data = imgdata.data;
-  const channelsPerPixel = tryAlpha ? 4 : 3;
-  const usableBits = (w*h) * channelsPerPixel;
-  // read first 32 bits header
-  const headerBits = [];
+  const channels = includeAlpha ? 4 : 3;
+  const usableBits = w*h*channels;
+  // read 32-bit header
+  let headerBits = [];
   let bitIndex = 0;
-  for(let i=0;i<data.length && bitIndex < 32;i+=4){
-    for(let ch=0; ch<channelsPerPixel; ch++){
-      const bit = data[i+ch] & 1;
-      headerBits.push(bit);
+  for(let p=0; p<w*h && bitIndex < 32; p++){
+    const base = p*4;
+    for(let ch=0; ch<channels && bitIndex < 32; ch++){
+      headerBits.push(data[base+ch] & 1);
       bitIndex++;
-      if(bitIndex >= 32) break;
     }
   }
-  if(headerBits.length < 32) throw new Error('Image too small to contain header');
-  let lengthBytes = new Uint8Array(4);
+  if(headerBits.length < 32) throw new Error('Image too small for header');
+  let headerBytes = new Uint8Array(4);
   for(let b=0;b<4;b++){
-    let val=0;
-    for(let bit=0;bit<8;bit++){
-      val = (val << 1) | headerBits[b*8 + bit];
-    }
-    lengthBytes[b] = val;
+    let v=0;
+    for(let i=0;i<8;i++) v = (v<<1) | headerBits[b*8 + i];
+    headerBytes[b] = v;
   }
-  const payloadLen = bytesToUint32(lengthBytes);
-  const totalBitsNeeded = payloadLen * 8;
-  if((payloadLen > 10000000) || (totalBitsNeeded + 32 > usableBits)){
-    throw new Error('Invalid or corrupt header length: ' + payloadLen);
-  }
+  const payloadLen = bytesToUint32(headerBytes);
+  if(payloadLen < 0 || payloadLen > 10000000) throw new Error('Invalid header length: ' + payloadLen);
+  const totalBits = payloadLen * 8;
+  if(32 + totalBits > usableBits) throw new Error('Image does not contain enough bits for declared payload');
   const out = new Uint8Array(payloadLen);
-  let outBitIndex = 0;
-  // we already consumed first 32 bits; resume from there
-  let consumedBits = 32;
-  for(let i=0;i<data.length && outBitIndex < payloadLen*8;i+=4){
-    for(let ch=0; ch<channelsPerPixel; ch++){
-      if(consumedBits < 32){
-        consumedBits++;
-        continue;
-      }
-      const bit = data[i+ch] & 1;
-      const byteIndex = Math.floor(outBitIndex/8);
-      const bitInByte = 7 - (outBitIndex % 8);
+  let outBit = 0;
+  let consumed = 0;
+  for(let p=0; p<w*h && outBit < totalBits; p++){
+    const base = p*4;
+    for(let ch=0; ch<channels && outBit < totalBits; ch++){
+      if(consumed < 32){ consumed++; continue; }
+      const bit = data[base+ch] & 1;
+      const byteIndex = Math.floor(outBit/8);
+      const bitInByte = 7 - (outBit % 8);
       if(bit) out[byteIndex] |= (1 << bitInByte);
-      outBitIndex++;
-      consumedBits++;
-      if(outBitIndex >= payloadLen*8) break;
+      outBit++;
     }
   }
   return out;
 }
 
-/* Keyed LSB: keyed permutation of bit positions using PRNG seeded from password */
-function embedLSBKeyed(canvas, payloadBytes, password, useAlpha=false){
+/* Keyed LSB */
+function embedLSBKeyedCanvas(canvas, payloadBytes, password, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
   const imgdata = ctx.getImageData(0,0,w,h);
   const data = imgdata.data;
-  const channelsPerPixel = useAlpha?4:3;
-  const totalBits = (w*h) * channelsPerPixel;
+  const channels = includeAlpha ? 4 : 3;
+  const totalBits = w*h*channels;
   const header = uint32ToBytes(payloadBytes.length);
-  let buf = concatUint8(header, payloadBytes);
+  const buf = concatUint8(header, payloadBytes);
   const neededBits = buf.length * 8;
-  if(neededBits > totalBits) throw new Error('Payload too large for keyed LSB using this image');
-  // seed from password string
-  let seed = 0x811c9dc5;
+  if(neededBits > totalBits) throw new Error('Payload too large for keyed LSB');
+  // seed from password
+  let seed = 0x811c9dc5 >>> 0;
   const pwBytes = strToUint8(password || '');
   for(let i=0;i<pwBytes.length;i++){ seed = (seed ^ pwBytes[i]) >>> 0; seed = Math.imul(seed, 0x01000193) >>> 0; }
   const rnd = xorshift32(seed);
-  // create array of indices for potential bit locations
+  // create indices and shuffle
   const indices = new Uint32Array(totalBits);
   for(let i=0;i<totalBits;i++) indices[i]=i;
-  // fisher-yates shuffle using rnd
   for(let i=indices.length-1;i>0;i--){
     const j = rnd() % (i+1);
     const tmp = indices[i]; indices[i]=indices[j]; indices[j]=tmp;
   }
-  // write bits into chosen indices
-  for(let bitIndex=0; bitIndex<neededBits; bitIndex++){
-    const globalBitPos = indices[bitIndex];
-    const pixelIndex = Math.floor(globalBitPos / channelsPerPixel);
-    const channel = globalBitPos % channelsPerPixel;
-    const dataIndex = pixelIndex*4 + channel; // RGBA stride
-    const byteIndex = Math.floor(bitIndex/8);
-    const bitInByte = 7 - (bitIndex % 8);
-    const bit = (buf[byteIndex] >> bitInByte) & 1;
-    data[dataIndex] = (data[dataIndex] & 0xFE) | bit;
+  // write bits using permutation
+  for(let bit=0; bit<neededBits; bit++){
+    const gp = indices[bit];
+    const pixel = Math.floor(gp / channels);
+    const ch = gp % channels;
+    const dataIndex = pixel*4 + ch;
+    const byteIndex = Math.floor(bit/8);
+    const bitInByte = 7 - (bit % 8);
+    const b = (buf[byteIndex] >> bitInByte) & 1;
+    data[dataIndex] = (data[dataIndex] & 0xFE) | b;
   }
   ctx.putImageData(imgdata,0,0);
-  return canvas;
 }
 
-function extractLSBKeyed(canvas, password, tryAlpha=false){
+function extractLSBKeyedCanvas(canvas, password, includeAlpha=false){
   const ctx = canvas.getContext('2d');
   const w = canvas.width, h = canvas.height;
   const imgdata = ctx.getImageData(0,0,w,h);
   const data = imgdata.data;
-  const channelsPerPixel = tryAlpha?4:3;
-  const totalBits = (w*h) * channelsPerPixel;
+  const channels = includeAlpha ? 4 : 3;
+  const totalBits = w*h*channels;
   // seed
-  let seed = 0x811c9dc5;
+  let seed = 0x811c9dc5 >>> 0;
   const pwBytes = strToUint8(password || '');
   for(let i=0;i<pwBytes.length;i++){ seed = (seed ^ pwBytes[i]) >>> 0; seed = Math.imul(seed, 0x01000193) >>> 0; }
   const rnd = xorshift32(seed);
@@ -529,253 +495,344 @@ function extractLSBKeyed(canvas, password, tryAlpha=false){
     const j = rnd() % (i+1);
     const tmp = indices[i]; indices[i]=indices[j]; indices[j]=tmp;
   }
-  // read first 32 bits using indices 0..31
+  // read first 32 bits for header
   const headerBits = [];
   for(let i=0;i<32;i++){
     const gp = indices[i];
-    const pixelIndex = Math.floor(gp / channelsPerPixel);
-    const channel = gp % channelsPerPixel;
-    const val = data[pixelIndex*4 + channel] & 1;
-    headerBits.push(val);
+    const pix = Math.floor(gp / channels);
+    const ch = gp % channels;
+    headerBits.push(data[pix*4 + ch] & 1);
   }
-  let lengthBytes = new Uint8Array(4);
+  let headerBytes = new Uint8Array(4);
   for(let b=0;b<4;b++){
-    let val=0;
-    for(let bit=0;bit<8;bit++) val = (val << 1) | headerBits[b*8+bit];
-    lengthBytes[b] = val;
+    let v=0;
+    for(let i=0;i<8;i++) v = (v<<1) | headerBits[b*8 + i];
+    headerBytes[b] = v;
   }
-  const payloadLen = bytesToUint32(lengthBytes);
-  if(payloadLen < 0 || payloadLen > 10000000) throw new Error('Invalid header length in keyed LSB: ' + payloadLen);
+  const payloadLen = bytesToUint32(headerBytes);
+  if(payloadLen < 0 || payloadLen > 10000000) throw new Error('Invalid keyed header length: ' + payloadLen);
   const out = new Uint8Array(payloadLen);
-  for(let bitIndex=0; bitIndex<payloadLen*8; bitIndex++){
-    const gp = indices[32 + bitIndex];
-    const pixelIndex = Math.floor(gp / channelsPerPixel);
-    const channel = gp % channelsPerPixel;
-    const bit = data[pixelIndex*4 + channel] & 1;
-    const byteIndex = Math.floor(bitIndex/8);
-    const bitInByte = 7 - (bitIndex % 8);
-    if(bit) out[byteIndex] |= (1 << bitInByte);
+  for(let bit=0; bit<payloadLen*8; bit++){
+    const gp = indices[32 + bit];
+    const pix = Math.floor(gp / channels);
+    const ch = gp % channels;
+    const val = data[pix*4 + ch] & 1;
+    const byteIndex = Math.floor(bit/8);
+    const bitInByte = 7 - (bit % 8);
+    if(val) out[byteIndex] |= (1 << bitInByte);
   }
   return out;
 }
 
-/* Append mode: append payload base64 with a signature to data URL */
+/* Append mode */
 const APP_SIG = 'STEGGYv1:';
-async function embedAppend(dataUrl, payloadBytes){
-  const b64Payload = btoa(String.fromCharCode(...payloadBytes));
-  // return data url with appended signature and base64 payload
-  return dataUrl + '::' + APP_SIG + b64Payload;
+async function embedAppendToDataUrl(dataUrl, payloadBytes){
+  // payload bytes to base64
+  let bin = '';
+  for(let i=0;i<payloadBytes.length;i++) bin += String.fromCharCode(payloadBytes[i]);
+  const b64 = btoa(bin);
+  return dataUrl + '::' + APP_SIG + b64;
 }
-function detectAppend(dataUrl){
-  const idx = dataUrl.indexOf('::' + APP_SIG);
+function detectAppendFromDataUrl(dataUrl){
+  const mark = '::' + APP_SIG;
+  const idx = dataUrl.indexOf(mark);
   if(idx === -1) return null;
-  const b64 = dataUrl.substring(idx + 2 + APP_SIG.length);
-  try {
-    const binStr = atob(b64);
-    const u = new Uint8Array(binStr.length);
-    for(let i=0;i<binStr.length;i++) u[i] = binStr.charCodeAt(i);
+  const b64 = dataUrl.substring(idx + mark.length);
+  try{
+    const bin = atob(b64);
+    const u = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u[i] = bin.charCodeAt(i);
     return u;
   } catch(e){ return null; }
 }
+function stripAppend(dataUrl){
+  const mark = '::' + APP_SIG;
+  const idx = dataUrl.indexOf(mark);
+  if(idx === -1) return dataUrl;
+  return dataUrl.substring(0, idx);
+}
 
-/* Export canvas as blob and provide download */
-function downloadDataUrl(dataUrl, filename='steggy.png'){
+/* Canvas helpers */
+function imageToCanvasElement(img){
+  procCanvas.width = img.naturalWidth;
+  procCanvas.height = img.naturalHeight;
+  const ctx = procCanvas.getContext('2d');
+  ctx.clearRect(0,0,procCanvas.width,procCanvas.height);
+  ctx.drawImage(img,0,0);
+  return procCanvas;
+}
+function canvasToDataUrl(canvas, type='image/png', quality=0.92){
+  return canvas.toDataURL(type, quality);
+}
+function canvasToBlobPromise(canvas, type='image/png', quality=0.92){
+  return new Promise((res)=> canvas.toBlob(b => res(b), type, quality));
+}
+
+/* Export helpers - mobile safe */
+async function saveDataUrlToFile(dataUrl, filename='steggy.png'){
+  // show preview first if possible
+  const previewImgEl = document.getElementById('imgPreview');
+  if(previewImgEl && previewImgEl.src !== dataUrl){
+    // set preview to show the exported image in UI
+    previewImgEl.src = dataUrl;
+    previewWrap.style.display = 'flex';
+  }
+  // convert dataUrl to blob for download
+  const blob = dataUrlToBlob(dataUrl);
+  const url = URL.createObjectURL(blob);
+  // create anchor and click - must be in user gesture
   const a = document.createElement('a');
-  a.href = dataUrl;
+  a.href = url;
   a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+function dataUrlToBlob(dataUrl){
+  const parts = dataUrl.split(',');
+  const meta = parts[0];
+  const isBase64 = meta.indexOf('base64') !== -1;
+  const mime = meta.split(':')[1].split(';')[0];
+  const data = parts[1];
+  if(isBase64){
+    const bin = atob(data);
+    const len = bin.length;
+    const arr = new Uint8Array(len);
+    for(let i=0;i<len;i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], {type: mime});
+  } else {
+    // percent-encoding
+    const decoded = decodeURIComponent(data);
+    const arr = new Uint8Array(decoded.length);
+    for(let i=0;i<decoded.length;i++) arr[i] = decoded.charCodeAt(i);
+    return new Blob([arr], {type: mime});
+  }
 }
 
 /* Handlers */
-async function encryptHandler(){
-  try {
-    if(!currentImage){
-      status.innerText = 'Load an image first';
+async function onEncrypt(e){
+  try{
+    if(!imgPreview.src){
+      status('Load an image first');
       return;
     }
-    status.innerText = 'Preparing payload...';
-    const payload = await readPayload();
-    if(!payload || payload.length === 0){
-      status.innerText = 'No payload provided';
+    const payloadBytes = await readPayloadBytes();
+    if(!payloadBytes || payloadBytes.length === 0){
+      status('Provide payload text or file');
       return;
     }
     const algo = algoSelect.value;
-    const useAlpha = tryAlpha.checked;
-    const password = passwordInput.value;
-    // draw image to canvas
-    const canvas = imgToCanvas(previewImg);
-    let outDataUrl;
+    const password = inputPassword.value || '';
+    const includeAlpha = useAlpha.checked;
+    const canvas = imageToCanvasElement(imgPreview);
     if(algo === 'lsb'){
-      embedLSB(canvas, payload, useAlpha);
-      outDataUrl = canvasToDataURL(canvas,'image/png');
+      embedLSBCanvas(canvas, payloadBytes, includeAlpha);
+      const dataUrl = canvasToDataUrl(canvas,'image/png');
+      await saveDataUrlToFile(dataUrl,'steggy-hidden.png');
+      status('Export complete using LSB');
+      log('Encrypted with LSB, ' + payloadBytes.length + ' bytes');
     } else if(algo === 'lsb-key'){
-      if(!password){
-        status.innerText = 'Password required for keyed LSB';
-        return;
-      }
-      embedLSBKeyed(canvas, payload, password, useAlpha);
-      outDataUrl = canvasToDataURL(canvas,'image/png');
+      if(!password){ status('Password required for keyed LSB'); return; }
+      embedLSBKeyedCanvas(canvas, payloadBytes, password, includeAlpha);
+      const dataUrl = canvasToDataUrl(canvas,'image/png');
+      await saveDataUrlToFile(dataUrl,'steggy-hidden.png');
+      status('Export complete using keyed LSB');
+      log('Encrypted with keyed LSB, ' + payloadBytes.length + ' bytes');
     } else if(algo === 'append'){
-      const base = canvasToDataURL(canvas,'image/png');
-      outDataUrl = await embedAppend(base, payload);
+      const baseCanvas = imageToCanvasElement(imgPreview);
+      const baseDataUrl = canvasToDataUrl(baseCanvas,'image/png');
+      const appended = await embedAppendToDataUrl(baseDataUrl, payloadBytes);
+      // when using append mode, we present two save options: raw appended, or clean PNG without marker
+      await saveDataUrlToFile(appended,'steggy-appended.png');
+      status('Export complete using append mode');
+      log('Encrypted with append, ' + payloadBytes.length + ' bytes');
     } else {
-      status.innerText = 'Unsupported algorithm selected';
-      return;
+      status('Unsupported algorithm for encrypt');
     }
-    downloadDataUrl(outDataUrl,'steggy-hidden.png');
-    status.innerText = 'Export complete';
-    log('Encrypted using ' + algo + ' size ' + payload.length + ' bytes');
   } catch(err){
-    status.innerText = 'Error: ' + err.message;
-    log('Error during encrypt: ' + (err.message || err));
+    status('Error: ' + (err.message || err));
+    log('Encrypt error: ' + (err.message || err));
   }
 }
 
-async function decryptHandler(){
-  try {
-    if(!currentImage){
-      status.innerText = 'Load an image first';
+async function onDecrypt(e){
+  try{
+    if(!imgPreview.src){
+      status('Load an image first');
       return;
     }
-    status.innerText = 'Decoding...';
-    outputBox.innerText = '';
-    lastDecodedFile = null;
     const algo = algoSelect.value;
-    const useAlpha = tryAlpha.checked;
-    const password = passwordInput.value;
-    // first, check appended mode even before canvas if dataUrl contains our signature
+    const password = inputPassword.value || '';
+    const includeAlpha = useAlpha.checked;
+    // first check append mode by inspecting data URL stored in currentDataUrl
     if(algo === 'auto' || algo === 'append'){
-      const arr = detectAppend(currentImage);
+      const dataUrl = currentDataUrl || imgPreview.src;
+      const arr = detectAppendFromDataUrl(dataUrl);
       if(arr){
-        outputBox.innerText = 'Detected appended payload: ' + arr.length + ' bytes';
-        lastDecodedFile = {bytes:arr,name:'decoded-appended.bin'};
-        tryOfferDownload(arr,'decoded-appended.bin');
-        status.innerText = 'Decoded appended payload';
-        log('Decoded appended payload, ' + arr.length + ' bytes');
+        displayDecoded(arr,'append');
         if(algo !== 'auto') return;
-      } else if(algo === 'append') {
-        throw new Error('No appended payload detected');
+      } else if(algo === 'append'){
+        status('No appended payload detected');
+        return;
       }
     }
-    // need canvas
-    const canvas = imgToCanvas(previewImg);
-    // if auto, try keyed LSB, then LSB, then LSB with alpha
+    // need canvas extraction for LSB variants
+    const canvas = imageToCanvasElement(imgPreview);
     if(algo === 'auto'){
-      // attempt keyed LSB if password provided
+      // try keyed if password present
       if(password){
-        try {
-          const out = extractLSBKeyed(canvas,password,useAlpha);
-          handleDecoded(out,'lsb-key');
+        try{
+          const arr = extractLSBKeyedCanvas(canvas, password, includeAlpha);
+          displayDecoded(arr,'lsb-key');
           return;
-        } catch(e){ log('Keyed LSB failed: ' + e.message); }
+        } catch(err){ log('Keyed LSB failed: ' + (err.message || err)); }
       }
-      // try plain LSB without alpha
-      try {
-        const out = extractLSB(canvas,false);
-        handleDecoded(out,'lsb');
+      // try plain LSB
+      try{
+        const arr = extractLSBCanvas(canvas, false);
+        displayDecoded(arr,'lsb');
         return;
-      } catch(e){ log('LSB RGB failed: ' + e.message); }
-      // try LSB with alpha
-      try {
-        const out = extractLSB(canvas,true);
-        handleDecoded(out,'lsb-alpha');
+      } catch(err){ log('LSB RGB failed: ' + (err.message || err)); }
+      // try alpha LSB
+      try{
+        const arr = extractLSBCanvas(canvas, true);
+        displayDecoded(arr,'lsb-alpha');
         return;
-      } catch(e){ log('LSB alpha failed: ' + e.message); }
-      status.innerText = 'Auto detect failed to find payload';
-      outputBox.innerText = 'No payload detected using available methods';
+      } catch(err){ log('LSB RGBA failed: ' + (err.message || err)); }
+      status('Auto detect failed to find payload');
+      outputEl.textContent = 'No payload detected';
       return;
     } else if(algo === 'lsb-key'){
-      if(!password){
-        status.innerText = 'Password required for keyed LSB';
-        return;
-      }
-      const out = extractLSBKeyed(canvas,password,useAlpha);
-      handleDecoded(out,'lsb-key');
+      if(!password){ status('Password required for keyed LSB'); return; }
+      const arr = extractLSBKeyedCanvas(canvas, password, includeAlpha);
+      displayDecoded(arr,'lsb-key');
       return;
     } else if(algo === 'lsb'){
-      const out = extractLSB(canvas,useAlpha);
-      handleDecoded(out,'lsb');
+      const arr = extractLSBCanvas(canvas, includeAlpha);
+      displayDecoded(arr,'lsb');
       return;
     } else {
-      status.innerText = 'Unsupported decrypt algorithm';
+      status('Unsupported algorithm for decrypt');
       return;
     }
   } catch(err){
-    status.innerText = 'Error: ' + err.message;
-    log('Error during decrypt: ' + (err.message || err));
+    status('Error: ' + (err.message || err));
+    log('Decrypt error: ' + (err.message || err));
   }
 }
 
-function handleDecoded(bytes,method){
-  // attempt to detect if bytes are text
-  let text = uint8ToStr(bytes);
+function displayDecoded(bytes, method){
+  lastDecoded = {bytes:bytes, method:method};
+  const text = uint8ToStr(bytes);
   if(text !== null && isLikelyText(text)){
-    outputBox.innerText = 'Decoded with ' + method + ' - text result:\\n\\n' + text;
-    lastDecodedFile = {bytes:bytes,name:'decoded.txt',text:text};
-    tryOfferDownload(bytes,'decoded.txt');
-    status.innerText = 'Decoded text';
-    log('Decoded text using ' + method + ' size ' + bytes.length);
+    outputEl.textContent = 'Decoded (' + method + ') - text:\\n\\n' + text;
+    status('Decoded text with ' + method);
+    log('Decoded text with ' + method + ' size ' + bytes.length);
   } else {
-    outputBox.innerText = 'Decoded binary with ' + method + ' - ' + bytes.length + ' bytes';
-    lastDecodedFile = {bytes:bytes,name:'decoded.bin'};
-    tryOfferDownload(bytes,'decoded.bin');
-    status.innerText = 'Decoded binary';
-    log('Decoded binary using ' + method + ' size ' + bytes.length);
+    outputEl.textContent = 'Decoded (' + method + ') - binary size: ' + bytes.length + ' bytes';
+    status('Decoded binary with ' + method);
+    log('Decoded binary with ' + method + ' size ' + bytes.length);
   }
+  // auto-download decoded binary so user gets it immediately
+  try{
+    const fname = isLikelyText(uint8ToStr(bytes)) ? 'decoded.txt' : 'decoded.bin';
+    const blob = new Blob([bytes]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = fname;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+  } catch(e){ /* ignore */ }
 }
 
 function isLikelyText(s){
-  // check proportion of printable characters
-  if(s.length === 0) return false;
+  if(!s) return false;
   let printable = 0;
   for(let i=0;i<s.length;i++){
     const c = s.charCodeAt(i);
     if((c >= 9 && c <= 13) || (c >= 32 && c <= 126) || (c >= 160)) printable++;
   }
-  return (printable / s.length) > 0.95;
+  return (printable / s.length) > 0.9;
 }
 
-function tryOfferDownload(bytes,filename){
-  // create blob and a link
-  const blob = new Blob([bytes]);
+/* Save clean PNG - strips appended marker if present and saves pure PNG */
+async function onSaveClean(){
+  try{
+    if(!imgPreview.src){ status('Load an image first'); return; }
+    // if currentDataUrl contains appended payload, strip it
+    let dataUrl = currentDataUrl || imgPreview.src;
+    const stripped = stripAppend(dataUrl);
+    if(stripped !== dataUrl){
+      // appended marker was present; save clean
+      await saveDataUrlToFile(stripped,'steggy-clean.png');
+      status('Saved clean PNG (stripped appended payload marker)');
+      log('Saved clean PNG - stripped appended payload');
+      // update preview to stripped image
+      imgPreview.src = stripped;
+      currentDataUrl = stripped;
+      return;
+    }
+    // no appended marker - but image may still be canvas derived; ensure we save as PNG based on canvas
+    // draw current image to canvas, export
+    const canvas = imageToCanvasElement(imgPreview);
+    const dataUrl2 = canvasToDataUrl(canvas,'image/png');
+    await saveDataUrlToFile(dataUrl2,'steggy-clean.png');
+    status('Saved clean PNG');
+    log('Saved clean PNG from canvas');
+  } catch(err){
+    status('Error saving clean PNG: ' + (err.message || err));
+    log('Save clean error: ' + (err.message || err));
+  }
+}
+
+/* Clear */
+function clearAll(){
+  inputImage.value = '';
+  inputPayloadFile.value = '';
+  inputPayloadText.value = '';
+  inputPassword.value = '';
+  imgPreview.src = '';
+  previewWrap.style.display = 'none';
+  imgInfo.textContent = 'No image loaded';
+  capacityEl.textContent = 'Load an image to estimate capacity';
+  outputEl.textContent = '';
+  currentDataUrl = null;
+  lastDecoded = null;
+  status('Cleared');
+}
+
+/* Download decoded data */
+function downloadDecoded(){
+  if(!lastDecoded){ status('No decoded payload'); return; }
+  const blob = new Blob([lastDecoded.bytes]);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  a.style.display = 'none';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const fname = isLikelyText(uint8ToStr(lastDecoded.bytes)) ? 'decoded.txt' : 'decoded.bin';
+  a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 
-/* Capacity estimate */
-function estimateCapacity(){
-  if(!previewImg || !previewImg.src) {
-    capacityEl.innerText = 'No image loaded';
-    return;
-  }
-  const c = imgToCanvas(previewImg);
-  const w = c.width, h = c.height;
-  const rgbCapacity = w*h*3/8; // bytes if using RGB LSB
-  const rgbaCapacity = w*h*4/8;
-  capacityEl.innerText = `RGB LSB capacity: approx ${Math.floor(rgbCapacity)} bytes. RGBA LSB capacity: approx ${Math.floor(rgbaCapacity)} bytes. Appended payload capacity: limited by data URL size.`;
+/* Copy decoded text */
+function copyDecoded(){
+  if(!lastDecoded) { status('No decoded payload to copy'); return; }
+  const text = uint8ToStr(lastDecoded.bytes);
+  if(!text){ status('Decoded payload not text'); return; }
+  navigator.clipboard?.writeText(text).then(()=> status('Copied decoded text to clipboard')).catch(()=> status('Copy failed'));
 }
 
-/* Download last decoded */
-function downloadLastDecoded(){
-  if(!lastDecodedFile){
-    status.innerText = 'No decoded payload available';
-    return;
-  }
-  tryOfferDownload(lastDecodedFile.bytes,lastDecodedFile.name || 'decoded.bin');
-}
+/* UI status */
+function status(s){ statusEl.textContent = s; }
 
-/* Accessibility: close license on outside click */
-licenseModal.addEventListener('click', (e)=>{
-  if(e.target === licenseModal) licenseModal.style.display = 'none';
+/* small helper to detect append in the loaded image file if available */
+inputImage.addEventListener('change', ()=> {
+  // we set currentDataUrl in handleImageLoad; nothing else needed
 });
+
+/* initial log */
+log('Steggy started');
 
 </script>
 </body>
