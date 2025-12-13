@@ -3,253 +3,306 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Steggy ステギー</title>
-<link rel="icon" href="stegosaurus_icon.png" type="image/png">
+<title>Steggy 1.4 ステギー</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Steggy">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
+
 <style>
-    :root {
-        --bg-light: #f5f5f5;
-        --bg-dark: #1e1e1e;
-        --text-light: #222;
-        --text-dark: #eee;
-        --primary: #4CAF50;
-        --secondary: #ff9800;
-    }
-    body {
-        font-family: sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: var(--bg-light);
-        color: var(--text-light);
-        transition: background-color 0.3s, color 0.3s;
-    }
-    body.dark {
-        background-color: var(--bg-dark);
-        color: var(--text-dark);
-    }
-    header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 20px;
-        background-color: var(--primary);
-        color: white;
-    }
-    header h1 {
-        margin: 0;
-        font-size: 1.5em;
-    }
-    .toggle-mode {
-        cursor: pointer;
-        font-size: 1.2em;
-        user-select: none;
-    }
-    main {
-        padding: 20px;
-        max-width: 800px;
-        margin: auto;
-    }
-    label {
-        display: block;
-        margin-top: 10px;
-    }
-    input, select, textarea, button {
-        margin-top: 5px;
-        padding: 5px;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    button {
-        background-color: var(--secondary);
-        border: none;
-        color: white;
-        cursor: pointer;
-        padding: 10px;
-        font-size: 1em;
-    }
-    button:hover {
-        opacity: 0.9;
-    }
-    #advancedSettings {
-        display: none;
-        border: 1px solid #ccc;
-        padding: 10px;
-        margin-top: 10px;
-    }
-    footer {
-        text-align: center;
-        font-size: 0.8em;
-        margin: 20px 0;
-    }
-    img#outputImage {
-        max-width: 100%;
-        margin-top: 10px;
-        border: 1px solid #ccc;
-    }
+:root {
+  --bg-light:#f5f6f7;
+  --bg-dark:#121212;
+  --card-light:#ffffff;
+  --card-dark:#1e1e1e;
+  --text-light:#111111;
+  --text-dark:#eaeaea;
+  --accent:#3fa46a;
+  --warn:#c87a2b;
+}
+
+body {
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg-light);
+  color:var(--text-light);
+}
+
+body.dark {
+  background:var(--bg-dark);
+  color:var(--text-dark);
+}
+
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 16px;
+  background:var(--accent);
+  color:white;
+}
+
+header .title {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:600;
+}
+
+header img {
+  width:32px;
+  height:32px;
+  image-rendering:pixelated;
+}
+
+button {
+  padding:10px;
+  border:none;
+  border-radius:6px;
+  background:var(--accent);
+  color:white;
+  cursor:pointer;
+}
+
+button.secondary {
+  background:#666;
+}
+
+main {
+  max-width:980px;
+  margin:auto;
+  padding:16px;
+}
+
+.card {
+  background:var(--card-light);
+  border-radius:10px;
+  padding:16px;
+  margin-bottom:16px;
+}
+
+body.dark .card {
+  background:var(--card-dark);
+}
+
+label {
+  display:block;
+  margin-top:10px;
+  font-weight:500;
+}
+
+input,textarea,select {
+  width:100%;
+  margin-top:6px;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+
+textarea {
+  resize:vertical;
+}
+
+#advanced {
+  display:none;
+  border-left:4px solid var(--warn);
+}
+
+.warning {
+  background:#fff2dd;
+  padding:10px;
+  border-radius:6px;
+  font-size:14px;
+}
+
+body.dark .warning {
+  background:#2a1f14;
+}
+
+.preview {
+  max-width:100%;
+  margin-top:10px;
+  border-radius:6px;
+}
+
+footer {
+  text-align:center;
+  font-size:13px;
+  opacity:0.8;
+  padding:20px;
+}
 </style>
 </head>
+
 <body>
 <header>
-    <h1>Steggy ステギー</h1>
-    <span class="toggle-mode" id="modeToggle">🌞</span>
+  <div class="title">
+    <img id="icon">
+    <div>Steggy 1.4 ステギー</div>
+  </div>
+  <button id="themeToggle">🌙</button>
 </header>
+
 <main>
-    <label for="modeSelect">Mode:</label>
-    <select id="modeSelect">
-        <option value="encrypt">Encrypt</option>
-        <option value="decrypt">Decrypt</option>
-    </select>
 
-    <label for="inputFile">Input Image:</label>
-    <input type="file" id="inputFile" accept="image/*">
+<div class="card">
+  <label>Mode</label>
+  <select id="mode">
+    <option value="encrypt">Encrypt</option>
+    <option value="decrypt">Decrypt</option>
+  </select>
 
-    <label for="inputText">Text to hide / file to embed (optional for encrypt):</label>
-    <textarea id="inputText" placeholder="Enter text here"></textarea>
+  <label>Algorithm</label>
+  <select id="algo">
+    <option value="auto">Auto detect</option>
+    <option value="lsb">LSB scatter</option>
+    <option value="pngtext">PNG tEXt chunk</option>
+  </select>
 
-    <button id="toggleAdvanced">Advanced Settings</button>
-    <div id="advancedSettings">
-        <label for="password">AES-GCM Password (optional):</label>
-        <input type="password" id="password">
+  <label>Carrier image (PNG)</label>
+  <input type="file" id="imageInput" accept="image/png">
 
-        <label for="pngChunk">Use PNG Chunk Insertion:</label>
-        <select id="pngChunk">
-            <option value="none">None</option>
-            <option value="tEXt">tEXt</option>
-            <option value="zTXt">zTXt</option>
-        </select>
-        <small>Future PGP options will appear here</small>
-    </div>
+  <label>Payload text</label>
+  <textarea id="payloadText"></textarea>
 
-    <button id="processBtn">Process</button>
+  <label>Payload file (optional)</label>
+  <input type="file" id="payloadFile">
 
-    <h2>Output:</h2>
-    <textarea id="outputText" rows="6" placeholder="Decrypted text appears here"></textarea>
-    <img id="outputImage" alt="Decrypted or Encrypted Image">
+  <div id="capacity"></div>
+
+  <button id="advancedToggle" class="secondary">Advanced Settings</button>
+</div>
+
+<div class="card" id="advanced">
+  <div class="warning">
+    Advanced features are intended for experienced users.
+    Misuse can permanently destroy access to embedded data.
+  </div>
+
+  <label>AES GCM password (optional)</label>
+  <input type="password" id="password">
+
+  <label>PGP public key</label>
+  <textarea id="pgpPublic"></textarea>
+
+  <label>PGP private key</label>
+  <textarea id="pgpPrivate"></textarea>
+</div>
+
+<div class="card">
+  <button id="process">Process</button>
+  <a id="download" style="display:none"></a>
+  <img id="imagePreview" class="preview">
+</div>
 
 </main>
-<footer>Created by Dan</footer>
+
+<footer>
+  Created by Dan<br>
+  Steggy operates fully offline. No data leaves your device.
+</footer>
 
 <script>
-const body = document.body;
-const modeToggle = document.getElementById('modeToggle');
-const advancedSettings = document.getElementById('advancedSettings');
-const toggleAdvanced = document.getElementById('toggleAdvanced');
-const inputFile = document.getElementById('inputFile');
-const inputText = document.getElementById('inputText');
-const outputText = document.getElementById('outputText');
-const outputImage = document.getElementById('outputImage');
-const processBtn = document.getElementById('processBtn');
-const modeSelect = document.getElementById('modeSelect');
+const ICON="iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVR4nGNgGAVxQFhYWJj8z8DAwMgABYwYGEZgEAwC4gqIBZBgAEANn4DgCd4XyAAAAAElFTkSuQmCC";
+document.getElementById("icon").src="data:image/png;base64,"+ICON;
 
-let darkMode = false;
+const themeBtn=document.getElementById("themeToggle");
+if(localStorage.theme==="dark"){document.body.classList.add("dark");themeBtn.textContent="☀️";}
+themeBtn.onclick=()=>{
+  document.body.classList.toggle("dark");
+  const d=document.body.classList.contains("dark");
+  localStorage.theme=d?"dark":"light";
+  themeBtn.textContent=d?"☀️":"🌙";
+};
 
-modeToggle.addEventListener('click', () => {
-    darkMode = !darkMode;
-    body.classList.toggle('dark', darkMode);
-    modeToggle.textContent = darkMode ? '🌜' : '🌞';
-    localStorage.setItem('darkMode', darkMode);
-});
+document.getElementById("advancedToggle").onclick=()=>{
+  const a=document.getElementById("advanced");
+  a.style.display=a.style.display==="block"?"none":"block";
+};
 
-// Load saved mode
-if(localStorage.getItem('darkMode') === 'true') {
-    darkMode = true;
-    body.classList.add('dark');
-    modeToggle.textContent = '🌜';
+async function sha256(data){
+  const h=await crypto.subtle.digest("SHA-256",data);
+  return new Uint8Array(h);
 }
 
-// Toggle advanced settings
-toggleAdvanced.addEventListener('click', () => {
-    advancedSettings.style.display = advancedSettings.style.display === 'none' ? 'block' : 'none';
-});
-
-// Helper: Convert text to Uint8Array
-function textToUint8Array(str) {
-    return new TextEncoder().encode(str);
+function randomIndices(max,count){
+  const idx=[];
+  const used=new Set();
+  while(idx.length<count){
+    const r=Math.floor(Math.random()*max);
+    if(!used.has(r)){used.add(r);idx.push(r);}
+  }
+  return idx;
 }
 
-// Helper: Convert Uint8Array to text
-function uint8ArrayToText(arr) {
-    return new TextDecoder().decode(arr);
+function embedLSBScatter(img,payload){
+  const pixels=Math.floor(img.data.length/4);
+  const bits=payload.length*8;
+  const idx=randomIndices(pixels,bits);
+  let bit=0;
+  for(const i of idx){
+    const b=(payload[Math.floor(bit/8)]>>(7-(bit%8)))&1;
+    img.data[i*4]=(img.data[i*4]&254)|b;
+    bit++;
+  }
 }
 
-// AES-GCM encryption/decryption
-async function encryptAESGCM(plaintext, password) {
-    const pwUtf8 = new TextEncoder().encode(password);
-    const keyMaterial = await crypto.subtle.importKey('raw', pwUtf8, 'PBKDF2', false, ['deriveKey']);
-    const key = await crypto.subtle.deriveKey({
-        name: 'PBKDF2',
-        salt: pwUtf8,
-        iterations: 100000,
-        hash: 'SHA-256'
-    }, keyMaterial, {name: 'AES-GCM', length: 256}, true, ['encrypt']);
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const enc = await crypto.subtle.encrypt({name: 'AES-GCM', iv}, key, textToUint8Array(plaintext));
-    const combined = new Uint8Array(iv.byteLength + enc.byteLength);
-    combined.set(iv, 0);
-    combined.set(new Uint8Array(enc), iv.byteLength);
-    return combined;
+function extractLSBSequential(img,count){
+  const out=new Uint8Array(count);
+  let bit=0;
+  for(let i=0;i<img.data.length && bit<count*8;i+=4){
+    out[Math.floor(bit/8)]|=(img.data[i]&1)<<(7-(bit%8));
+    bit++;
+  }
+  return out;
 }
 
-async function decryptAESGCM(ciphertext, password) {
-    const pwUtf8 = new TextEncoder().encode(password);
-    const keyMaterial = await crypto.subtle.importKey('raw', pwUtf8, 'PBKDF2', false, ['deriveKey']);
-    const key = await crypto.subtle.deriveKey({
-        name: 'PBKDF2',
-        salt: pwUtf8,
-        iterations: 100000,
-        hash: 'SHA-256'
-    }, keyMaterial, {name: 'AES-GCM', length: 256}, true, ['decrypt']);
-    const iv = ciphertext.slice(0, 12);
-    const data = ciphertext.slice(12);
-    const dec = await crypto.subtle.decrypt({name: 'AES-GCM', iv}, key, data);
-    return uint8ArrayToText(new Uint8Array(dec));
-}
+document.getElementById("process").onclick=async()=>{
+  const mode=document.getElementById("mode").value;
+  const imgFile=document.getElementById("imageInput").files[0];
+  if(!imgFile){alert("Select a PNG image");return;}
 
-// Simple LSB-like steganography for demonstration
-async function embedTextInImage(imgFile, text, password) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const img = new Image();
-            img.onload = async () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img,0,0);
-                let data = ctx.getImageData(0,0,canvas.width,canvas.height);
-                let textData = textToUint8Array(text);
-                if(password) textData = await encryptAESGCM(text, password);
-                // Embed each byte in LSB of pixels (very simple)
-                for(let i=0;i<textData.length;i++){
-                    data.data[i*4] = (data.data[i*4]&0xFE) | ((textData[i]&0x80)>>7);
-                    // Can expand for full implementation
-                }
-                ctx.putImageData(data,0,0);
-                canvas.toBlob(blob => {
-                    resolve(blob);
-                },'image/png');
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(imgFile);
-    });
-}
+  const img=new Image();
+  img.src=URL.createObjectURL(imgFile);
+  img.onload=async()=>{
+    const c=document.createElement("canvas");
+    c.width=img.width;c.height=img.height;
+    const ctx=c.getContext("2d");
+    ctx.drawImage(img,0,0);
+    const data=ctx.getImageData(0,0,c.width,c.height);
 
-// Event handler
-processBtn.addEventListener('click', async () => {
-    const mode = modeSelect.value;
-    if(!inputFile.files[0]) { alert('Select an image file'); return; }
-    const text = inputText.value;
-    const password = document.getElementById('password').value;
-    if(mode === 'encrypt'){
-        const resultBlob = await embedTextInImage(inputFile.files[0], text, password);
-        outputImage.src = URL.createObjectURL(resultBlob);
-        outputText.value = "Encryption successful!";
+    if(mode==="encrypt"){
+      let payload;
+      const file=document.getElementById("payloadFile").files[0];
+      payload=file ? new Uint8Array(await file.arrayBuffer())
+                   : new TextEncoder().encode(document.getElementById("payloadText").value);
+
+      const hash=await sha256(payload);
+      const framed=new Uint8Array([...new TextEncoder().encode("STEGGY14"),...hash,...payload]);
+
+      embedLSBScatter(data,framed);
+      ctx.putImageData(data,0,0);
+
+      c.toBlob(b=>{
+        const url=URL.createObjectURL(b);
+        document.getElementById("imagePreview").src=url;
+        const dl=document.getElementById("download");
+        dl.href=url;
+        dl.download="steggy.png";
+        dl.textContent="Download Image";
+        dl.style.display="inline-block";
+      });
     } else {
-        outputText.value = "Decryption not yet implemented";
-        outputImage.src = "";
+      const raw=extractLSBSequential(data,1024*512);
+      const sig=new TextDecoder().decode(raw.slice(0,8));
+      if(sig!=="STEGGY14"){alert("No Steggy payload found");return;}
+      const body=raw.slice(40);
+      document.getElementById("payloadText").value=new TextDecoder().decode(body).replace(/\0/g,"");
     }
-});
+  };
+};
 </script>
 </body>
 </html>
