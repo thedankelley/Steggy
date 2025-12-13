@@ -11,6 +11,18 @@
 
 <script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
 
+<!-- PWA manifest and service worker -->
+<link rel="manifest" href="manifest.json">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => console.log('ServiceWorker registered', reg))
+      .catch(err => console.log('ServiceWorker registration failed', err));
+  });
+}
+</script>
+
 <style>
 :root {
   --bg-light:#f5f6f7;
