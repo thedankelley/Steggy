@@ -5,61 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Steggy 1.4 ステギー</title>
 
+<meta name="description" content="Client side steganography for private communication">
+<meta name="theme-color" content="#3fa46a">
+
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Steggy">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-<script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
+<link rel="manifest" href="./manifest.json">
 
-<!-- PWA manifest and service worker -->
-<link rel="manifest" href="manifest.json">
 <script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg => console.log('ServiceWorker registered', reg))
-      .catch(err => console.log('ServiceWorker registration failed', err));
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" });
   });
 }
 </script>
 
 <style>
 :root {
-  --bg-light:#f5f6f7;
-  --bg-dark:#121212;
-  --card-light:#ffffff;
-  --card-dark:#1e1e1e;
-  --text-light:#111111;
-  --text-dark:#eaeaea;
+  --bg:#f5f6f7;
+  --fg:#111;
+  --card:#fff;
   --accent:#3fa46a;
-  --warn:#c87a2b;
+}
+
+body.dark {
+  --bg:#121212;
+  --fg:#eaeaea;
+  --card:#1e1e1e;
 }
 
 body {
   margin:0;
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-  background:var(--bg-light);
-  color:var(--text-light);
-}
-
-body.dark {
-  background:var(--bg-dark);
-  color:var(--text-dark);
+  background:var(--bg);
+  color:var(--fg);
+  font-family:system-ui,sans-serif;
 }
 
 header {
+  background:var(--accent);
+  color:#fff;
+  padding:12px 16px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:12px 16px;
-  background:var(--accent);
-  color:white;
 }
 
 header .title {
   display:flex;
-  align-items:center;
   gap:10px;
+  align-items:center;
   font-weight:600;
 }
 
@@ -70,11 +66,11 @@ header img {
 }
 
 button {
-  padding:10px;
-  border:none;
-  border-radius:6px;
   background:var(--accent);
   color:white;
+  border:none;
+  padding:10px;
+  border-radius:6px;
   cursor:pointer;
 }
 
@@ -83,60 +79,36 @@ button.secondary {
 }
 
 main {
-  max-width:980px;
+  max-width:900px;
   margin:auto;
   padding:16px;
 }
 
 .card {
-  background:var(--card-light);
-  border-radius:10px;
+  background:var(--card);
   padding:16px;
+  border-radius:10px;
   margin-bottom:16px;
-}
-
-body.dark .card {
-  background:var(--card-dark);
 }
 
 label {
   display:block;
   margin-top:10px;
-  font-weight:500;
 }
 
 input,textarea,select {
   width:100%;
-  margin-top:6px;
   padding:8px;
-  border-radius:6px;
-  border:1px solid #ccc;
+  margin-top:6px;
 }
 
 textarea {
   resize:vertical;
 }
 
-#advanced {
-  display:none;
-  border-left:4px solid var(--warn);
-}
-
-.warning {
-  background:#fff2dd;
-  padding:10px;
-  border-radius:6px;
-  font-size:14px;
-}
-
-body.dark .warning {
-  background:#2a1f14;
-}
-
 .preview {
   max-width:100%;
   margin-top:10px;
-  border-radius:6px;
 }
 
 footer {
@@ -152,13 +124,12 @@ footer {
 <header>
   <div class="title">
     <img id="icon">
-    <div>Steggy 1.4 ステギー</div>
+    <span>Steggy 1.4 ステギー</span>
   </div>
   <button id="themeToggle">🌙</button>
 </header>
 
 <main>
-
 <div class="card">
   <label>Mode</label>
   <select id="mode">
@@ -166,14 +137,7 @@ footer {
     <option value="decrypt">Decrypt</option>
   </select>
 
-  <label>Algorithm</label>
-  <select id="algo">
-    <option value="auto">Auto detect</option>
-    <option value="lsb">LSB scatter</option>
-    <option value="pngtext">PNG tEXt chunk</option>
-  </select>
-
-  <label>Carrier image (PNG)</label>
+  <label>Carrier PNG image</label>
   <input type="file" id="imageInput" accept="image/png">
 
   <label>Payload text</label>
@@ -182,38 +146,19 @@ footer {
   <label>Payload file (optional)</label>
   <input type="file" id="payloadFile">
 
-  <div id="capacity"></div>
-
-  <button id="advancedToggle" class="secondary">Advanced Settings</button>
-</div>
-
-<div class="card" id="advanced">
-  <div class="warning">
-    Advanced features are intended for experienced users.
-    Misuse can permanently destroy access to embedded data.
-  </div>
-
-  <label>AES GCM password (optional)</label>
+  <label>Password (optional AES GCM)</label>
   <input type="password" id="password">
 
-  <label>PGP public key</label>
-  <textarea id="pgpPublic"></textarea>
-
-  <label>PGP private key</label>
-  <textarea id="pgpPrivate"></textarea>
-</div>
-
-<div class="card">
   <button id="process">Process</button>
-  <a id="download" style="display:none"></a>
-  <img id="imagePreview" class="preview">
-</div>
 
+  <a id="download" style="display:none"></a>
+  <img id="preview" class="preview">
+</div>
 </main>
 
 <footer>
-  Created by Dan<br>
-  Steggy operates fully offline. No data leaves your device.
+Created by Dan<br>
+Runs fully client side. No data leaves your device.
 </footer>
 
 <script>
@@ -221,99 +166,131 @@ const ICON="iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVR4nGNgGAVxQFhY
 document.getElementById("icon").src="data:image/png;base64,"+ICON;
 
 const themeBtn=document.getElementById("themeToggle");
-if(localStorage.theme==="dark"){document.body.classList.add("dark");themeBtn.textContent="☀️";}
+if(localStorage.theme==="dark"){
+  document.body.classList.add("dark");
+  themeBtn.textContent="☀️";
+}
 themeBtn.onclick=()=>{
   document.body.classList.toggle("dark");
-  const d=document.body.classList.contains("dark");
-  localStorage.theme=d?"dark":"light";
-  themeBtn.textContent=d?"☀️":"🌙";
+  const dark=document.body.classList.contains("dark");
+  localStorage.theme=dark?"dark":"light";
+  themeBtn.textContent=dark?"☀️":"🌙";
 };
 
-document.getElementById("advancedToggle").onclick=()=>{
-  const a=document.getElementById("advanced");
-  a.style.display=a.style.display==="block"?"none":"block";
-};
-
-async function sha256(data){
-  const h=await crypto.subtle.digest("SHA-256",data);
-  return new Uint8Array(h);
+function bytesToBits(bytes){
+  return bytes.flatMap(b=>[7,6,5,4,3,2,1,0].map(i=>(b>>i)&1));
 }
 
-function randomIndices(max,count){
-  const idx=[];
-  const used=new Set();
-  while(idx.length<count){
-    const r=Math.floor(Math.random()*max);
-    if(!used.has(r)){used.add(r);idx.push(r);}
+function bitsToBytes(bits){
+  const out=[];
+  for(let i=0;i<bits.length;i+=8){
+    let b=0;
+    for(let j=0;j<8;j++) b=(b<<1)|(bits[i+j]||0);
+    out.push(b);
   }
-  return idx;
+  return new Uint8Array(out);
 }
 
-function embedLSBScatter(img,payload){
-  const pixels=Math.floor(img.data.length/4);
-  const bits=payload.length*8;
-  const idx=randomIndices(pixels,bits);
-  let bit=0;
-  for(const i of idx){
-    const b=(payload[Math.floor(bit/8)]>>(7-(bit%8)))&1;
-    img.data[i*4]=(img.data[i*4]&254)|b;
-    bit++;
-  }
+async function encryptAES(data,password){
+  if(!password) return data;
+  const enc=new TextEncoder();
+  const key=await crypto.subtle.importKey(
+    "raw",
+    await crypto.subtle.digest("SHA-256",enc.encode(password)),
+    "AES-GCM",
+    false,
+    ["encrypt"]
+  );
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt(
+    {name:"AES-GCM",iv},
+    key,
+    data
+  ));
+  return new Uint8Array([...iv,...ct]);
 }
 
-function extractLSBSequential(img,count){
-  const out=new Uint8Array(count);
-  let bit=0;
-  for(let i=0;i<img.data.length && bit<count*8;i+=4){
-    out[Math.floor(bit/8)]|=(img.data[i]&1)<<(7-(bit%8));
-    bit++;
-  }
-  return out;
+async function decryptAES(data,password){
+  if(!password) return data;
+  const enc=new TextEncoder();
+  const key=await crypto.subtle.importKey(
+    "raw",
+    await crypto.subtle.digest("SHA-256",enc.encode(password)),
+    "AES-GCM",
+    false,
+    ["decrypt"]
+  );
+  const iv=data.slice(0,12);
+  const ct=data.slice(12);
+  return new Uint8Array(await crypto.subtle.decrypt(
+    {name:"AES-GCM",iv},
+    key,
+    ct
+  ));
 }
 
 document.getElementById("process").onclick=async()=>{
   const mode=document.getElementById("mode").value;
   const imgFile=document.getElementById("imageInput").files[0];
-  if(!imgFile){alert("Select a PNG image");return;}
+  if(!imgFile){alert("Select an image");return;}
 
   const img=new Image();
   img.src=URL.createObjectURL(imgFile);
-  img.onload=async()=>{
-    const c=document.createElement("canvas");
-    c.width=img.width;c.height=img.height;
-    const ctx=c.getContext("2d");
-    ctx.drawImage(img,0,0);
-    const data=ctx.getImageData(0,0,c.width,c.height);
+  await img.decode();
 
-    if(mode==="encrypt"){
-      let payload;
-      const file=document.getElementById("payloadFile").files[0];
-      payload=file ? new Uint8Array(await file.arrayBuffer())
-                   : new TextEncoder().encode(document.getElementById("payloadText").value);
+  const canvas=document.createElement("canvas");
+  canvas.width=img.width;
+  canvas.height=img.height;
+  const ctx=canvas.getContext("2d");
+  ctx.drawImage(img,0,0);
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
 
-      const hash=await sha256(payload);
-      const framed=new Uint8Array([...new TextEncoder().encode("STEGGY14"),...hash,...payload]);
+  if(mode==="encrypt"){
+    let payload;
+    const file=document.getElementById("payloadFile").files[0];
+    payload=file ? new Uint8Array(await file.arrayBuffer())
+                 : new TextEncoder().encode(document.getElementById("payloadText").value);
 
-      embedLSBScatter(data,framed);
-      ctx.putImageData(data,0,0);
+    payload=await encryptAES(payload,document.getElementById("password").value);
+    const framed=new Uint8Array([...new TextEncoder().encode("STEGGY14"),...payload]);
+    const bits=bytesToBits([...framed]);
 
-      c.toBlob(b=>{
-        const url=URL.createObjectURL(b);
-        document.getElementById("imagePreview").src=url;
-        const dl=document.getElementById("download");
-        dl.href=url;
-        dl.download="steggy.png";
-        dl.textContent="Download Image";
-        dl.style.display="inline-block";
-      });
-    } else {
-      const raw=extractLSBSequential(data,1024*512);
-      const sig=new TextDecoder().decode(raw.slice(0,8));
-      if(sig!=="STEGGY14"){alert("No Steggy payload found");return;}
-      const body=raw.slice(40);
-      document.getElementById("payloadText").value=new TextDecoder().decode(body).replace(/\0/g,"");
+    let bitIndex=0;
+    for(let i=0;i<imgData.data.length && bitIndex<bits.length;i+=4){
+      imgData.data[i]=(imgData.data[i]&254)|bits[bitIndex++];
     }
-  };
+
+    ctx.putImageData(imgData,0,0);
+    canvas.toBlob(b=>{
+      const url=URL.createObjectURL(b);
+      document.getElementById("preview").src=url;
+      const dl=document.getElementById("download");
+      dl.href=url;
+      dl.download="steggy.png";
+      dl.textContent="Download Image";
+      dl.style.display="inline-block";
+    });
+
+  } else {
+    const bits=[];
+    for(let i=0;i<imgData.data.length;i+=4){
+      bits.push(imgData.data[i]&1);
+    }
+    const bytes=bitsToBytes(bits);
+    const sig=new TextDecoder().decode(bytes.slice(0,8));
+    if(sig!=="STEGGY14"){alert("No Steggy payload found");return;}
+
+    let payload=bytes.slice(8);
+    payload=await decryptAES(payload,document.getElementById("password").value);
+
+    try {
+      const text=new TextDecoder().decode(payload);
+      document.getElementById("payloadText").value=text.replace(/\0/g,"");
+    } catch {
+      const blob=new Blob([payload]);
+      document.getElementById("preview").src=URL.createObjectURL(blob);
+    }
+  }
 };
 </script>
 </body>
