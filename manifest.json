@@ -1,13 +1,13 @@
 {
-  "name": "Steggy 1.4",
+  "name": "Steggy",
   "short_name": "Steggy",
-  "description": "A privacy focused steganography web app for journalists and activists",
-  "lang": "en-US",
+  "description": "Client side steganography for deniable private communication",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f5f6f7",
-  "theme_color": "#3fa46a",
-  "orientation": "portrait",
+  "orientation": "any",
+  "background_color": "#2f8f5b",
+  "theme_color": "#2f8f5b",
   "icons": [
     {
       "src": "icon-192.png",
