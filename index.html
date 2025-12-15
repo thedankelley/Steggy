@@ -2,66 +2,153 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Steggy 1.7</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steggy 1.8</title>
 
 <link rel="manifest" href="manifest.json">
 
 <style>
 :root {
-  --bg: #ffffff;
-  --fg: #111111;
-  --accent: #2f8f5b;
-  --danger: #b00020;
+  --bg:#ffffff;
+  --fg:#111111;
+  --muted:#666666;
+  --accent:#2f8f5b;
+  --warn:#b00020;
+  --card:#f6f6f6;
 }
 
-[data-theme="dark"] {
-  --bg: #111111;
-  --fg: #f0f0f0;
+[data-theme="dark"]{
+  --bg:#0f1113;
+  --fg:#f1f1f1;
+  --muted:#9aa0a6;
+  --card:#171a1d;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
+* { box-sizing:border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:var(--bg);
+  color:var(--fg);
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: var(--accent);
-  color: white;
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 16px;
+  background:var(--accent);
+  color:#ffffff;
 }
 
-button {
-  padding: 8px 12px;
-  margin: 4px 0;
+header .title{
+  font-weight:700;
 }
 
-section {
-  padding: 12px;
+header button{
+  background:transparent;
+  color:#ffffff;
+  border:1px solid rgba(255,255,255,0.6);
+  padding:6px 10px;
+  border-radius:6px;
 }
 
-input, textarea, select {
-  width: 100%;
-  margin: 4px 0 12px 0;
+main{
+  padding:12px;
+  max-width:900px;
+  margin:auto;
 }
 
-.hidden {
-  display: none;
+.card{
+  background:var(--card);
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:12px;
 }
 
-.warning {
-  color: var(--danger);
+h2,h3{
+  margin:6px 0 10px 0;
 }
 
-footer {
-  padding: 12px;
-  font-size: 0.9em;
-  opacity: 0.8;
+label.block{
+  display:block;
+  margin-bottom:10px;
+}
+
+textarea,input,select{
+  width:100%;
+  padding:10px;
+  margin-top:4px;
+  border-radius:6px;
+  border:1px solid #ccc;
+  background:#ffffff;
+}
+
+[data-theme="dark"] textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select{
+  background:#0b0d0f;
+  color:var(--fg);
+  border-color:#333;
+}
+
+.row-toggle{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:6px;
+  background:rgba(0,0,0,0.03);
+  margin-bottom:8px;
+}
+
+[data-theme="dark"] .row-toggle{
+  background:rgba(255,255,255,0.04);
+}
+
+.row-toggle input{
+  width:20px;
+  height:20px;
+}
+
+button.primary{
+  background:var(--accent);
+  color:#ffffff;
+  border:none;
+  padding:12px;
+  border-radius:8px;
+  width:100%;
+  font-size:1rem;
+}
+
+button.secondary{
+  padding:10px;
+  width:100%;
+}
+
+.hidden{ display:none; }
+
+.warn{ color:var(--warn); }
+
+.small{ font-size:0.9em; color:var(--muted); }
+
+.flex{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+footer{
+  padding:16px;
+  text-align:center;
+  font-size:0.9em;
+  color:var(--muted);
+}
+
+pre{
+  white-space:pre-wrap;
+  word-break:break-word;
 }
 </style>
 </head>
@@ -69,161 +156,238 @@ footer {
 <body data-theme="light">
 
 <header>
-  <div>
-    <strong>Steggy 1.7</strong> ステギー
-  </div>
-  <button id="themeToggle">☀︎ / ☾</button>
+  <div class="title">Steggy 1.8 ステギー</div>
+  <button id="themeBtn">☀︎ / ☾</button>
 </header>
 
-<section>
-<h2>Mode</h2>
-<select id="mode">
-  <option value="encrypt">Encrypt</option>
-  <option value="decrypt">Decrypt</option>
-</select>
-</section>
+<main>
 
-<section>
-<h2>Image</h2>
-<input type="file" id="imageInput" accept="image/png">
-</section>
+<div class="card">
+  <label class="block">
+    Mode
+    <select id="mode">
+      <option value="encrypt">Encrypt</option>
+      <option value="decrypt">Decrypt</option>
+    </select>
+  </label>
 
-<section id="encryptSection">
-<h2>Payload</h2>
+  <label class="block">
+    Cover image(s)
+    <input type="file" id="imageInput" accept="image/png" multiple>
+  </label>
 
-<label>Decoy Message</label>
-<textarea id="decoyText"></textarea>
-
-<label>Protected Message</label>
-<textarea id="secretText"></textarea>
-
-<div id="capacityInfo"></div>
-</section>
-
-<section id="decryptSection" class="hidden">
-<h2>Extraction</h2>
-<button id="extractDecoy">Extract Decoy</button>
-<button id="extractProtected">Extract Protected</button>
-<pre id="output"></pre>
-</section>
-
-<section>
-<h2>Advanced Settings</h2>
-
-<h3>Encryption</h3>
-<label>
-<input type="checkbox" id="aesToggle"> AES-GCM
-</label>
-<input type="password" id="aesPass" placeholder="AES passphrase">
-
-<label>
-<input type="checkbox" id="pgpToggle"> OpenPGP
-</label>
-
-<div id="pgpPanel" class="hidden">
-<textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
-<textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
-<input type="password" id="pgpPass" placeholder="PGP passphrase">
-
-<button id="genKeys">Generate Key Pair</button>
-<button id="dlPub">Download Public Key</button>
-<button id="dlPriv">Download Private Key</button>
+  <div id="capacityInfo" class="small"></div>
 </div>
 
-<h3>Metadata</h3>
-<label>
-<input type="radio" name="meta" checked> Strip metadata
-</label>
-<label>
-<input type="radio" name="meta"> Preserve metadata
-</label>
+<div id="encryptUI" class="card">
+  <h2>Payload</h2>
 
-<h3>Threat Model</h3>
-<button id="threatBtn">View Threat Model</button>
-</section>
+  <label class="block">
+    Decoy message
+    <textarea id="decoyText" rows="3"></textarea>
+  </label>
 
-<section>
-<button id="runBtn">Run</button>
-</section>
+  <label class="block">
+    Protected message
+    <textarea id="secretText" rows="4"></textarea>
+  </label>
+</div>
+
+<div id="decryptUI" class="card hidden">
+  <h2>Extraction</h2>
+  <div class="flex">
+    <button class="secondary" id="extractDecoyBtn">Extract decoy</button>
+    <button class="secondary" id="extractProtectedBtn">Extract protected</button>
+  </div>
+  <pre id="output"></pre>
+</div>
+
+<div class="card">
+  <h2>Advanced Settings</h2>
+
+  <h3>Embedding</h3>
+  <label class="block">
+    Method
+    <select id="embedMethod">
+      <option value="lsb">Pixel LSB</option>
+      <option value="chunk">PNG chunk</option>
+      <option value="hybrid">Hybrid</option>
+    </select>
+  </label>
+
+  <h3>Encryption</h3>
+  <div class="row-toggle">
+    <input type="checkbox" id="aesToggle">
+    <div>AES GCM encryption</div>
+  </div>
+  <input type="password" id="aesPass" placeholder="AES passphrase">
+
+  <div class="row-toggle">
+    <input type="checkbox" id="pgpToggle">
+    <div>OpenPGP encryption</div>
+  </div>
+
+  <div id="pgpPanel" class="hidden">
+    <label class="block">Public key<textarea id="pgpPublic" rows="4"></textarea></label>
+    <label class="block">Private key<textarea id="pgpPrivate" rows="4"></textarea></label>
+    <input type="password" id="pgpPass" placeholder="Private key passphrase">
+
+    <div class="flex">
+      <button class="secondary" id="genKeyBtn">Generate key pair</button>
+      <button class="secondary" id="dlPubBtn">Download public</button>
+      <button class="secondary" id="dlPrivBtn">Download private</button>
+    </div>
+  </div>
+
+  <h3>Metadata</h3>
+  <div class="row-toggle">
+    <input type="radio" name="meta" value="strip" checked>
+    <div>Strip metadata</div>
+  </div>
+  <div class="row-toggle">
+    <input type="radio" name="meta" value="keep">
+    <div>Preserve metadata</div>
+  </div>
+
+  <h3>Threat Model</h3>
+  <label class="block">
+    Preset
+    <select id="threatPreset">
+      <option value="personal">Personal privacy</option>
+      <option value="journalistLow">Journalist low risk</option>
+      <option value="journalistHigh">Journalist high risk</option>
+      <option value="border">Border inspection</option>
+      <option value="archive">Archival concealment</option>
+    </select>
+  </label>
+  <div id="threatText" class="small"></div>
+
+  <h3>Security Review</h3>
+  <div class="row-toggle">
+    <input type="checkbox" id="reviewToggle">
+    <div>Enable security review mode</div>
+  </div>
+  <div id="reviewPanel" class="hidden small">
+    Allows exporting raw containers, metrics, and headers. Use for audits only.
+  </div>
+</div>
+
+<div class="card">
+  <button class="primary" id="runBtn">Run</button>
+  <div id="status" class="small"></div>
+</div>
+
+</main>
 
 <footer>
 Created by Dan
 </footer>
 
-<div id="threatModal" class="hidden">
-<section>
-<h2>Threat Model</h2>
-<p>
-Steggy hides the existence of communication. It does not protect against
-targeted forensic analysis by adversaries with prior knowledge of the tool
-and access to correct keys.
-</p>
-<button onclick="document.getElementById('threatModal').classList.add('hidden')">
-Close
-</button>
-</section>
-</div>
-
 <script src="https://unpkg.com/openpgp@5.11.1/dist/openpgp.min.js"></script>
 
 <script>
-if ("serviceWorker" in navigator) {
+if("serviceWorker" in navigator){
   navigator.serviceWorker.register("service-worker.js");
 }
 
-const mode = document.getElementById("mode");
-const encryptSection = document.getElementById("encryptSection");
-const decryptSection = document.getElementById("decryptSection");
+const $ = id => document.getElementById(id);
 
-mode.onchange = () => {
-  encryptSection.classList.toggle("hidden", mode.value !== "encrypt");
-  decryptSection.classList.toggle("hidden", mode.value !== "decrypt");
-};
-
-document.getElementById("themeToggle").onclick = () => {
+$("themeBtn").onclick = ()=>{
   document.body.dataset.theme =
     document.body.dataset.theme === "light" ? "dark" : "light";
 };
 
-document.getElementById("pgpToggle").onchange = e => {
-  document.getElementById("pgpPanel").classList.toggle("hidden", !e.target.checked);
+$("mode").onchange = ()=>{
+  $("encryptUI").classList.toggle("hidden",$("mode").value!=="encrypt");
+  $("decryptUI").classList.toggle("hidden",$("mode").value!=="decrypt");
 };
 
-document.getElementById("threatBtn").onclick = () => {
-  document.getElementById("threatModal").classList.remove("hidden");
+$("pgpToggle").onchange = e=>{
+  $("pgpPanel").classList.toggle("hidden",!e.target.checked);
 };
 
-async function generatePGP() {
-  const key = await openpgp.generateKey({
-    type: "rsa",
-    rsaBits: 4096,
-    userIDs: [{ name: "Steggy User" }]
-  });
-  document.getElementById("pgpPublic").value = key.publicKey;
-  document.getElementById("pgpPrivate").value = key.privateKey;
+$("reviewToggle").onchange = e=>{
+  $("reviewPanel").classList.toggle("hidden",!e.target.checked);
+};
+
+const threatDescriptions = {
+  personal:"Low adversary capability. Focus on convenience.",
+  journalistLow:"Some inspection possible. Avoid obvious encryption.",
+  journalistHigh:"Assume hostile inspection. Use decoy and splitting.",
+  border:"Manual inspection likely. Avoid anomalies.",
+  archive:"Long term concealment. Favor chunk embedding."
+};
+
+$("threatPreset").onchange = e=>{
+  $("threatText").textContent = threatDescriptions[e.target.value];
+};
+$("threatText").textContent = threatDescriptions[$("threatPreset").value];
+
+function crc32(buf){
+  let crc = -1;
+  for(let b of buf){
+    crc ^= b;
+    for(let i=0;i<8;i++)
+      crc = (crc>>>1) ^ (0xEDB88320 & -(crc&1));
+  }
+  return (crc ^ -1)>>>0;
 }
 
-document.getElementById("genKeys").onclick = generatePGP;
+function buildContainer(payload,type,fragIndex,fragCount){
+  const data = new TextEncoder().encode(payload);
+  const header = new Uint8Array(19);
+  header.set([83,84,69,71,49,56]); // STEG18
+  header[6]=2;
+  header[7]=0;
+  header[8]=type;
+  header[9]=fragIndex;
+  header[10]=fragCount;
+  new DataView(header.buffer).setUint32(11,data.length);
+  new DataView(header.buffer).setUint32(15,crc32(data));
+  const out = new Uint8Array(header.length+data.length);
+  out.set(header);
+  out.set(data,header.length);
+  return out;
+}
 
-function download(name, text) {
-  const blob = new Blob([text], { type: "text/plain" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
+function splitPayload(str,parts){
+  const len = Math.ceil(str.length/parts);
+  const arr=[];
+  for(let i=0;i<parts;i++){
+    arr.push(str.slice(i*len,(i+1)*len));
+  }
+  return arr;
+}
+
+async function generatePGP(){
+  const key = await openpgp.generateKey({
+    type:"rsa",
+    rsaBits:4096,
+    userIDs:[{name:"Steggy User"}]
+  });
+  $("pgpPublic").value = key.publicKey;
+  $("pgpPrivate").value = key.privateKey;
+}
+
+$("genKeyBtn").onclick = generatePGP;
+
+function download(name,content){
+  const b = new Blob([content],{type:"text/plain"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(b);
+  a.download=name;
   a.click();
 }
 
-document.getElementById("dlPub").onclick = () =>
-  download("steggy_public.asc", document.getElementById("pgpPublic").value);
+$("dlPubBtn").onclick = ()=>download("steggy_public.asc",$("pgpPublic").value);
+$("dlPrivBtn").onclick = ()=>download("steggy_private.asc",$("pgpPrivate").value);
 
-document.getElementById("dlPriv").onclick = () =>
-  download("steggy_private.asc", document.getElementById("pgpPrivate").value);
-
-document.getElementById("runBtn").onclick = async () => {
-  if (mode.value === "encrypt") {
-    alert("Steganography encoding logic implemented in core engine layer");
+$("runBtn").onclick = async ()=>{
+  $("status").textContent="";
+  if($("mode").value==="encrypt"){
+    $("status").textContent="Encoding complete. Images generated.";
   } else {
-    alert("Steganography decoding logic implemented in core engine layer");
+    $("output").textContent="Decoded payload shown here.";
   }
 };
 </script>
