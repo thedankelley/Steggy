@@ -2,322 +2,166 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Steggy 1.9 | ステギー</title>
+<title>Steggy 1.9 ステギー</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b0b0b">
 
 <style>
 :root {
-  --bg: #0b0b0b; --fg: #f1f1f1; --panel: #151515; --accent: #5fb3ff; --border: #2a2a2a; --warn: #ff5555;
+  --bg: #0f172a;
+  --fg: #e5e7eb;
+  --panel: #020617;
+  --accent: #22d3ee;
 }
-.light {
-  --bg: #ffffff; --fg: #111111; --panel: #f3f3f3; --accent: #005bbb; --border: #cccccc; --warn: #b00020;
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --fg: #020617;
+  --panel: #e5e7eb;
 }
-body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg);}
-header{padding:14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);}
-h1{font-size:1.2rem;margin:0;}
-button, select, textarea, input{background:var(--panel);color:var(--fg);border:1px solid var(--border);border-radius:6px;padding:10px;font-size:1rem;width:100%;}
-textarea{min-height:180px;resize:vertical;}
-.container{padding:16px;max-width:900px;margin:auto;}
-.section{margin-bottom:20px;}
-label{display:block;margin-bottom:6px;font-size:0.9rem;}
-details{background:var(--panel);padding:12px;border-radius:8px;}
-footer{text-align:center;font-size:0.8rem;padding:16px;opacity:0.7;}
-.row{display:flex;gap:10px;flex-wrap:wrap;}
-.row>div{flex:1;min-width:200px;}
-pre{white-space:pre-wrap;word-break:break-word;}
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+header, footer {
+  padding: 1rem;
+  text-align: center;
+}
+section {
+  padding: 1rem;
+  max-width: 900px;
+  margin: auto;
+}
+.panel {
+  background: var(--panel);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+label {
+  display: block;
+  margin-top: 0.5rem;
+}
+textarea, input, select, button {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+button {
+  padding: 0.75rem;
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+}
 </style>
 </head>
-<body>
+
+<body data-theme="dark">
+
 <header>
-<h1>Steggy 1.9 | ステギー</h1>
-<button onclick="toggleTheme()">☀︎ / ☾</button>
+  <h1>Steggy 1.9 ステギー</h1>
+  <button onclick="toggleTheme()">🌙 / ☀️</button>
 </header>
 
-<div class="container">
-<div class="section">
-<label>Mode</label>
-<select id="mode">
-<option value="encrypt">Encrypt</option>
-<option value="decrypt">Decrypt</option>
-</select>
-</div>
+<section class="panel">
+  <h2>Encrypt</h2>
+  <input type="file" id="encImage">
+  <label>Protected Message</label>
+  <textarea id="encPayload" rows="6"></textarea>
 
-<div class="section">
-<label>Cover Image(s)</label>
-<input type="file" id="imageInput" accept="image/png" multiple>
-</div>
+  <label>Decoy Message</label>
+  <textarea id="encDecoy" rows="4"></textarea>
 
-<div class="section">
-<label>Encryption Method</label>
-<select id="algo">
-<option value="lsb">LSB Pixel Embed</option>
-<option value="png">PNG Chunk Embed</option>
-<option value="hybrid">Hybrid</option>
-</select>
-</div>
+  <label>AES Password (optional)</label>
+  <input type="password" id="encPassword">
 
-<div class="section">
-<label>Metadata Handling</label>
-<select id="metadata">
-<option value="strip">Strip all metadata</option>
-<option value="preserve">Preserve metadata</option>
-</select>
-</div>
+  <button onclick="encrypt()">Encrypt Image</button>
+</section>
 
-<div class="section">
-<label>Protected Message</label>
-<textarea id="secret"></textarea>
-</div>
+<section class="panel">
+  <h2>Decrypt</h2>
+  <input type="file" id="decImage">
+  <label>AES Password</label>
+  <input type="password" id="decPassword">
+  <button onclick="decrypt()">Decrypt Image</button>
 
-<div class="section">
-<label>Decoy Message</label>
-<textarea id="decoy"></textarea>
-</div>
+  <h3>Protected Output</h3>
+  <pre id="outProtected"></pre>
 
-<details class="section">
-<summary>Advanced Settings</summary>
+  <h3>Decoy Output</h3>
+  <pre id="outDecoy"></pre>
+</section>
 
-<div class="section">
-<label>AES-GCM Password (optional)</label>
-<input type="password" id="password">
-</div>
+<footer>
+  <small>Created by Dan</small>
+</footer>
 
-<div class="section">
-<label>PGP Mode</label>
-<select id="pgpMode">
-<option value="none">Disabled</option>
-<option value="encrypt">Encrypt with Public Key</option>
-<option value="decrypt">Decrypt with Private Key</option>
-</select>
-</div>
+<script type="module">
+import { encrypt as coreEncrypt, decrypt as coreDecrypt } from "./steggy-core.js";
 
-<div class="section" id="pgpPanel">
-<label>Public Key<textarea id="pgpPublic" rows="4"></textarea></label>
-<label>Private Key<textarea id="pgpPrivate" rows="4"></textarea></label>
-<input type="password" id="pgpPass" placeholder="Private key passphrase">
-<div class="row">
-<button onclick="generatePGP()">Generate key pair</button>
-<button onclick="downloadKey('public')">Download Public</button>
-<button onclick="downloadKey('private')">Download Private</button>
-</div>
-</div>
+function toggleTheme() {
+  document.body.dataset.theme =
+    document.body.dataset.theme === "dark" ? "light" : "dark";
+}
 
-<div class="section">
-<label>Threat Model</label>
-<select id="threat">
-<option>Personal Privacy</option>
-<option>Journalist Low Risk</option>
-<option>Journalist High Risk</option>
-<option>Border Inspection</option>
-<option>Archival Concealment</option>
-</select>
-<div id="threatText" style="margin-top:6px;font-size:0.85rem;color:var(--warn);"></div>
-</div>
-
-<div class="section">
-<label>Security Review Mode</label>
-<input type="checkbox" id="reviewToggle"> Enable
-<div id="reviewPanel" style="display:none;margin-top:6px;font-size:0.85rem;color:var(--warn);">
-Displays raw payloads, container headers, and forensic metrics. For audits only.
-</div>
-</div>
-
-</details>
-
-<div class="section">
-<button onclick="run()">Run Steggy</button>
-</div>
-
-<div class="section">
-<pre id="output"></pre>
-</div>
-
-</div>
-
-<footer>Created by Dan</footer>
-
-<script src="https://unpkg.com/openpgp@5.11.1/dist/openpgp.min.js"></script>
-<script>
-// Theme toggle
-function toggleTheme(){document.body.classList.toggle("light");}
-
-// Threat model
-const threatInfo={
-"Personal Privacy":"Low risk. Focus on convenience.",
-"Journalist Low Risk":"Moderate inspection possible. Avoid obvious encryption.",
-"Journalist High Risk":"High surveillance. Use decoy and fragmentation.",
-"Border Inspection":"Manual inspection likely. Avoid anomalies.",
-"Archival Concealment":"Long term storage. Use chunk embedding."
-};
-document.getElementById("threat").onchange=e=>{
-document.getElementById("threatText").textContent=threatInfo[e.target.value];
-};
-document.getElementById("threatText").textContent=threatInfo[document.getElementById("threat").value];
-
-// Security Review toggle
-document.getElementById("reviewToggle").onchange=e=>{
-document.getElementById("reviewPanel").style.display=e.target.checked?"block":"none";
+window.encrypt = async () => {
+  const file = encImage.files[0];
+  const img = await loadImage(file);
+  const ctx = imgToCtx(img);
+  const out = await coreEncrypt({
+    imageData: ctx.getImageData(0,0,img.width,img.height),
+    payload: encPayload.value,
+    decoyPayload: encDecoy.value,
+    options: { aesPassword: encPassword.value }
+  });
+  downloadImage(out);
 };
 
-// PGP panel toggle
-document.getElementById("pgpMode").onchange=e=>{
-document.getElementById("pgpPanel").style.display=(e.target.value!=="none")?"block":"none";
+window.decrypt = async () => {
+  const file = decImage.files[0];
+  const img = await loadImage(file);
+  const ctx = imgToCtx(img);
+  const data = await coreDecrypt({
+    imageData: ctx.getImageData(0,0,img.width,img.height),
+    options: { aesPassword: decPassword.value }
+  });
+  outProtected.textContent = new TextDecoder().decode(data);
 };
 
-// Utilities
-function arrayBufferToHex(buf){return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");}
-
-// PGP key download
-function downloadKey(type){
-const content=type==="public"?document.getElementById("pgpPublic").value:document.getElementById("pgpPrivate").value;
-const blob=new Blob([content],{type:"text/plain"});
-const a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download=type==="public"?"steggy_public.asc":"steggy_private.asc";
-a.click();
+function loadImage(file) {
+  return new Promise(r => {
+    const i = new Image();
+    i.onload = () => r(i);
+    i.src = URL.createObjectURL(file);
+  });
+}
+function imgToCtx(img) {
+  const c = document.createElement("canvas");
+  c.width = img.width;
+  c.height = img.height;
+  const x = c.getContext("2d");
+  x.drawImage(img,0,0);
+  return x;
+}
+function downloadImage(imageData) {
+  const c = document.createElement("canvas");
+  c.width = imageData.width;
+  c.height = imageData.height;
+  c.getContext("2d").putImageData(imageData,0,0);
+  const a = document.createElement("a");
+  a.href = c.toDataURL("image/png");
+  a.download = "steggy.png";
+  a.click();
 }
 
-// Generate PGP key pair
-async function generatePGP(){
-const key=await openpgp.generateKey({
-type:"rsa",rsaBits:4096,
-userIDs:[{name:"Steggy User"}]
-});
-document.getElementById("pgpPublic").value=key.publicKey;
-document.getElementById("pgpPrivate").value=key.privateKey;
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
 }
-
-// CRC32 calculation
-function crc32(buf){
-let crc=0xffffffff;
-for(let i=0;i<buf.length;i++){
-let byte=buf[i];
-crc=crc^byte;
-for(let j=0;j<8;j++){
-crc=(crc>>>1)^((crc&1)?0xedb88320:0);
-}}
-return (crc^0xffffffff)>>>0;
-}
-
-// LSB embedding helper
-function embedLSB(imageData,payload){
-const data=imageData.data;
-let bitIndex=0;
-for(let i=0;i<data.length;i++){
-for(let b=0;b<1;b++){
-if(bitIndex>=payload.length*8) break;
-const byteIndex=Math.floor(bitIndex/8);
-const bit=(payload[byteIndex]>>(7-(bitIndex%8)))&1;
-data[i]=(data[i]&0xFE)|bit;
-bitIndex++;
-}
-}
-return imageData;
-}
-
-// Extract LSB
-function extractLSB(imageData,length){
-const data=imageData.data;
-const out=new Uint8Array(length);
-let bitIndex=0;
-for(let i=0;i<data.length;i++){
-for(let b=0;b<1;b++){
-if(bitIndex>=length*8) break;
-const byteIndex=Math.floor(bitIndex/8);
-const bit=(data[i]&1);
-out[byteIndex]=(out[byteIndex]<<1)|bit;
-bitIndex++;
-}}
-for(let i=0;i<out.length;i++){
-out[i]=out[i]>>>(8-(bitIndex%8)||8);
-}
-return out;
-}
-
-// PNG chunk embedding
-function embedPNGChunk(pngArrayBuffer,payload){
-const view=new Uint8Array(pngArrayBuffer);
-const stEG=[0x73,0x74,0x45,0x47]; // 'stEG'
-const length=[(payload.length>>>24)&0xFF,(payload.length>>>16)&0xFF,(payload.length>>>8)&0xFF,(payload.length)&0xFF];
-const crc=[0,0,0,0]; // For simplicity
-const newBuffer=new Uint8Array(view.length+12+payload.length);
-newBuffer.set(view,0);
-newBuffer.set(length,view.length);
-newBuffer.set(stEG,view.length+4);
-newBuffer.set(payload,view.length+8);
-newBuffer.set(crc,view.length+8+payload.length);
-return newBuffer.buffer;
-}
-
-// AES encrypt/decrypt
-async function aesEncrypt(data,password){
-const enc=new TextEncoder();
-const keyMaterial=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveKey"]);
-const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:enc.encode("steggySalt"),iterations:1000,hash:"SHA-256"},keyMaterial,{name:"AES-GCM",length:256},false,["encrypt"]);
-const iv=crypto.getRandomValues(new Uint8Array(12));
-const encrypted=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,data);
-return {encrypted,iv};
-}
-
-async function aesDecrypt(encrypted,iv,password){
-const enc=new TextEncoder();
-const keyMaterial=await crypto.subtle.importKey("raw",enc.encode(password),"PBKDF2",false,["deriveKey"]);
-const key=await crypto.subtle.deriveKey({name:"PBKDF2",salt:enc.encode("steggySalt"),iterations:1000,hash:"SHA-256"},keyMaterial,{name:"AES-GCM",length:256},false,["decrypt"]);
-return await crypto.subtle.decrypt({name:"AES-GCM",iv},key,encrypted);
-}
-
-// Main run
-async function run(){
-const output=document.getElementById("output");
-output.textContent="Running Steggy 1.9 engine...\n";
-
-try{
-const mode=document.getElementById("mode").value;
-const algo=document.getElementById("algo").value;
-const files=document.getElementById("imageInput").files;
-const secret=document.getElementById("secret").value;
-const decoy=document.getElementById("decoy").value;
-const password=document.getElementById("password").value;
-const pgpMode=document.getElementById("pgpMode").value;
-const pgpPublic=document.getElementById("pgpPublic").value;
-const pgpPrivate=document.getElementById("pgpPrivate").value;
-if(files.length===0){output.textContent+="No images selected.\n";return;}
-let payload=new TextEncoder().encode(secret);
-let decoyPayload=new TextEncoder().encode(decoy);
-
-// AES
-if(password){payload=(await aesEncrypt(payload,password)).encrypted; decoyPayload=(await aesEncrypt(decoyPayload,password)).encrypted;}
-
-// PGP
-if(pgpMode==="encrypt"&&pgpPublic){payload=await openpgp.encrypt({message:openpgp.Message.fromBinary(payload),publicKeys:await openpgp.readKey({armoredKey:pgpPublic})}).then(res=>new Uint8Array(res.message.packets.write()));}
-if(pgpMode==="encrypt"&&pgpPublic){decoyPayload=await openpgp.encrypt({message:openpgp.Message.fromBinary(decoyPayload),publicKeys:await openpgp.readKey({armoredKey:pgpPublic})}).then(res=>new Uint8Array(res.message.packets.write()));}
-
-for(let f=0;f<files.length;f++){
-const file=files[f];
-const reader=new FileReader();
-reader.onload=async function(e){
-let buffer=e.target.result;
-let newBuffer;
-if(algo==="lsb"){const img=new Image();img.src=URL.createObjectURL(file);const canvas=document.createElement("canvas");const ctx=canvas.getContext("2d");img.onload=()=>{
-canvas.width=img.width;canvas.height=img.height;
-ctx.drawImage(img,0,0);
-let imageData=ctx.getImageData(0,0,img.width,img.height);
-imageData=embedLSB(imageData,payload);
-ctx.putImageData(imageData,0,0);
-canvas.toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="steggy_output.png";a.click();output.textContent+="File "+file.name+" encrypted with LSB.\n";},"image/png");};
-}
-if(algo==="png"){newBuffer=embedPNGChunk(buffer,new Uint8Array(payload)); const blob=new Blob([newBuffer],{type:"image/png"}); const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="steggy_output.png";a.click();output.textContent+="File "+file.name+" encrypted with PNG chunk.\n";}
-if(algo==="hybrid"){newBuffer=embedPNGChunk(buffer,new Uint8Array(payload)); const blob=new Blob([newBuffer],{type:"image/png"}); const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="steggy_output.png";a.click();output.textContent+="File "+file.name+" encrypted with hybrid.\n";}
-};
-reader.readAsArrayBuffer(file);
-}
-}catch(err){output.textContent+="Error: "+err;}
-}
-
-// Service worker registration
-if("serviceWorker" in navigator){navigator.serviceWorker.register("service-worker.js");}
 </script>
+
 </body>
 </html>
