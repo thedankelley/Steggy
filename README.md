@@ -1,40 +1,38 @@
-# Steggy 1.9 | ステギー
+# Steggy 1.9 ステギー
 
-Steggy is a client side steganography framework designed to give individuals meaningful control over how private information is concealed inside ordinary images.
+Steggy is a client-side steganographic framework designed to help journalists,
+researchers, and individuals in sensitive environments communicate discreetly
+without relying on centralized infrastructure.
 
-Unlike conventional encrypted messaging platforms that rely on centralized infrastructure, Steggy operates entirely in the browser and focuses on concealment rather than conversation. This makes it suitable for journalists, researchers, activists, and individuals operating in environments where encrypted messaging alone may attract unwanted attention.
+Steggy operates entirely in the browser and works offline.
 
-## Core Principles
+## What Steggy Is
 
-- No server side processing
-- No accounts
-- No tracking
-- No network dependency
-- Full user control over concealment methods
+- A tool for hiding structured data inside images
+- A framework for experimentation and review
+- An offline-capable PWA
+- A building block, not a messaging app
 
-## Features
+## What Steggy Is Not
 
-- Image based steganography using pixel embedding and PNG chunk insertion
-- Optional AES-GCM encryption
-- Optional PGP encryption for text payloads
-- Decoy messages to mislead adversarial extraction
-- Metadata stripping to remove EXIF and identifying data
-- Multi layer concealment strategies
-- Threat model guidance surfaced directly in the interface
-- Progressive Web App support for offline usage
+- Not anonymous
+- Not undetectable
+- Not a secure messenger
+- Not a bypass for surveillance
 
-## Intended Use
+## Core Features
 
-Steggy is not designed to replace messaging platforms such as Signal or WhatsApp.
+- LSB image embedding
+- AES-GCM encryption
+- Decoy payload support
+- Corruption detection
+- Explicit failure states
+- Offline operation
+- Experimental SSTV transport
 
-Instead, it provides a flexible toolkit for embedding information inside benign media files, allowing users to choose how visible or concealed their communications should be depending on risk level.
+## Ethical Position
 
-This approach supports scenarios where encrypted traffic itself may be suspicious, and where alternative methods of private communication are necessary.
+Steggy is designed to provide control and transparency.
+It does not promise safety where none can be guaranteed.
 
-## Installation
-
-Steggy can be used directly in the browser or installed as a Progressive Web App on supported platforms.
-
-## License
-
-See LICENSE.md for usage terms.
+Read the security-review documents before relying on Steggy.
