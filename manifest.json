@@ -1,23 +1,14 @@
 {
   "name": "Steggy",
   "short_name": "Steggy",
-  "description": "Client side steganography tool for embedding protected and decoy messages inside images. Designed for journalists and sensitive communications.",
-  "categories": ["security", "privacy", "utilities", "productivity"],
+  "description": "Client-side steganographic framework for controlled, offline data hiding.",
+  "categories": ["security", "utilities", "productivity"],
   "start_url": "./index.html",
-  "scope": "./",
   "display": "standalone",
-  "background_color": "#0b0b0b",
-  "theme_color": "#0b0b0b",
+  "background_color": "#020617",
+  "theme_color": "#0f172a",
   "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
