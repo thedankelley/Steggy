@@ -1,46 +1,37 @@
+import { encryptImageData, decryptImageData } from "./modules/steggy-core.js";
 import { getAvailableSSTVModes, encodeImageToSSTV, samplesToWav } from "./modules/steggy-sstv.js";
 import { decodeSSTVFromAudioFile } from "./modules/steggy-sstv-decode.js";
 
-let currentImageData = null;
-
 const $ = id => document.getElementById(id);
+let currentImageData = null;
 
 document.addEventListener("DOMContentLoaded", () => {
 
-  const modeSelect = $("modeSelect");
+  // UI sections
   const encryptSection = $("encryptSection");
   const decryptSection = $("decryptSection");
   const advancedSection = $("advancedSection");
 
-  const imageInput = $("imageInput");
+  // Canvas & image
   const canvas = $("imageCanvas");
   const ctx = canvas.getContext("2d");
 
-  const toggleAdvanced = $("toggleAdvanced");
-
-  const sstvModeSelect = $("sstvMode");
-
-  getAvailableSSTVModes().forEach(m => {
-    const o = document.createElement("option");
-    o.value = m.id;
-    o.textContent = m.name;
-    sstvModeSelect.appendChild(o);
-  });
-
-  function updateMode() {
-    const isEncrypt = modeSelect.value === "encrypt";
-    encryptSection.classList.toggle("hidden", !isEncrypt);
-    decryptSection.classList.toggle("hidden", isEncrypt);
-  }
-
-  modeSelect.addEventListener("change", updateMode);
-  updateMode();
-
-  toggleAdvanced.addEventListener("click", () => {
+  // Advanced Settings toggle
+  $("toggleAdvanced").addEventListener("click", () => {
     advancedSection.classList.toggle("hidden");
   });
 
-  imageInput.addEventListener("change", () => {
+  // Mode select
+  $("modeSelect").addEventListener("change", () => {
+    const encrypt = $("modeSelect").value === "encrypt";
+    encryptSection.classList.toggle("hidden", !encrypt);
+    decryptSection.classList.toggle("hidden", encrypt);
+  });
+
+  // Image load
+  $("imageInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
     const img = new Image();
     img.onload = () => {
       canvas.width = img.width;
@@ -49,13 +40,55 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.drawImage(img, 0, 0);
       currentImageData = ctx.getImageData(0, 0, img.width, img.height);
     };
-    img.src = URL.createObjectURL(imageInput.files[0]);
+    img.src = URL.createObjectURL(file);
+  });
+
+  // Encryption
+  $("encryptBtn").addEventListener("click", async () => {
+    if (!currentImageData) return alert("No image loaded");
+    const protectedMsg = $("protectedMessage").value;
+    const decoyMsg = $("decoyMessage").value;
+    const options = {
+      method: $("encryptionMethod").value,
+      metadata: $("metadataMode").value
+    };
+    try {
+      const newImg = await encryptImageData(currentImageData, protectedMsg, decoyMsg, options);
+      canvas.width = newImg.width;
+      canvas.height = newImg.height;
+      ctx.putImageData(newImg, 0, 0);
+      currentImageData = newImg;
+      alert("Encryption successful!");
+    } catch (e) {
+      console.error(e);
+      alert("Encryption failed: " + e.message);
+    }
+  });
+
+  // Decryption
+  $("decryptBtn").addEventListener("click", async () => {
+    if (!currentImageData) return alert("No image loaded");
+    try {
+      const output = await decryptImageData(currentImageData);
+      $("decryptOutput").textContent = output;
+    } catch (e) {
+      console.error(e);
+      alert("Decryption failed: " + e.message);
+    }
+  });
+
+  // SSTV Encode
+  const sstvModeSelect = $("sstvMode");
+  getAvailableSSTVModes().forEach(m => {
+    const o = document.createElement("option");
+    o.value = m.id;
+    o.textContent = m.name;
+    sstvModeSelect.appendChild(o);
   });
 
   $("generateSSTV").addEventListener("click", () => {
     if (!currentImageData) return alert("No image loaded");
-    const { samples, sampleRate } =
-      encodeImageToSSTV(currentImageData, sstvModeSelect.value);
+    const { samples, sampleRate } = encodeImageToSSTV(currentImageData, sstvModeSelect.value);
     const wav = samplesToWav(samples, sampleRate);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(wav);
@@ -63,21 +96,21 @@ document.addEventListener("DOMContentLoaded", () => {
     a.click();
   });
 
+  // SSTV Decode
   $("decodeSSTV").addEventListener("click", async () => {
     const file = $("sstvAudioInput").files[0];
     if (!file) return alert("No SSTV audio selected");
     try {
-      const img = await decodeSSTVFromAudioFile(
-        file,
-        $("sstvDecodeMode").value
-      );
+      const img = await decodeSSTVFromAudioFile(file, $("sstvDecodeMode").value);
       canvas.width = img.width;
       canvas.height = img.height;
       canvas.classList.remove("hidden");
       ctx.putImageData(img, 0, 0);
       currentImageData = img;
-    } catch {
-      alert("SSTV decode failed");
+      $("decryptOutput").textContent = "SSTV decoded successfully";
+    } catch (e) {
+      console.error(e);
+      alert("SSTV decode failed: " + e.message);
     }
   });
 
