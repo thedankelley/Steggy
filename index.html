@@ -44,15 +44,6 @@
       border-radius: 8px;
     }
 
-    h2, h3 {
-      margin-top: 0;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 12px;
-    }
-
     textarea {
       width: 100%;
       min-height: 140px;
@@ -69,10 +60,6 @@
       border: 1px solid #333;
       border-radius: 4px;
       padding: 6px;
-    }
-
-    button {
-      cursor: pointer;
     }
 
     .warning {
@@ -95,81 +82,68 @@
 <body>
 
 <header>
-  <img src="icons/icon-512.png" alt="Steggy icon">
+  <img src="icons/icon-512.png">
   <h1>Steggy 2.0 ステギー</h1>
 </header>
 
 <main>
 
-  <section>
-    <h2>Mode</h2>
-    <label>
-      <select id="modeSelect">
-        <option value="encrypt">Encrypt</option>
-        <option value="decrypt">Decrypt</option>
-      </select>
-    </label>
-  </section>
+<section>
+  <h2>Mode</h2>
+  <select id="modeSelect">
+    <option value="encrypt">Encrypt</option>
+    <option value="decrypt">Decrypt</option>
+  </select>
+</section>
 
-  <section>
-    <h2>Image</h2>
-    <input type="file" id="imageInput" accept="image/*">
-    <canvas id="imageCanvas" class="hidden"></canvas>
-  </section>
+<section>
+  <h2>Image</h2>
+  <input type="file" id="imageInput" accept="image/*">
+  <canvas id="imageCanvas" class="hidden"></canvas>
+</section>
 
-  <section id="encryptSection">
-    <h2>Encrypt</h2>
+<section id="encryptSection">
+  <h2>Encrypt</h2>
+  <textarea id="protectedMessage" placeholder="Protected message"></textarea>
+  <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
+  <button id="encryptBtn">Encrypt into Image</button>
+</section>
 
-    <label>
-      Protected Message
-      <textarea id="protectedMessage"></textarea>
-    </label>
+<section id="decryptSection" class="hidden">
+  <h2>Decrypt</h2>
 
-    <label>
-      Decoy Message
-      <textarea id="decoyMessage"></textarea>
-    </label>
+  <button id="decryptBtn">Extract from Image</button>
+  <pre id="decryptOutput"></pre>
 
-    <button id="encryptBtn">Encrypt into Image</button>
-  </section>
+  <h3>Decode SSTV Audio</h3>
+  <input type="file" id="sstvAudioInput" accept="audio/*">
+  <select id="sstvDecodeMode">
+    <option value="MARTIN_M1">Martin M1</option>
+    <option value="SCOTTIE_S1">Scottie S1</option>
+  </select>
+  <button id="decodeSSTVBtn">Decode SSTV Audio</button>
 
-  <section id="decryptSection" class="hidden">
-    <h2>Decrypt</h2>
-    <button id="decryptBtn">Extract from Image</button>
+  <p class="warning">
+    SSTV decoding is observable and not encrypted.
+  </p>
+</section>
 
-    <h3>Results</h3>
-    <pre id="decryptOutput"></pre>
-  </section>
-
-  <section id="sstvSection" class="hidden">
-    <h2>Emergency Transport (Observable)</h2>
-
-    <label>
-      <input type="checkbox" id="enableSSTV">
-      Generate SSTV audio from image
-    </label>
-
-    <div id="sstvOptions" class="hidden">
-      <label>
-        SSTV Mode
-        <select id="sstvMode"></select>
-      </label>
-
-      <button id="downloadSSTV">Download SSTV WAV</button>
-
-      <p class="warning">
-        SSTV provides no confidentiality. Anyone can decode it.
-      </p>
-    </div>
-  </section>
+<section id="sstvSection" class="hidden">
+  <h2>Emergency Transport (Observable)</h2>
+  <label>
+    <input type="checkbox" id="enableSSTV">
+    Generate SSTV audio from image
+  </label>
+  <div id="sstvOptions" class="hidden">
+    <select id="sstvMode"></select>
+    <button id="downloadSSTV">Download SSTV WAV</button>
+  </div>
+</section>
 
 </main>
 
-<footer>
-  Created by Dan.
-</footer>
+<footer>Created by Dan.</footer>
 
 <script type="module" src="app.js"></script>
-
 </body>
 </html>
