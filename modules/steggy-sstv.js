@@ -1,55 +1,96 @@
 /*
-  Steggy SSTV Module
-  Version: 2.0
+  steggy-sstv.js
+  Steggy 2.0
 
-  Purpose:
-  - Convert image data into an SSTV audio signal
-  - Emergency transport only
-  - No confidentiality
+  SSTV Emergency Transport Module
+  Observable, not encrypted
 */
 
-export function imageDataToSSTV(imageData, options = {}) {
+const MODES = {
+  MARTIN_M1: {
+    name: "Martin M1",
+    width: 320,
+    height: 256,
+    scanlineTimeMs: 146.432,
+    syncPulseMs: 4.862,
+    porchMs: 0.572,
+    minFreq: 1200,
+    maxFreq: 2300
+  },
+  SCOTTIE_S1: {
+    name: "Scottie S1",
+    width: 320,
+    height: 256,
+    scanlineTimeMs: 138.24,
+    syncPulseMs: 9,
+    porchMs: 1.5,
+    minFreq: 1200,
+    maxFreq: 2300
+  }
+};
+
+export function getAvailableSSTVModes() {
+  return Object.keys(MODES).map(k => ({
+    id: k,
+    name: MODES[k].name
+  }));
+}
+
+export function encodeImageToSSTV(imageData, modeId, options = {}) {
+  const mode = MODES[modeId];
+  if (!mode) {
+    throw new Error("Unsupported SSTV mode");
+  }
+
   const sampleRate = options.sampleRate || 44100;
-  const durationSeconds = options.duration || 30;
+  const samples = [];
 
-  const totalSamples = sampleRate * durationSeconds;
-  const audio = new Float32Array(totalSamples);
+  function tone(freq, durationMs) {
+    const total = Math.floor(sampleRate * (durationMs / 1000));
+    for (let i = 0; i < total; i++) {
+      samples.push(Math.sin(2 * Math.PI * freq * i / sampleRate));
+    }
+  }
 
-  /*
-    NOTE:
-    This is a placeholder waveform generator that establishes
-    correct structure and offline audio generation.
+  // VIS header (simplified)
+  tone(1900, 300);
+  tone(1200, 10);
+  tone(1900, 300);
 
-    A full SSTV mode (Scottie, Martin, etc.) can be dropped in
-    here later without changing callers.
-  */
+  const { width, height } = mode;
+  const data = imageData.data;
 
-  const baseFreq = 1200;
-  for (let i = 0; i < totalSamples; i++) {
-    audio[i] = Math.sin(2 * Math.PI * baseFreq * i / sampleRate);
+  for (let y = 0; y < height; y++) {
+    // Sync
+    tone(1200, mode.syncPulseMs);
+    tone(1500, mode.porchMs);
+
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const r = data[idx];
+      const freq =
+        mode.minFreq +
+        (r / 255) * (mode.maxFreq - mode.minFreq);
+      tone(freq, mode.scanlineTimeMs / width);
+    }
   }
 
   return {
-    audioBuffer: audio,
+    samples: new Float32Array(samples),
     sampleRate
   };
 }
 
-export function audioBufferToWav(audioBuffer, sampleRate) {
-  const length = audioBuffer.length;
-  const buffer = new ArrayBuffer(44 + length * 2);
+export function samplesToWav(samples, sampleRate) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
   const view = new DataView(buffer);
 
-  function writeString(offset, str) {
-    for (let i = 0; i < str.length; i++) {
-      view.setUint8(offset + i, str.charCodeAt(i));
-    }
-  }
+  const write = (o, s) => [...s].forEach((c, i) => view.setUint8(o + i, c.charCodeAt(0)));
 
-  writeString(0, "RIFF");
-  view.setUint32(4, 36 + length * 2, true);
-  writeString(8, "WAVE");
-  writeString(12, "fmt ");
+  write(0, "RIFF");
+  view.setUint32(4, 36 + samples.length * 2, true);
+  write(8, "WAVE");
+  write(12, "fmt ");
   view.setUint32(16, 16, true);
   view.setUint16(20, 1, true);
   view.setUint16(22, 1, true);
@@ -57,14 +98,14 @@ export function audioBufferToWav(audioBuffer, sampleRate) {
   view.setUint32(28, sampleRate * 2, true);
   view.setUint16(32, 2, true);
   view.setUint16(34, 16, true);
-  writeString(36, "data");
-  view.setUint32(40, length * 2, true);
+  write(36, "data");
+  view.setUint32(40, samples.length * 2, true);
 
   let offset = 44;
-  for (let i = 0; i < length; i++) {
-    view.setInt16(offset, audioBuffer[i] * 32767, true);
+  samples.forEach(s => {
+    view.setInt16(offset, s * 32767, true);
     offset += 2;
-  }
+  });
 
   return new Blob([buffer], { type: "audio/wav" });
 }
