@@ -20,117 +20,39 @@
   --accent: #4da3ff;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
+body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
 
-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-}
+header { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); }
+header img { width:28px; height:28px; }
 
-header img {
-  width: 28px;
-  height: 28px;
-}
+main { max-width:960px; margin:auto; padding:16px; }
 
-main {
-  max-width: 960px;
-  margin: auto;
-  padding: 16px;
-}
+section { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
 
-section {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 16px;
-}
+h2,h3 { margin-top:0; }
+label { display:block; margin-bottom:6px; font-size:0.9em; color:var(--muted); }
 
-h2, h3 {
-  margin-top: 0;
-}
+textarea { width:100%; min-height:120px; background:#0f0f0f; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:10px; resize:vertical; }
+select,input[type="file"],button { width:100%; padding:10px; background:#0f0f0f; color:var(--text); border:1px solid var(--border); border-radius:6px; }
+button { cursor:pointer; }
+button.primary { background:var(--accent); border:none; color:#000; }
 
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 0.9em;
-  color: var(--muted);
-}
+.row { display:grid; gap:12px; }
+@media (min-width:700px){ .row.two { grid-template-columns:1fr 1fr; } }
 
-textarea {
-  width: 100%;
-  min-height: 120px;
-  background: #0f0f0f;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px;
-  resize: vertical;
-}
-
-select, input[type="file"], button {
-  width: 100%;
-  padding: 10px;
-  background: #0f0f0f;
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-}
-
-button {
-  cursor: pointer;
-}
-
-button.primary {
-  background: var(--accent);
-  border: none;
-  color: #000;
-}
-
-.row {
-  display: grid;
-  gap: 12px;
-}
-
-@media (min-width: 700px) {
-  .row.two { grid-template-columns: 1fr 1fr; }
-}
-
-.hidden {
-  display: none;
-}
-
-.warning {
-  font-size: 0.85em;
-  color: #ffb347;
-}
-
-footer {
-  text-align: center;
-  font-size: 0.75em;
-  opacity: 0.7;
-  padding: 12px;
-}
+.hidden { display:none; }
+.warning { font-size:0.85em; color:#ffb347; }
+footer { text-align:center; font-size:0.75em; opacity:0.7; padding:12px; }
 </style>
 </head>
 
 <body>
-
 <header>
   <img src="icons/icon-512.png">
   <strong>Steggy 2.0 ステギー</strong>
 </header>
 
 <main>
-
 <section>
   <label>Mode</label>
   <select id="modeSelect">
@@ -147,13 +69,8 @@ footer {
 
 <section id="encryptSection">
   <h2>Messages</h2>
-
-  <label>Protected Message</label>
-  <textarea id="protectedMessage"></textarea>
-
-  <label>Decoy Message</label>
-  <textarea id="decoyMessage"></textarea>
-
+  <textarea id="protectedMessage" placeholder="Protected message"></textarea>
+  <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
   <button class="primary" id="encryptBtn">Encrypt into Image</button>
 </section>
 
@@ -167,9 +84,8 @@ footer {
 </section>
 
 <section id="advancedSection" class="hidden">
-
   <h3>Encryption</h3>
-  <label>Encryption Method</label>
+  <label>Method</label>
   <select id="encryptionMethod">
     <option value="none">None</option>
     <option value="aes">AES</option>
@@ -195,7 +111,6 @@ footer {
     <option value="SCOTTIE_S1">Scottie S1</option>
   </select>
   <button id="decodeSSTV">Decode SSTV</button>
-
 </section>
 
 </main>
