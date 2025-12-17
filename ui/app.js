@@ -4,6 +4,10 @@ import {
   samplesToWav
 } from "./modules/steggy-sstv.js";
 
+import {
+  decodeSSTVFromAudioFile
+} from "./modules/steggy-sstv-decode.js";
+
 let currentImageData = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -16,11 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("imageCanvas");
   const ctx = canvas.getContext("2d");
 
-  const encryptBtn = document.getElementById("encryptBtn");
-  const decryptBtn = document.getElementById("decryptBtn");
-
-  const protectedMessage = document.getElementById("protectedMessage");
-  const decoyMessage = document.getElementById("decoyMessage");
   const decryptOutput = document.getElementById("decryptOutput");
 
   const enableSSTV = document.getElementById("enableSSTV");
@@ -28,7 +27,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const sstvModeSelect = document.getElementById("sstvMode");
   const downloadSSTV = document.getElementById("downloadSSTV");
 
-  // Populate SSTV modes
+  const sstvAudioInput = document.getElementById("sstvAudioInput");
+  const sstvDecodeMode = document.getElementById("sstvDecodeMode");
+  const decodeSSTVBtn = document.getElementById("decodeSSTVBtn");
+
   getAvailableSSTVModes().forEach(m => {
     const opt = document.createElement("option");
     opt.value = m.id;
@@ -47,9 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateModeUI();
 
   imageInput.addEventListener("change", () => {
-    const file = imageInput.files[0];
-    if (!file) return;
-
     const img = new Image();
     img.onload = () => {
       canvas.width = img.width;
@@ -57,26 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ctx.drawImage(img, 0, 0);
       currentImageData = ctx.getImageData(0, 0, img.width, img.height);
     };
-    img.src = URL.createObjectURL(file);
-  });
-
-  encryptBtn.addEventListener("click", () => {
-    if (!currentImageData) {
-      alert("No image loaded");
-      return;
-    }
-
-    alert("Steganographic encryption via steggy-core will run here");
-  });
-
-  decryptBtn.addEventListener("click", () => {
-    if (!currentImageData) {
-      alert("No image loaded");
-      return;
-    }
-
-    decryptOutput.textContent =
-      "Steganographic extraction via steggy-core will run here";
+    img.src = URL.createObjectURL(imageInput.files[0]);
   });
 
   enableSSTV.addEventListener("change", () => {
@@ -84,21 +64,34 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   downloadSSTV.addEventListener("click", () => {
-    if (!currentImageData) {
-      alert("No image loaded");
+    const { samples, sampleRate } =
+      encodeImageToSSTV(currentImageData, sstvModeSelect.value);
+    const wav = samplesToWav(samples, sampleRate);
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(wav);
+    a.download = "steggy-sstv.wav";
+    a.click();
+  });
+
+  decodeSSTVBtn.addEventListener("click", async () => {
+    const file = sstvAudioInput.files[0];
+    if (!file) {
+      alert("No SSTV audio selected");
       return;
     }
 
-    const mode = sstvModeSelect.value;
-    const { samples, sampleRate } =
-      encodeImageToSSTV(currentImageData, mode);
+    try {
+      const imgData =
+        await decodeSSTVFromAudioFile(file, sstvDecodeMode.value);
 
-    const wav = samplesToWav(samples, sampleRate);
-    const url = URL.createObjectURL(wav);
+      canvas.width = imgData.width;
+      canvas.height = imgData.height;
+      ctx.putImageData(imgData, 0, 0);
+      currentImageData = imgData;
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "steggy-sstv.wav";
-    a.click();
+      decryptOutput.textContent = "SSTV image decoded successfully";
+    } catch (e) {
+      alert("Failed to decode SSTV audio");
+    }
   });
 });
