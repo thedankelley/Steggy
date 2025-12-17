@@ -1,167 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Steggy 1.9 ステギー</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0f172a">
-
-<link rel="manifest" href="manifest.json">
-
-<style>
-:root {
-  --bg: #0f172a;
-  --fg: #e5e7eb;
-  --panel: #020617;
-  --accent: #22d3ee;
-}
-[data-theme="light"] {
-  --bg: #f8fafc;
-  --fg: #020617;
-  --panel: #e5e7eb;
-}
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
-}
-header, footer {
-  padding: 1rem;
-  text-align: center;
-}
-section {
-  padding: 1rem;
-  max-width: 900px;
-  margin: auto;
-}
-.panel {
-  background: var(--panel);
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-label {
-  display: block;
-  margin-top: 0.5rem;
-}
-textarea, input, select, button {
-  width: 100%;
-  margin-top: 0.25rem;
-}
-button {
-  padding: 0.75rem;
-  background: var(--accent);
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-}
-</style>
+  <meta charset="utf-8">
+  <title>Steggy 2.0 (ステギー)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0f1115;
+      color: #eaeaea;
+      margin: 0;
+      padding: 1rem;
+    }
+    h1 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    img.logo {
+      width: 32px;
+      height: 32px;
+    }
+    textarea, input, select, button {
+      width: 100%;
+      margin: 0.5rem 0;
+    }
+    section {
+      margin-bottom: 1.5rem;
+    }
+  </style>
 </head>
+<body>
 
-<body data-theme="dark">
+<h1>
+  <img src="icon-512.png" class="logo">
+  Steggy 2.0 <span>(ステギー)</span>
+</h1>
 
-<header>
-  <h1>Steggy 1.9 ステギー</h1>
-  <button onclick="toggleTheme()">🌙 / ☀️</button>
-</header>
+<section>
+  <label>Mode</label>
+  <select id="mode">
+    <option value="encrypt">Encrypt</option>
+    <option value="decrypt">Decrypt</option>
+  </select>
+</section>
 
-<section class="panel">
-  <h2>Encrypt</h2>
-  <input type="file" id="encImage">
+<section data-mode="encrypt">
+  <label>Cover Image</label>
+  <input type="file" id="cover">
+
   <label>Protected Message</label>
-  <textarea id="encPayload" rows="6"></textarea>
+  <textarea id="payload" rows="6"></textarea>
 
-  <label>Decoy Message</label>
-  <textarea id="encDecoy" rows="4"></textarea>
+  <label>Decoy Message (optional)</label>
+  <textarea id="decoy" rows="4"></textarea>
 
   <label>AES Password (optional)</label>
-  <input type="password" id="encPassword">
+  <input type="password" id="aes">
 
-  <button onclick="encrypt()">Encrypt Image</button>
+  <button id="encryptBtn">Encrypt</button>
 </section>
 
-<section class="panel">
-  <h2>Decrypt</h2>
-  <input type="file" id="decImage">
-  <label>AES Password</label>
-  <input type="password" id="decPassword">
-  <button onclick="decrypt()">Decrypt Image</button>
+<section data-mode="decrypt" style="display:none">
+  <label>Stego Image</label>
+  <input type="file" id="stego">
 
-  <h3>Protected Output</h3>
-  <pre id="outProtected"></pre>
+  <label>AES Password (if used)</label>
+  <input type="password" id="aesDec">
 
-  <h3>Decoy Output</h3>
-  <pre id="outDecoy"></pre>
+  <button id="decryptBtn">Decrypt</button>
+
+  <pre id="output"></pre>
 </section>
 
-<footer>
-  <small>Created by Dan</small>
-</footer>
+<section>
+  <strong>SHA-256 Hash</strong>
+  <pre id="hash"></pre>
+</section>
 
-<script type="module">
-import { encrypt as coreEncrypt, decrypt as coreDecrypt } from "./steggy-core.js";
-
-function toggleTheme() {
-  document.body.dataset.theme =
-    document.body.dataset.theme === "dark" ? "light" : "dark";
-}
-
-window.encrypt = async () => {
-  const file = encImage.files[0];
-  const img = await loadImage(file);
-  const ctx = imgToCtx(img);
-  const out = await coreEncrypt({
-    imageData: ctx.getImageData(0,0,img.width,img.height),
-    payload: encPayload.value,
-    decoyPayload: encDecoy.value,
-    options: { aesPassword: encPassword.value }
-  });
-  downloadImage(out);
-};
-
-window.decrypt = async () => {
-  const file = decImage.files[0];
-  const img = await loadImage(file);
-  const ctx = imgToCtx(img);
-  const data = await coreDecrypt({
-    imageData: ctx.getImageData(0,0,img.width,img.height),
-    options: { aesPassword: decPassword.value }
-  });
-  outProtected.textContent = new TextDecoder().decode(data);
-};
-
-function loadImage(file) {
-  return new Promise(r => {
-    const i = new Image();
-    i.onload = () => r(i);
-    i.src = URL.createObjectURL(file);
-  });
-}
-function imgToCtx(img) {
-  const c = document.createElement("canvas");
-  c.width = img.width;
-  c.height = img.height;
-  const x = c.getContext("2d");
-  x.drawImage(img,0,0);
-  return x;
-}
-function downloadImage(imageData) {
-  const c = document.createElement("canvas");
-  c.width = imageData.width;
-  c.height = imageData.height;
-  c.getContext("2d").putImageData(imageData,0,0);
-  const a = document.createElement("a");
-  a.href = c.toDataURL("image/png");
-  a.download = "steggy.png";
-  a.click();
-}
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
-
+<script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
+<script type="module" src="ui/app.js"></script>
 </body>
 </html>
