@@ -1,85 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Steggy 2.0 (ステギー)</title>
+  <meta charset="UTF-8">
+  <title>Steggy 2.0 ステギー</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0b0b">
+
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" sizes="512x512" href="icons/icon-512.png">
+
   <style>
     body {
-      font-family: system-ui, sans-serif;
-      background: #0f1115;
-      color: #eaeaea;
       margin: 0;
-      padding: 1rem;
+      font-family: system-ui, sans-serif;
+      background: #0b0b0b;
+      color: #eaeaea;
     }
-    h1 {
+
+    header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 12px;
+      padding: 16px;
+      border-bottom: 1px solid #222;
     }
-    img.logo {
+
+    header img {
       width: 32px;
       height: 32px;
     }
-    textarea, input, select, button {
-      width: 100%;
-      margin: 0.5rem 0;
+
+    main {
+      padding: 16px;
+      max-width: 900px;
+      margin: auto;
     }
+
     section {
-      margin-bottom: 1.5rem;
+      margin-bottom: 24px;
+      padding: 16px;
+      border: 1px solid #222;
+      border-radius: 8px;
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 8px;
+    }
+
+    select, button, input[type="file"] {
+      background: #111;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 6px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .warning {
+      color: #ff9f43;
+      font-size: 0.9em;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8em;
+      opacity: 0.7;
+      padding: 16px;
+    }
+
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
 
-<h1>
-  <img src="icon-512.png" class="logo">
-  Steggy 2.0 <span>(ステギー)</span>
-</h1>
+<header>
+  <img src="icons/icon-512.png" alt="Steggy icon">
+  <h1>Steggy 2.0 ステギー</h1>
+</header>
 
-<section>
-  <label>Mode</label>
-  <select id="mode">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
-  </select>
-</section>
+<main>
 
-<section data-mode="encrypt">
-  <label>Cover Image</label>
-  <input type="file" id="cover">
+  <section>
+    <h2>Mode</h2>
+    <label>
+      <select id="modeSelect">
+        <option value="encrypt">Encrypt</option>
+        <option value="decrypt">Decrypt</option>
+      </select>
+    </label>
+  </section>
 
-  <label>Protected Message</label>
-  <textarea id="payload" rows="6"></textarea>
+  <section>
+    <h2>Image</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <canvas id="imageCanvas" class="hidden"></canvas>
+  </section>
 
-  <label>Decoy Message (optional)</label>
-  <textarea id="decoy" rows="4"></textarea>
+  <section id="encryptSection">
+    <h2>Encrypt</h2>
 
-  <label>AES Password (optional)</label>
-  <input type="password" id="aes">
+    <label>
+      Protected Message
+      <textarea id="protectedMessage"></textarea>
+    </label>
 
-  <button id="encryptBtn">Encrypt</button>
-</section>
+    <label>
+      Decoy Message
+      <textarea id="decoyMessage"></textarea>
+    </label>
 
-<section data-mode="decrypt" style="display:none">
-  <label>Stego Image</label>
-  <input type="file" id="stego">
+    <button id="encryptBtn">Encrypt into Image</button>
+  </section>
 
-  <label>AES Password (if used)</label>
-  <input type="password" id="aesDec">
+  <section id="decryptSection" class="hidden">
+    <h2>Decrypt</h2>
+    <button id="decryptBtn">Extract from Image</button>
 
-  <button id="decryptBtn">Decrypt</button>
+    <h3>Results</h3>
+    <pre id="decryptOutput"></pre>
+  </section>
 
-  <pre id="output"></pre>
-</section>
+  <section id="sstvSection" class="hidden">
+    <h2>Emergency Transport (Observable)</h2>
 
-<section>
-  <strong>SHA-256 Hash</strong>
-  <pre id="hash"></pre>
-</section>
+    <label>
+      <input type="checkbox" id="enableSSTV">
+      Generate SSTV audio from image
+    </label>
 
-<script src="https://unpkg.com/openpgp@5.11.0/dist/openpgp.min.js"></script>
-<script type="module" src="ui/app.js"></script>
+    <div id="sstvOptions" class="hidden">
+      <label>
+        SSTV Mode
+        <select id="sstvMode"></select>
+      </label>
+
+      <button id="downloadSSTV">Download SSTV WAV</button>
+
+      <p class="warning">
+        SSTV is not encrypted. Anyone can decode this signal.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Created by Dan.
+</footer>
+
+<script type="module" src="ui.js"></script>
+
 </body>
 </html>
