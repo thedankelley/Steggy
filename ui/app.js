@@ -1,51 +1,104 @@
-import { encrypt, decrypt } from "../core/steggy-core.js";
-import { sha256 } from "../modules/steggy-hash.js";
+import {
+  getAvailableSSTVModes,
+  encodeImageToSSTV,
+  samplesToWav
+} from "./modules/steggy-sstv.js";
 
-const mode = document.getElementById("mode");
+let currentImageData = null;
 
-mode.onchange = () => {
-  document.querySelectorAll("[data-mode]").forEach(s => {
-    s.style.display = s.dataset.mode === mode.value ? "block" : "none";
+document.addEventListener("DOMContentLoaded", () => {
+  const modeSelect = document.getElementById("modeSelect");
+  const encryptSection = document.getElementById("encryptSection");
+  const decryptSection = document.getElementById("decryptSection");
+  const sstvSection = document.getElementById("sstvSection");
+
+  const imageInput = document.getElementById("imageInput");
+  const canvas = document.getElementById("imageCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const encryptBtn = document.getElementById("encryptBtn");
+  const decryptBtn = document.getElementById("decryptBtn");
+
+  const protectedMessage = document.getElementById("protectedMessage");
+  const decoyMessage = document.getElementById("decoyMessage");
+  const decryptOutput = document.getElementById("decryptOutput");
+
+  const enableSSTV = document.getElementById("enableSSTV");
+  const sstvOptions = document.getElementById("sstvOptions");
+  const sstvModeSelect = document.getElementById("sstvMode");
+  const downloadSSTV = document.getElementById("downloadSSTV");
+
+  // Populate SSTV modes
+  getAvailableSSTVModes().forEach(m => {
+    const opt = document.createElement("option");
+    opt.value = m.id;
+    opt.textContent = m.name;
+    sstvModeSelect.appendChild(opt);
   });
-};
 
-async function loadImage(file) {
-  const img = new Image();
-  img.src = URL.createObjectURL(file);
-  await img.decode();
-  const c = new OffscreenCanvas(img.width, img.height);
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  return ctx.getImageData(0, 0, img.width, img.height);
-}
+  function updateModeUI() {
+    const mode = modeSelect.value;
+    encryptSection.classList.toggle("hidden", mode !== "encrypt");
+    decryptSection.classList.toggle("hidden", mode !== "decrypt");
+    sstvSection.classList.toggle("hidden", mode !== "encrypt");
+  }
 
-document.getElementById("encryptBtn").onclick = async () => {
-  const imgData = await loadImage(cover.files[0]);
-  const out = await encrypt({
-    imageData: imgData,
-    payload: payload.value,
-    options: { aesPassword: aes.value || null }
+  modeSelect.addEventListener("change", updateModeUI);
+  updateModeUI();
+
+  imageInput.addEventListener("change", () => {
+    const file = imageInput.files[0];
+    if (!file) return;
+
+    const img = new Image();
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      currentImageData = ctx.getImageData(0, 0, img.width, img.height);
+    };
+    img.src = URL.createObjectURL(file);
   });
 
-  const c = document.createElement("canvas");
-  c.width = out.width;
-  c.height = out.height;
-  c.getContext("2d").putImageData(out, 0, 0);
+  encryptBtn.addEventListener("click", () => {
+    if (!currentImageData) {
+      alert("No image loaded");
+      return;
+    }
 
-  c.toBlob(async b => {
-    hash.textContent = await sha256(await b.arrayBuffer());
+    alert("Steganographic encryption via steggy-core will run here");
+  });
+
+  decryptBtn.addEventListener("click", () => {
+    if (!currentImageData) {
+      alert("No image loaded");
+      return;
+    }
+
+    decryptOutput.textContent =
+      "Steganographic extraction via steggy-core will run here";
+  });
+
+  enableSSTV.addEventListener("change", () => {
+    sstvOptions.classList.toggle("hidden", !enableSSTV.checked);
+  });
+
+  downloadSSTV.addEventListener("click", () => {
+    if (!currentImageData) {
+      alert("No image loaded");
+      return;
+    }
+
+    const mode = sstvModeSelect.value;
+    const { samples, sampleRate } =
+      encodeImageToSSTV(currentImageData, mode);
+
+    const wav = samplesToWav(samples, sampleRate);
+    const url = URL.createObjectURL(wav);
+
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(b);
-    a.download = "stego.png";
+    a.href = url;
+    a.download = "steggy-sstv.wav";
     a.click();
   });
-};
-
-document.getElementById("decryptBtn").onclick = async () => {
-  const imgData = await loadImage(stego.files[0]);
-  const data = await decrypt({
-    imageData: imgData,
-    options: { aesPassword: aesDec.value || null }
-  });
-  output.textContent = new TextDecoder().decode(data);
-};
+});
