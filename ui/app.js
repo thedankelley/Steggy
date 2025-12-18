@@ -4,29 +4,30 @@ import {
 } from "../core/steggy-core.js";
 
 import {
-  decodeSSTVFromAudio
+  decodeSSTVFromAudio,
+  decodeSSTVFromSamples
 } from "../modules/steggy-sstv-decode.js";
 
-const $ = id => document.getElementById(id);
+import {
+  startMicCapture,
+  stopMicCapture
+} from "../modules/steggy-sstv-mic.js";
 
-let imageData = null;
+const $ = id => document.getElementById(id);
 let canvas = $("canvas");
 let ctx = canvas.getContext("2d");
-
-$("toggleAdvanced").onclick = () => {
-  $("advanced").classList.toggle("hidden");
-};
+let imageData = null;
 
 $("mode").onchange = () => {
-  const mode = $("mode").value;
-  $("imageInput").classList.toggle("hidden", mode === "sstv-decode");
-  $("audioInput").classList.toggle("hidden", mode !== "sstv-decode");
+  const sstv = $("mode").value === "sstv-decode";
+  $("imageInput").classList.toggle("hidden", sstv);
+  $("audioInput").classList.toggle("hidden", !sstv);
+  $("sstvMode").classList.toggle("hidden", !sstv);
+  $("micStart").classList.toggle("hidden", !sstv);
+  $("micStop").classList.toggle("hidden", !sstv);
 };
 
 $("imageInput").onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
   const img = new Image();
   img.onload = () => {
     canvas.width = img.width;
@@ -35,47 +36,37 @@ $("imageInput").onchange = e => {
     ctx.drawImage(img, 0, 0);
     imageData = ctx.getImageData(0, 0, img.width, img.height);
   };
-  img.src = URL.createObjectURL(file);
+  img.src = URL.createObjectURL(e.target.files[0]);
 };
 
 $("run").onclick = async () => {
-  try {
-    if ($("mode").value === "sstv-decode") {
-      const file = $("audioInput").files[0];
-      if (!file) return alert("No audio file provided");
+  if ($("mode").value !== "sstv-decode") return;
 
-      const decoded = await decodeSSTVFromAudio(file);
-      canvas.width = decoded.width;
-      canvas.height = decoded.height;
-      canvas.classList.remove("hidden");
-      ctx.putImageData(decoded, 0, 0);
-      return;
-    }
+  const file = $("audioInput").files[0];
+  if (!file) return alert("No audio file");
 
-    if (!imageData) return alert("No image loaded");
+  const img = await decodeSSTVFromAudio(file, $("sstvMode").value);
+  canvas.width = img.width;
+  canvas.height = img.height;
+  canvas.classList.remove("hidden");
+  ctx.putImageData(img, 0, 0);
+};
 
-    const options = {
-      method: $("method").value,
-      password: $("password").value,
-      pgpPublicKey: $("pgpPublicKey").value,
-      pgpPrivateKey: $("pgpPrivateKey").value,
-      pgpPassphrase: $("pgpPassphrase").value
-    };
+$("micStart").onclick = async () => {
+  await startMicCapture(async (samples, rate) => {
+    if (samples.length < rate * 2) return;
+    const img = await decodeSSTVFromSamples(
+      samples,
+      rate,
+      $("sstvMode").value
+    );
+    canvas.width = img.width;
+    canvas.height = img.height;
+    canvas.classList.remove("hidden");
+    ctx.putImageData(img, 0, 0);
+  });
+};
 
-    if ($("mode").value === "encrypt") {
-      const result = await encryptImageData(
-        imageData,
-        $("protectedMessage").value,
-        $("decoyMessage").value,
-        options
-      );
-      ctx.putImageData(result, 0, 0);
-      alert("Encryption successful");
-    } else {
-      const msg = await decryptImageData(imageData, options);
-      alert("Decrypted message:\n\n" + msg);
-    }
-  } catch (e) {
-    alert("Error: " + e.message);
-  }
+$("micStop").onclick = () => {
+  stopMicCapture();
 };
