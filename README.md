@@ -1,5 +1,7 @@
 # Steggy 2.0 (ステギー)
 
+## WANRING: Software is currently in alpha state. This project will not receive an official release until the initial roadmap is fully implemented. Please use this software at your own risk.
+
 Steggy is a client-side, offline-first steganographic framework for embedding structured data into image files using explicit, auditable techniques.
 
 Steggy is designed for journalists, researchers, human rights workers, and technologists who require **direct control over how information is hidden, transported, and recovered**, especially in constrained or hostile environments.
