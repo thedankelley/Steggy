@@ -3,6 +3,10 @@ import {
   decryptImageData
 } from "../core/steggy-core.js";
 
+import {
+  decodeSSTVFromAudio
+} from "../modules/steggy-sstv-decode.js";
+
 const $ = id => document.getElementById(id);
 
 let imageData = null;
@@ -11,6 +15,12 @@ let ctx = canvas.getContext("2d");
 
 $("toggleAdvanced").onclick = () => {
   $("advanced").classList.toggle("hidden");
+};
+
+$("mode").onchange = () => {
+  const mode = $("mode").value;
+  $("imageInput").classList.toggle("hidden", mode === "sstv-decode");
+  $("audioInput").classList.toggle("hidden", mode !== "sstv-decode");
 };
 
 $("imageInput").onchange = e => {
@@ -29,33 +39,42 @@ $("imageInput").onchange = e => {
 };
 
 $("run").onclick = async () => {
-  if (!imageData) return alert("No image loaded");
-
-  const options = {
-    method: $("method").value,
-    password: $("password").value,
-    pgpPublicKey: $("pgpPublicKey").value,
-    pgpPrivateKey: $("pgpPrivateKey").value,
-    pgpPassphrase: $("pgpPassphrase").value
-  };
-
   try {
-    let result;
+    if ($("mode").value === "sstv-decode") {
+      const file = $("audioInput").files[0];
+      if (!file) return alert("No audio file provided");
+
+      const decoded = await decodeSSTVFromAudio(file);
+      canvas.width = decoded.width;
+      canvas.height = decoded.height;
+      canvas.classList.remove("hidden");
+      ctx.putImageData(decoded, 0, 0);
+      return;
+    }
+
+    if (!imageData) return alert("No image loaded");
+
+    const options = {
+      method: $("method").value,
+      password: $("password").value,
+      pgpPublicKey: $("pgpPublicKey").value,
+      pgpPrivateKey: $("pgpPrivateKey").value,
+      pgpPassphrase: $("pgpPassphrase").value
+    };
+
     if ($("mode").value === "encrypt") {
-      result = await encryptImageData(
+      const result = await encryptImageData(
         imageData,
         $("protectedMessage").value,
         $("decoyMessage").value,
         options
       );
+      ctx.putImageData(result, 0, 0);
+      alert("Encryption successful");
     } else {
       const msg = await decryptImageData(imageData, options);
       alert("Decrypted message:\n\n" + msg);
-      return;
     }
-
-    ctx.putImageData(result, 0, 0);
-    alert("Operation successful");
   } catch (e) {
     alert("Error: " + e.message);
   }
