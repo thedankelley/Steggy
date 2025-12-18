@@ -1,39 +1,54 @@
-// Basic SSTV decoder (Martin M1 style grayscale)
-// Inspired by offline DSP approaches used in Web-SSTV
+// SSTV decode module with selectable modes
+// Baseline implementations for offline decoding
 
-export async function decodeSSTVFromAudio(file) {
-  const ctx = new AudioContext();
-  const arrayBuf = await file.arrayBuffer();
-  const audioBuf = await ctx.decodeAudioData(arrayBuf);
+function decodeLine(line, width) {
+  const pixels = new Uint8ClampedArray(width * 4);
+  for (let x = 0; x < width; x++) {
+    const idx = Math.floor((x / width) * line.length);
+    const v = Math.max(-1, Math.min(1, line[idx]));
+    const p = Math.floor((v + 1) * 127.5);
+    pixels[x * 4] = p;
+    pixels[x * 4 + 1] = p;
+    pixels[x * 4 + 2] = p;
+    pixels[x * 4 + 3] = 255;
+  }
+  return pixels;
+}
 
-  const data = audioBuf.getChannelData(0);
-  const sampleRate = audioBuf.sampleRate;
+export async function decodeSSTVFromSamples(samples, sampleRate, mode) {
+  let width = 320;
+  let height = 256;
+  let lineTime = 0.146;
 
-  // Martin M1 parameters (simplified)
-  const width = 320;
-  const height = 256;
-  const lineTime = 0.146; // seconds per line
+  if (mode === "scottie1") lineTime = 0.138;
+  if (mode === "robot36") {
+    width = 320;
+    height = 240;
+    lineTime = 0.088;
+  }
+
   const samplesPerLine = Math.floor(sampleRate * lineTime);
-
   const image = new ImageData(width, height);
 
   let ptr = 0;
   for (let y = 0; y < height; y++) {
-    const line = data.slice(ptr, ptr + samplesPerLine);
+    const line = samples.slice(ptr, ptr + samplesPerLine);
     ptr += samplesPerLine;
 
-    for (let x = 0; x < width; x++) {
-      const idx = Math.floor((x / width) * line.length);
-      const v = Math.max(-1, Math.min(1, line[idx]));
-      const pixel = Math.floor((v + 1) * 127.5);
+    if (line.length < samplesPerLine) break;
 
-      const off = (y * width + x) * 4;
-      image.data[off] = pixel;
-      image.data[off + 1] = pixel;
-      image.data[off + 2] = pixel;
-      image.data[off + 3] = 255;
-    }
+    const row = decodeLine(line, width);
+    image.data.set(row, y * width * 4);
   }
 
   return image;
+}
+
+export async function decodeSSTVFromAudio(file, mode) {
+  const ctx = new AudioContext();
+  const buf = await file.arrayBuffer();
+  const audio = await ctx.decodeAudioData(buf);
+  const samples = audio.getChannelData(0);
+
+  return decodeSSTVFromSamples(samples, audio.sampleRate, mode);
 }
