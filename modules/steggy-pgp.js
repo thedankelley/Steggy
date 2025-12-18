@@ -1,18 +1,29 @@
-export async function pgpEncrypt(bytes, publicKey) {
-  const key = await openpgp.readKey({ armoredKey: publicKey });
-  const msg = await openpgp.createMessage({ binary: bytes });
-  const enc = await openpgp.encrypt({ message: msg, encryptionKeys: key });
-  return new TextEncoder().encode(enc);
+import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@5.10.0/+esm";
+
+export async function generatePGPKeyPair() {
+  return openpgp.generateKey({
+    type:"rsa",
+    rsaBits:4096,
+    userIDs:[{name:"Steggy User"}],
+    passphrase:""
+  });
 }
 
-export async function pgpDecrypt(bytes, privateKey, passphrase="") {
-  const key = await openpgp.decryptKey({
-    privateKey: await openpgp.readPrivateKey({ armoredKey: privateKey }),
+export async function pgpEncrypt(text, publicKeyArmored) {
+  const publicKey = await openpgp.readKey({armoredKey:publicKeyArmored});
+  const message = await openpgp.createMessage({text});
+  return openpgp.encrypt({message,encryptionKeys:publicKey});
+}
+
+export async function pgpDecrypt(cipher, privateKeyArmored, passphrase) {
+  const privateKey = await openpgp.decryptKey({
+    privateKey:await openpgp.readPrivateKey({armoredKey:privateKeyArmored}),
     passphrase
   });
-  const msg = await openpgp.readMessage({
-    armoredMessage: new TextDecoder().decode(bytes)
+  const message = await openpgp.readMessage({armoredMessage:cipher});
+  const { data } = await openpgp.decrypt({
+    message,
+    decryptionKeys:privateKey
   });
-  const res = await openpgp.decrypt({ message: msg, decryptionKeys: key });
-  return new TextEncoder().encode(res.data);
+  return data;
 }
