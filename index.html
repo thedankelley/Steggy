@@ -1,161 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Steggy 2.0 ステギー</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b0b0b">
-
-<link rel="manifest" href="manifest.json">
-<link rel="icon" sizes="512x512" href="icons/icon-512.png">
-
-<style>
-:root {
-  --bg:#0b0b0b;
-  --panel:#121212;
-  --border:#2a2a2a;
-  --text:#eaeaea;
-  --muted:#9a9a9a;
-  --accent:#4da3ff;
-}
-body {
-  margin:0;
-  font-family:system-ui,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-header {
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:14px 16px;
-  border-bottom:1px solid var(--border);
-}
-header img { width:28px;height:28px }
-main {
-  max-width:960px;
-  margin:auto;
-  padding:16px;
-}
-section {
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:16px;
-  margin-bottom:16px;
-}
-label {
-  display:block;
-  margin-bottom:6px;
-  font-size:.9em;
-  color:var(--muted);
-}
-textarea {
-  width:100%;
-  min-height:120px;
-  background:#0f0f0f;
-  color:var(--text);
-  border:1px solid var(--border);
-  border-radius:6px;
-  padding:10px;
-}
-select,input,button {
-  width:100%;
-  padding:10px;
-  background:#0f0f0f;
-  color:var(--text);
-  border:1px solid var(--border);
-  border-radius:6px;
-}
-button.primary {
-  background:var(--accent);
-  border:none;
-  color:#000;
-}
-.hidden { display:none }
-footer {
-  text-align:center;
-  font-size:.75em;
-  opacity:.7;
-  padding:12px;
-}
-</style>
+  <meta charset="UTF-8" />
+  <title>Steggy ステギー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#111111" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #111;
+      color: #eee;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      background: #000;
+      gap: 12px;
+    }
+    header img {
+      height: 32px;
+      width: 32px;
+    }
+    main {
+      padding: 16px;
+    }
+    select, textarea, input, button {
+      width: 100%;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 6px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .hidden {
+      display: none;
+    }
+    footer {
+      text-align: center;
+      opacity: 0.6;
+      margin-top: 40px;
+      font-size: 0.9em;
+    }
+  </style>
 </head>
-
 <body>
+  <header>
+    <img src="./icons/icon-512.png" alt="Steggy" />
+    <strong>Steggy ステギー</strong>
+  </header>
 
-<header>
-  <img src="icons/icon-512.png">
-  <strong>Steggy 2.0 ステギー</strong>
-</header>
+  <main>
+    <select id="mode">
+      <option value="encrypt">Encrypt</option>
+      <option value="decrypt">Decrypt</option>
+    </select>
 
-<main>
+    <input type="file" id="imageInput" accept="image/*" />
 
-<section>
-<label>Mode</label>
-<select id="modeSelect">
-  <option value="encrypt">Encrypt</option>
-  <option value="decrypt">Decrypt</option>
-</select>
-</section>
+    <textarea id="protectedMessage" placeholder="Protected message"></textarea>
+    <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
 
-<section>
-<label>Image</label>
-<input type="file" id="imageInput" accept="image/*">
-<canvas id="imageCanvas" class="hidden"></canvas>
-</section>
+    <select id="method">
+      <option value="none">No encryption</option>
+      <option value="aes">AES-GCM</option>
+      <option value="pgp">PGP</option>
+    </select>
 
-<section id="encryptSection">
-<label>Protected Message</label>
-<textarea id="protectedMessage"></textarea>
+    <input id="password" type="password" placeholder="AES password" />
 
-<label>Decoy Message</label>
-<textarea id="decoyMessage"></textarea>
+    <button id="toggleAdvanced">Advanced Settings</button>
 
-<button class="primary" id="encryptBtn">Encrypt</button>
-</section>
+    <section id="advanced" class="hidden">
+      <textarea id="pgpPublicKey" placeholder="PGP Public Key"></textarea>
+      <textarea id="pgpPrivateKey" placeholder="PGP Private Key"></textarea>
+      <input id="pgpPassphrase" type="password" placeholder="PGP Passphrase" />
+    </section>
 
-<section id="decryptSection" class="hidden">
-<button class="primary" id="decryptBtn">Decrypt</button>
-<pre id="decryptOutput"></pre>
-</section>
+    <button id="run">Run</button>
 
-<section>
-<button id="toggleAdvanced">Advanced Settings</button>
-</section>
+    <canvas id="canvas" class="hidden"></canvas>
+  </main>
 
-<section id="advancedSection" class="hidden">
+  <footer>
+    Created by Dan
+  </footer>
 
-<label>Encryption Method</label>
-<select id="encryptionMethod">
-  <option value="none">None</option>
-  <option value="pgp">PGP</option>
-</select>
-
-<label>PGP Public Key</label>
-<textarea id="pgpPublicKey"></textarea>
-
-<label>PGP Private Key</label>
-<textarea id="pgpPrivateKey"></textarea>
-
-<label>PGP Passphrase</label>
-<input type="password" id="pgpPassphrase">
-
-<button id="generatePGPKeys">Generate PGP Key Pair</button>
-<button id="downloadPGPPublic">Download Public Key</button>
-<button id="downloadPGPPrivate">Download Private Key</button>
-
-<label>SSTV Mode</label>
-<select id="sstvMode"></select>
-<button id="generateSSTV">Generate SSTV Audio</button>
-
-</section>
-
-</main>
-
-<footer>Created by Dan</footer>
-
-<script type="module" src="ui/app.js"></script>
+  <script type="module" src="./ui/app.js"></script>
 </body>
 </html>
