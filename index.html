@@ -42,12 +42,6 @@
     .hidden {
       display: none;
     }
-    footer {
-      text-align: center;
-      opacity: 0.6;
-      margin-top: 40px;
-      font-size: 0.9em;
-    }
   </style>
 </head>
 <body>
@@ -63,36 +57,25 @@
       <option value="sstv-decode">SSTV Decode</option>
     </select>
 
+    <select id="sstvMode" class="hidden">
+      <option value="martin1">Martin M1</option>
+      <option value="scottie1">Scottie S1</option>
+      <option value="robot36">Robot36</option>
+    </select>
+
     <input type="file" id="imageInput" accept="image/*" />
     <input type="file" id="audioInput" accept="audio/*" class="hidden" />
 
+    <button id="micStart" class="hidden">Start Microphone</button>
+    <button id="micStop" class="hidden">Stop Microphone</button>
+
     <textarea id="protectedMessage" placeholder="Protected message"></textarea>
     <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
-
-    <select id="method">
-      <option value="none">No encryption</option>
-      <option value="aes">AES-GCM</option>
-      <option value="pgp">PGP</option>
-    </select>
-
-    <input id="password" type="password" placeholder="AES password" />
-
-    <button id="toggleAdvanced">Advanced Settings</button>
-
-    <section id="advanced" class="hidden">
-      <textarea id="pgpPublicKey" placeholder="PGP Public Key"></textarea>
-      <textarea id="pgpPrivateKey" placeholder="PGP Private Key"></textarea>
-      <input id="pgpPassphrase" type="password" placeholder="PGP Passphrase" />
-    </section>
 
     <button id="run">Run</button>
 
     <canvas id="canvas" class="hidden"></canvas>
   </main>
-
-  <footer>
-    Created by Dan
-  </footer>
 
   <script type="module" src="./ui/app.js"></script>
 </body>
