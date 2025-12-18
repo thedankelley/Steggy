@@ -12,111 +12,150 @@
 
 <style>
 :root {
-  --bg: #0b0b0b;
-  --panel: #121212;
-  --border: #2a2a2a;
-  --text: #eaeaea;
-  --muted: #9a9a9a;
-  --accent: #4da3ff;
+  --bg:#0b0b0b;
+  --panel:#121212;
+  --border:#2a2a2a;
+  --text:#eaeaea;
+  --muted:#9a9a9a;
+  --accent:#4da3ff;
 }
-
-body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); }
-
-header { display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--border); }
-header img { width:28px; height:28px; }
-
-main { max-width:960px; margin:auto; padding:16px; }
-
-section { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:16px; }
-
-h2,h3 { margin-top:0; }
-label { display:block; margin-bottom:6px; font-size:0.9em; color:var(--muted); }
-
-textarea { width:100%; min-height:120px; background:#0f0f0f; color:var(--text); border:1px solid var(--border); border-radius:6px; padding:10px; resize:vertical; }
-select,input[type="file"],button { width:100%; padding:10px; background:#0f0f0f; color:var(--text); border:1px solid var(--border); border-radius:6px; }
-button { cursor:pointer; }
-button.primary { background:var(--accent); border:none; color:#000; }
-
-.row { display:grid; gap:12px; }
-@media (min-width:700px){ .row.two { grid-template-columns:1fr 1fr; } }
-
-.hidden { display:none; }
-.warning { font-size:0.85em; color:#ffb347; }
-footer { text-align:center; font-size:0.75em; opacity:0.7; padding:12px; }
+body {
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+}
+header img { width:28px;height:28px }
+main {
+  max-width:960px;
+  margin:auto;
+  padding:16px;
+}
+section {
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  margin-bottom:16px;
+}
+label {
+  display:block;
+  margin-bottom:6px;
+  font-size:.9em;
+  color:var(--muted);
+}
+textarea {
+  width:100%;
+  min-height:120px;
+  background:#0f0f0f;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:10px;
+}
+select,input,button {
+  width:100%;
+  padding:10px;
+  background:#0f0f0f;
+  color:var(--text);
+  border:1px solid var(--border);
+  border-radius:6px;
+}
+button.primary {
+  background:var(--accent);
+  border:none;
+  color:#000;
+}
+.hidden { display:none }
+footer {
+  text-align:center;
+  font-size:.75em;
+  opacity:.7;
+  padding:12px;
+}
 </style>
 </head>
 
 <body>
+
 <header>
   <img src="icons/icon-512.png">
   <strong>Steggy 2.0 ステギー</strong>
 </header>
 
 <main>
+
 <section>
-  <label>Mode</label>
-  <select id="modeSelect">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
-  </select>
+<label>Mode</label>
+<select id="modeSelect">
+  <option value="encrypt">Encrypt</option>
+  <option value="decrypt">Decrypt</option>
+</select>
 </section>
 
 <section>
-  <label>Image</label>
-  <input type="file" id="imageInput" accept="image/*">
-  <canvas id="imageCanvas" class="hidden"></canvas>
+<label>Image</label>
+<input type="file" id="imageInput" accept="image/*">
+<canvas id="imageCanvas" class="hidden"></canvas>
 </section>
 
 <section id="encryptSection">
-  <h2>Messages</h2>
-  <textarea id="protectedMessage" placeholder="Protected message"></textarea>
-  <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
-  <button class="primary" id="encryptBtn">Encrypt into Image</button>
+<label>Protected Message</label>
+<textarea id="protectedMessage"></textarea>
+
+<label>Decoy Message</label>
+<textarea id="decoyMessage"></textarea>
+
+<button class="primary" id="encryptBtn">Encrypt</button>
 </section>
 
 <section id="decryptSection" class="hidden">
-  <button class="primary" id="decryptBtn">Decrypt Image</button>
-  <pre id="decryptOutput"></pre>
+<button class="primary" id="decryptBtn">Decrypt</button>
+<pre id="decryptOutput"></pre>
 </section>
 
 <section>
-  <button id="toggleAdvanced">Advanced Settings</button>
+<button id="toggleAdvanced">Advanced Settings</button>
 </section>
 
 <section id="advancedSection" class="hidden">
-  <h3>Encryption</h3>
-  <label>Method</label>
-  <select id="encryptionMethod">
-    <option value="none">None</option>
-    <option value="aes">AES</option>
-    <option value="pgp">PGP</option>
-  </select>
 
-  <h3>Metadata</h3>
-  <label>Metadata Handling</label>
-  <select id="metadataMode">
-    <option value="strip">Strip All Metadata</option>
-    <option value="preserve">Preserve Metadata</option>
-  </select>
+<label>Encryption Method</label>
+<select id="encryptionMethod">
+  <option value="none">None</option>
+  <option value="pgp">PGP</option>
+</select>
 
-  <h3>SSTV (Emergency Transport)</h3>
-  <label>SSTV Mode</label>
-  <select id="sstvMode"></select>
-  <button id="generateSSTV">Generate SSTV Audio</button>
+<label>PGP Public Key</label>
+<textarea id="pgpPublicKey"></textarea>
 
-  <h3>SSTV Decode</h3>
-  <input type="file" id="sstvAudioInput" accept="audio/*">
-  <select id="sstvDecodeMode">
-    <option value="MARTIN_M1">Martin M1</option>
-    <option value="SCOTTIE_S1">Scottie S1</option>
-  </select>
-  <button id="decodeSSTV">Decode SSTV</button>
+<label>PGP Private Key</label>
+<textarea id="pgpPrivateKey"></textarea>
+
+<label>PGP Passphrase</label>
+<input type="password" id="pgpPassphrase">
+
+<button id="generatePGPKeys">Generate PGP Key Pair</button>
+<button id="downloadPGPPublic">Download Public Key</button>
+<button id="downloadPGPPrivate">Download Private Key</button>
+
+<label>SSTV Mode</label>
+<select id="sstvMode"></select>
+<button id="generateSSTV">Generate SSTV Audio</button>
+
 </section>
 
 </main>
 
-<footer>Offline-first steganography & emergency transport</footer>
+<footer>Created by Dan</footer>
 
-<script type="module" src="app.js"></script>
+<script type="module" src="ui/app.js"></script>
 </body>
 </html>
