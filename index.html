@@ -60,9 +60,11 @@
     <select id="mode">
       <option value="encrypt">Encrypt</option>
       <option value="decrypt">Decrypt</option>
+      <option value="sstv-decode">SSTV Decode</option>
     </select>
 
     <input type="file" id="imageInput" accept="image/*" />
+    <input type="file" id="audioInput" accept="audio/*" class="hidden" />
 
     <textarea id="protectedMessage" placeholder="Protected message"></textarea>
     <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
