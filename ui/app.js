@@ -1,33 +1,35 @@
-import {
-  encryptImageData,
-  decryptImageData
-} from "../core/steggy-core.js";
-
-import {
-  decodeSSTVFromAudio,
-  decodeSSTVFromSamples
-} from "../modules/steggy-sstv-decode.js";
-
-import {
-  startMicCapture,
-  stopMicCapture
-} from "../modules/steggy-sstv-mic.js";
+import { encryptImageData, decryptImageData } from "../core/steggy-core.js";
+import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
+import { decodeSSTVFromAudio } from "../modules/steggy-sstv-decode.js";
 
 const $ = id => document.getElementById(id);
-let canvas = $("canvas");
-let ctx = canvas.getContext("2d");
+
 let imageData = null;
+let currentImageURL = null;
+
+const canvas = $("canvas");
+const ctx = canvas.getContext("2d");
+
+$("toggleAdvanced").onclick = () => {
+  $("advanced").classList.toggle("hidden");
+};
 
 $("mode").onchange = () => {
-  const sstv = $("mode").value === "sstv-decode";
-  $("imageInput").classList.toggle("hidden", sstv);
-  $("audioInput").classList.toggle("hidden", !sstv);
-  $("sstvMode").classList.toggle("hidden", !sstv);
-  $("micStart").classList.toggle("hidden", !sstv);
-  $("micStop").classList.toggle("hidden", !sstv);
+  const mode = $("mode").value;
+
+  $("imageInput").classList.toggle("hidden", mode === "sstv-decode");
+  $("audioInput").classList.toggle("hidden", mode !== "sstv-decode");
+
+  $("protectedMessage").classList.toggle("hidden", mode !== "encrypt");
+  $("decoyMessage").classList.toggle("hidden", mode !== "encrypt");
+
+  $("output").classList.add("hidden");
 };
 
 $("imageInput").onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
   const img = new Image();
   img.onload = () => {
     canvas.width = img.width;
@@ -36,37 +38,88 @@ $("imageInput").onchange = e => {
     ctx.drawImage(img, 0, 0);
     imageData = ctx.getImageData(0, 0, img.width, img.height);
   };
-  img.src = URL.createObjectURL(e.target.files[0]);
+  img.src = URL.createObjectURL(file);
+};
+
+$("generatePGP").onclick = async () => {
+  const passphrase = prompt("Enter a passphrase for your private key:");
+  if (!passphrase) return;
+
+  const { publicKey, privateKey } = await generatePGPKeyPair(passphrase);
+  $("pgpPublicKey").value = publicKey;
+  $("pgpPrivateKey").value = privateKey;
+  $("pgpPassphrase").value = passphrase;
+};
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+$("downloadPublic").onclick = () => {
+  downloadText("steggy_public.asc", $("pgpPublicKey").value);
+};
+
+$("downloadPrivate").onclick = () => {
+  downloadText("steggy_private.asc", $("pgpPrivateKey").value);
 };
 
 $("run").onclick = async () => {
-  if ($("mode").value !== "sstv-decode") return;
+  try {
+    const mode = $("mode").value;
 
-  const file = $("audioInput").files[0];
-  if (!file) return alert("No audio file");
+    if (mode === "sstv-decode") {
+      const file = $("audioInput").files[0];
+      if (!file) return alert("No audio file");
 
-  const img = await decodeSSTVFromAudio(file, $("sstvMode").value);
-  canvas.width = img.width;
-  canvas.height = img.height;
-  canvas.classList.remove("hidden");
-  ctx.putImageData(img, 0, 0);
+      const img = await decodeSSTVFromAudio(file, "martin1");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.classList.remove("hidden");
+      ctx.putImageData(img, 0, 0);
+      $("downloadImage").classList.remove("hidden");
+      return;
+    }
+
+    if (!imageData) return alert("No image loaded");
+
+    const options = {
+      method: $("method").value,
+      password: $("password").value,
+      pgpPublicKey: $("pgpPublicKey").value,
+      pgpPrivateKey: $("pgpPrivateKey").value,
+      pgpPassphrase: $("pgpPassphrase").value
+    };
+
+    if (mode === "encrypt") {
+      const result = await encryptImageData(
+        imageData,
+        $("protectedMessage").value,
+        $("decoyMessage").value,
+        options
+      );
+
+      ctx.putImageData(result, 0, 0);
+      imageData = result;
+      $("downloadImage").classList.remove("hidden");
+    } else {
+      const msg = await decryptImageData(imageData, options);
+      $("output").value = msg;
+      $("output").classList.remove("hidden");
+    }
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-$("micStart").onclick = async () => {
-  await startMicCapture(async (samples, rate) => {
-    if (samples.length < rate * 2) return;
-    const img = await decodeSSTVFromSamples(
-      samples,
-      rate,
-      $("sstvMode").value
-    );
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.classList.remove("hidden");
-    ctx.putImageData(img, 0, 0);
+$("downloadImage").onclick = () => {
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "steggy_output.png";
+    a.click();
   });
-};
-
-$("micStop").onclick = () => {
-  stopMicCapture();
 };
