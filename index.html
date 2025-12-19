@@ -19,10 +19,10 @@
       color: #eee;
       border: 1px solid #444;
     }
-    button {
-      cursor: pointer;
-    }
+    button { cursor: pointer; }
+    textarea { min-height: 90px; }
     #advanced {
+      display: none;
       border-top: 1px solid #333;
       margin-top: 1rem;
       padding-top: 1rem;
@@ -35,55 +35,60 @@
 </head>
 
 <body>
-  <h1>Steggy 2.0 ステギー</h1>
+<h1>Steggy 2.0 ステギー</h1>
 
-  <label>Mode</label>
-  <select id="mode">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
-    <option value="sstv-decode">SSTV Decode</option>
-  </select>
+<label>Mode</label>
+<select id="mode">
+  <option value="encrypt">Encrypt</option>
+  <option value="decrypt">Decrypt</option>
+  <option value="sstv-decode">SSTV Decode</option>
+</select>
 
-  <input type="file" id="imageInput">
+<input type="file" id="imageInput">
 
-  <div id="sstvSection" style="display:none">
-    <label>SSTV WAV File</label>
-    <input type="file" id="sstvInput"
-      accept="audio/wav,audio/wave,audio/x-wav">
-  </div>
+<div id="sstvSection">
+  <label>SSTV WAV File</label>
+  <input type="file" id="sstvInput"
+    accept="audio/wav,audio/wave,audio/x-wav">
+</div>
 
-  <label>Method</label>
-  <select id="method">
-    <option value="aes">AES-GCM</option>
-    <option value="pgp">PGP</option>
-  </select>
+<label>Encryption Method</label>
+<select id="method">
+  <option value="aes">AES-GCM</option>
+  <option value="pgp">PGP</option>
+  <option value="both">AES + PGP</option>
+</select>
 
-  <div id="aesFields">
-    <input type="password" id="aesPassword" placeholder="AES Password">
-  </div>
+<div id="aesFields">
+  <input type="password" id="aesPassword" placeholder="AES Password">
+</div>
 
-  <div id="pgpFields">
-    <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
-    <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
-    <input type="password" id="pgpPass" placeholder="PGP Passphrase (optional)">
-    <button id="genKeys">Generate PGP Keys</button>
-    <button id="downloadPub">Download Public Key</button>
-    <button id="downloadPriv">Download Private Key</button>
-  </div>
+<div id="pgpFields">
+  <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
+  <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
 
-  <textarea id="protectedMsg" placeholder="Protected message"></textarea>
-  <textarea id="decoyMsg" placeholder="Decoy message"></textarea>
+  <input type="file" id="pgpPrivateUpload" accept=".asc,.txt">
 
-  <button id="toggleAdvanced">Advanced Settings</button>
+  <input type="password" id="pgpPass" placeholder="PGP Passphrase (optional)">
 
-  <div id="advanced">
-    <p>Advanced options ready.</p>
-  </div>
+  <button id="genKeys">Generate PGP Keys</button>
+  <button id="pgpEncryptBtn">Encrypt Message with Public Key</button>
+  <button id="downloadPub">Download Public Key</button>
+  <button id="downloadPriv">Download Private Key</button>
+</div>
 
-  <button id="run">Run</button>
+<textarea id="protectedMsg" placeholder="Protected message"></textarea>
+<textarea id="decoyMsg" placeholder="Decoy message"></textarea>
 
-  <div id="output"></div>
+<button id="toggleAdvanced">Advanced Settings</button>
+<div id="advanced">
+  <p>Advanced features enabled.</p>
+</div>
 
-  <script type="module" src="ui/app.js"></script>
+<button id="run">Run</button>
+
+<div id="output"></div>
+
+<script type="module" src="ui/app.js"></script>
 </body>
 </html>
