@@ -4,85 +4,106 @@
   <meta charset="UTF-8">
   <title>Steggy 2.0 ステギー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="assets/icon-512.png">
+
+  <link rel="icon" href="icons/icon-512.png">
+
   <style>
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: #0e0e11;
       color: #eaeaea;
     }
+
     header {
       display: flex;
       align-items: center;
-      padding: 12px;
       gap: 12px;
+      padding: 12px;
     }
+
     header img {
       width: 32px;
       height: 32px;
     }
+
     main {
       padding: 12px;
       max-width: 720px;
-      margin: auto;
+      margin: 0 auto;
     }
+
     section {
       margin-bottom: 16px;
     }
+
     label {
       display: block;
-      margin-top: 8px;
+      margin-top: 10px;
       font-size: 14px;
     }
-    input, textarea, select, button {
+
+    input,
+    textarea,
+    select,
+    button {
       width: 100%;
-      margin-top: 4px;
-      padding: 8px;
+      margin-top: 6px;
+      padding: 10px;
       background: #1b1b22;
       color: #fff;
       border: 1px solid #333;
       border-radius: 6px;
       font-size: 14px;
     }
+
+    textarea {
+      resize: vertical;
+    }
+
     button {
       cursor: pointer;
     }
-    .row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .row > * {
-      flex: 1;
-    }
+
     #advanced {
-      display: none;
-      border-top: 1px solid #333;
+      margin-top: 12px;
       padding-top: 12px;
+      border-top: 1px solid #333;
     }
+
     #output img {
       max-width: 100%;
-      margin-top: 8px;
+      display: block;
+      margin-top: 12px;
       border-radius: 6px;
     }
+
     .notice {
       font-size: 12px;
-      opacity: 0.8;
-      margin-top: 4px;
+      opacity: 0.75;
+      margin-top: 6px;
+    }
+
+    footer {
+      margin-top: 32px;
+      text-align: center;
+      font-size: 12px;
+      opacity: 0.6;
     }
   </style>
 </head>
 
 <body>
+
 <header>
-  <img src="assets/icon-512.png" alt="Steggy">
-  <strong>Steggy 2.0 <span style="opacity:.7">ステギー</span></strong>
+  <img src="icons/icon-512.png" alt="Steggy icon">
+  <strong>Steggy 2.0 <span style="opacity:0.7">ステギー</span></strong>
 </header>
 
 <main>
+
   <section>
-    <label>Mode</label>
+    <label for="mode">Mode</label>
     <select id="mode">
       <option value="encrypt">Encrypt</option>
       <option value="decrypt">Decrypt</option>
@@ -91,62 +112,67 @@
   </section>
 
   <section>
-    <label>Image</label>
+    <label for="imageInput">Image</label>
     <input type="file" id="imageInput" accept="image/*">
   </section>
 
   <section id="encryptSection">
-    <label>Protected Message</label>
-    <textarea id="protectedMsg" rows="5"></textarea>
+    <label for="protectedMsg">Protected Message</label>
+    <textarea id="protectedMsg" rows="6"></textarea>
 
-    <label>Decoy Message</label>
-    <textarea id="decoyMsg" rows="3"></textarea>
+    <label for="decoyMsg">Decoy Message</label>
+    <textarea id="decoyMsg" rows="4"></textarea>
   </section>
 
   <section id="decryptSection" style="display:none">
-    <div class="notice">Decrypted output will appear below.</div>
+    <div class="notice">Decrypted content will appear below.</div>
   </section>
 
   <section>
-    <button id="toggleAdvanced">Advanced Settings</button>
+    <button id="toggleAdvanced" type="button">
+      Advanced Settings
+    </button>
+
     <div id="advanced">
-      <label>Encryption Method</label>
+      <label for="method">Encryption Method</label>
       <select id="method">
         <option value="none">None</option>
         <option value="aes">AES-GCM</option>
         <option value="pgp">PGP</option>
       </select>
 
-      <div id="aesFields" style="display:none">
-        <label>Password</label>
+      <div id="aesFields">
+        <label for="aesPassword">AES Password</label>
         <input type="password" id="aesPassword">
       </div>
 
-      <div id="pgpFields" style="display:none">
-        <label>Public Key</label>
-        <textarea id="pgpPublic" rows="4"></textarea>
+      <div id="pgpFields">
+        <label for="pgpPublic">PGP Public Key</label>
+        <textarea id="pgpPublic" rows="5"></textarea>
 
-        <label>Private Key</label>
-        <textarea id="pgpPrivate" rows="4"></textarea>
+        <label for="pgpPrivate">PGP Private Key</label>
+        <textarea id="pgpPrivate" rows="5"></textarea>
 
-        <label>Passphrase</label>
+        <label for="pgpPass">PGP Passphrase</label>
         <input type="password" id="pgpPass">
-        <button id="genKeys">Generate PGP Keys</button>
-        <button id="downloadPub">Download Public Key</button>
-        <button id="downloadPriv">Download Private Key</button>
+
+        <button id="genKeys" type="button">Generate PGP Keys</button>
+        <button id="downloadPub" type="button">Download Public Key</button>
+        <button id="downloadPriv" type="button">Download Private Key</button>
       </div>
     </div>
   </section>
 
   <section>
-    <button id="run">Run</button>
+    <button id="run" type="button">Run</button>
   </section>
 
   <section id="output"></section>
 
-  <footer class="notice">
+  <footer>
     Created by Dan
   </footer>
+
 </main>
 
 <script type="module" src="ui/app.js"></script>
