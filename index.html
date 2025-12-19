@@ -2,157 +2,88 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Steggy 2.0 ステギー</title>
+  <title>Steggy 2.0</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="icons/icon-512.png">
-
   <style>
     body {
-      margin: 0;
+      background: #111;
+      color: #eee;
       font-family: system-ui, sans-serif;
-      background: #0e0e11;
-      color: #eaeaea;
+      padding: 1rem;
     }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-    }
-    header img {
-      width: 32px;
-      height: 32px;
-    }
-    main {
-      padding: 12px;
-      max-width: 720px;
-      margin: auto;
-    }
-    section {
-      margin-bottom: 16px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-size: 14px;
-    }
-    input, textarea, select, button {
+    select, textarea, input, button {
       width: 100%;
-      margin-top: 6px;
-      padding: 10px;
-      background: #1b1b22;
-      color: #fff;
-      border: 1px solid #333;
-      border-radius: 6px;
-      font-size: 14px;
+      margin: 0.4rem 0;
+      padding: 0.5rem;
+      background: #222;
+      color: #eee;
+      border: 1px solid #444;
     }
     button {
       cursor: pointer;
     }
     #advanced {
-      margin-top: 12px;
-      padding-top: 12px;
       border-top: 1px solid #333;
+      margin-top: 1rem;
+      padding-top: 1rem;
     }
     #output img {
       max-width: 100%;
-      margin-top: 10px;
-      border-radius: 6px;
-    }
-    .notice {
-      font-size: 12px;
-      opacity: 0.7;
-      margin-top: 6px;
-    }
-    footer {
-      margin-top: 32px;
-      text-align: center;
-      font-size: 12px;
-      opacity: 0.6;
+      margin-top: 1rem;
     }
   </style>
 </head>
 
 <body>
+  <h1>Steggy 2.0 ステギー</h1>
 
-<header>
-  <img src="icons/icon-512.png" alt="Steggy">
-  <strong>Steggy 2.0 <span style="opacity:.7">ステギー</span></strong>
-</header>
+  <label>Mode</label>
+  <select id="mode">
+    <option value="encrypt">Encrypt</option>
+    <option value="decrypt">Decrypt</option>
+    <option value="sstv-decode">SSTV Decode</option>
+  </select>
 
-<main>
+  <input type="file" id="imageInput">
 
-  <section>
-    <label>Mode</label>
-    <select id="mode">
-      <option value="encrypt">Encrypt</option>
-      <option value="decrypt">Decrypt</option>
-      <option value="sstv-decode">SSTV Decode</option>
-    </select>
-  </section>
+  <div id="sstvSection" style="display:none">
+    <label>SSTV WAV File</label>
+    <input type="file" id="sstvInput"
+      accept="audio/wav,audio/wave,audio/x-wav">
+  </div>
 
-  <section>
-    <label id="imageLabel">Image</label>
-    <input type="file" id="imageInput" accept="image/*">
-  </section>
+  <label>Method</label>
+  <select id="method">
+    <option value="aes">AES-GCM</option>
+    <option value="pgp">PGP</option>
+  </select>
 
-  <section id="sstvSection" style="display:none">
-    <label>Audio File (SSTV)</label>
-    <input type="file" id="sstvInput" accept="audio/*">
-  </section>
+  <div id="aesFields">
+    <input type="password" id="aesPassword" placeholder="AES Password">
+  </div>
 
-  <section id="encryptSection">
-    <label>Protected Message</label>
-    <textarea id="protectedMsg" rows="6"></textarea>
+  <div id="pgpFields">
+    <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
+    <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
+    <input type="password" id="pgpPass" placeholder="PGP Passphrase (optional)">
+    <button id="genKeys">Generate PGP Keys</button>
+    <button id="downloadPub">Download Public Key</button>
+    <button id="downloadPriv">Download Private Key</button>
+  </div>
 
-    <label>Decoy Message</label>
-    <textarea id="decoyMsg" rows="4"></textarea>
-  </section>
+  <textarea id="protectedMsg" placeholder="Protected message"></textarea>
+  <textarea id="decoyMsg" placeholder="Decoy message"></textarea>
 
-  <section>
-    <button id="toggleAdvanced" type="button">Advanced Settings</button>
-    <div id="advanced">
-      <label>Encryption Method</label>
-      <select id="method">
-        <option value="none">None</option>
-        <option value="aes">AES-GCM</option>
-        <option value="pgp">PGP</option>
-      </select>
+  <button id="toggleAdvanced">Advanced Settings</button>
 
-      <div id="aesFields">
-        <label>Password</label>
-        <input type="password" id="aesPassword">
-      </div>
+  <div id="advanced">
+    <p>Advanced options ready.</p>
+  </div>
 
-      <div id="pgpFields">
-        <label>PGP Public Key</label>
-        <textarea id="pgpPublic" rows="5"></textarea>
+  <button id="run">Run</button>
 
-        <label>PGP Private Key</label>
-        <textarea id="pgpPrivate" rows="5"></textarea>
+  <div id="output"></div>
 
-        <label>PGP Passphrase</label>
-        <input type="password" id="pgpPass">
-
-        <button id="genKeys" type="button">Generate PGP Keys</button>
-        <button id="downloadPub" type="button">Download Public Key</button>
-        <button id="downloadPriv" type="button">Download Private Key</button>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <button id="run" type="button">Run</button>
-  </section>
-
-  <section id="hashPanel" class="notice"></section>
-
-  <section id="output"></section>
-
-  <footer>Created by Dan</footer>
-
-</main>
-
-<script type="module" src="ui/app.js"></script>
+  <script type="module" src="ui/app.js"></script>
 </body>
 </html>
