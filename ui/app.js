@@ -1,125 +1,104 @@
 import { encryptImageData, decryptImageData } from "../core/steggy-core.js";
-import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
-import { decodeSSTVFromAudio } from "../modules/steggy-sstv-decode.js";
+import { generatePGPKeypair } from "../modules/steggy-pgp.js";
 
 const $ = id => document.getElementById(id);
 
-let imageData = null;
-let currentImageURL = null;
-
-const canvas = $("canvas");
-const ctx = canvas.getContext("2d");
+const state = {
+  image: null
+};
 
 $("toggleAdvanced").onclick = () => {
-  $("advanced").classList.toggle("hidden");
+  $("advanced").style.display =
+    $("advanced").style.display === "none" ? "block" : "none";
+};
+
+$("method").onchange = () => {
+  $("aesFields").style.display = $("method").value === "aes" ? "block" : "none";
+  $("pgpFields").style.display = $("method").value === "pgp" ? "block" : "none";
 };
 
 $("mode").onchange = () => {
-  const mode = $("mode").value;
-
-  $("imageInput").classList.toggle("hidden", mode === "sstv-decode");
-  $("audioInput").classList.toggle("hidden", mode !== "sstv-decode");
-
-  $("protectedMessage").classList.toggle("hidden", mode !== "encrypt");
-  $("decoyMessage").classList.toggle("hidden", mode !== "encrypt");
-
-  $("output").classList.add("hidden");
+  const m = $("mode").value;
+  $("encryptSection").style.display = m === "encrypt" ? "block" : "none";
+  $("decryptSection").style.display = m === "decrypt" ? "block" : "none";
 };
 
 $("imageInput").onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const img = new Image();
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.classList.remove("hidden");
-    ctx.drawImage(img, 0, 0);
-    imageData = ctx.getImageData(0, 0, img.width, img.height);
-  };
-  img.src = URL.createObjectURL(file);
+  state.image = e.target.files[0];
 };
 
-$("generatePGP").onclick = async () => {
-  const passphrase = prompt("Enter a passphrase for your private key:");
-  if (!passphrase) return;
-
-  const { publicKey, privateKey } = await generatePGPKeyPair(passphrase);
-  $("pgpPublicKey").value = publicKey;
-  $("pgpPrivateKey").value = privateKey;
-  $("pgpPassphrase").value = passphrase;
+$("genKeys").onclick = async () => {
+  const kp = await generatePGPKeypair();
+  $("pgpPublic").value = kp.publicKey;
+  $("pgpPrivate").value = kp.privateKey;
 };
 
-function downloadText(filename, text) {
-  const blob = new Blob([text], { type: "text/plain" });
+function download(name, text) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
+  a.href = URL.createObjectURL(new Blob([text]));
+  a.download = name;
   a.click();
 }
 
-$("downloadPublic").onclick = () => {
-  downloadText("steggy_public.asc", $("pgpPublicKey").value);
-};
-
-$("downloadPrivate").onclick = () => {
-  downloadText("steggy_private.asc", $("pgpPrivateKey").value);
-};
+$("downloadPub").onclick = () =>
+  download("public.asc", $("pgpPublic").value);
+$("downloadPriv").onclick = () =>
+  download("private.asc", $("pgpPrivate").value);
 
 $("run").onclick = async () => {
+  if (!state.image) return alert("Select an image");
+
+  const img = new Image();
+  img.src = URL.createObjectURL(state.image);
+  await img.decode();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  let imageData = ctx.getImageData(0, 0, img.width, img.height);
+
   try {
-    const mode = $("mode").value;
+    let result;
 
-    if (mode === "sstv-decode") {
-      const file = $("audioInput").files[0];
-      if (!file) return alert("No audio file");
+    if ($("mode").value === "encrypt") {
+      result = await encryptImageData(
+        imageData,
+        $("protectedMsg").value,
+        $("decoyMsg").value,
+        {
+          method: $("method").value,
+          password: $("aesPassword").value,
+          pgpPublicKey: $("pgpPublic").value
+        }
+      );
+      ctx.putImageData(result, 0, 0);
+    }
 
-      const img = await decodeSSTVFromAudio(file, "martin1");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      canvas.classList.remove("hidden");
-      ctx.putImageData(img, 0, 0);
-      $("downloadImage").classList.remove("hidden");
+    if ($("mode").value === "decrypt") {
+      const msg = await decryptImageData(imageData, {
+        password: $("aesPassword").value,
+        pgpPrivateKey: $("pgpPrivate").value,
+        pgpPassphrase: $("pgpPass").value
+      });
+      $("output").innerText = msg;
       return;
     }
 
-    if (!imageData) return alert("No image loaded");
+    const outImg = document.createElement("img");
+    outImg.src = canvas.toDataURL("image/png");
 
-    const options = {
-      method: $("method").value,
-      password: $("password").value,
-      pgpPublicKey: $("pgpPublicKey").value,
-      pgpPrivateKey: $("pgpPrivateKey").value,
-      pgpPassphrase: $("pgpPassphrase").value
-    };
+    const dl = document.createElement("a");
+    dl.href = outImg.src;
+    dl.download = "steggy.png";
+    dl.textContent = "Download image";
 
-    if (mode === "encrypt") {
-      const result = await encryptImageData(
-        imageData,
-        $("protectedMessage").value,
-        $("decoyMessage").value,
-        options
-      );
+    $("output").innerHTML = "";
+    $("output").append(outImg, dl);
 
-      ctx.putImageData(result, 0, 0);
-      imageData = result;
-      $("downloadImage").classList.remove("hidden");
-    } else {
-      const msg = await decryptImageData(imageData, options);
-      $("output").value = msg;
-      $("output").classList.remove("hidden");
-    }
-  } catch (err) {
-    alert(err.message);
+  } catch (e) {
+    alert(e.message);
   }
-};
-
-$("downloadImage").onclick = () => {
-  canvas.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "steggy_output.png";
-    a.click();
-  });
 };
