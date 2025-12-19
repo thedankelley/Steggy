@@ -1,155 +1,154 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Steggy ステギー</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#111111" />
+  <meta charset="UTF-8">
+  <title>Steggy 2.0 ステギー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="assets/icon-512.png">
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #111;
-      color: #eee;
+      font-family: system-ui, sans-serif;
+      background: #0e0e11;
+      color: #eaeaea;
     }
-
     header {
       display: flex;
       align-items: center;
+      padding: 12px;
       gap: 12px;
-      padding: 12px 16px;
-      background: #000;
     }
-
     header img {
       width: 32px;
       height: 32px;
     }
-
     main {
-      padding: 16px;
-      max-width: 820px;
+      padding: 12px;
+      max-width: 720px;
       margin: auto;
     }
-
-    h3 {
-      margin-top: 24px;
-      margin-bottom: 8px;
+    section {
+      margin-bottom: 16px;
     }
-
-    select, textarea, input, button {
+    label {
+      display: block;
+      margin-top: 8px;
+      font-size: 14px;
+    }
+    input, textarea, select, button {
       width: 100%;
-      box-sizing: border-box;
-      margin-bottom: 12px;
-      padding: 10px;
-      background: #1e1e1e;
+      margin-top: 4px;
+      padding: 8px;
+      background: #1b1b22;
       color: #fff;
-      border: 1px solid #444;
+      border: 1px solid #333;
       border-radius: 6px;
-      font-size: 1em;
+      font-size: 14px;
     }
-
-    textarea {
-      min-height: 96px;
-      resize: vertical;
-    }
-
     button {
       cursor: pointer;
-      background: #2b2b2b;
     }
-
-    button.secondary {
-      background: #1a1a1a;
-    }
-
-    .hidden {
-      display: none;
-    }
-
     .row {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       flex-wrap: wrap;
     }
-
-    .row > button {
+    .row > * {
       flex: 1;
     }
-
-    canvas {
-      width: 100%;
+    #advanced {
+      display: none;
+      border-top: 1px solid #333;
+      padding-top: 12px;
+    }
+    #output img {
       max-width: 100%;
-      margin-top: 16px;
+      margin-top: 8px;
       border-radius: 6px;
     }
-
-    footer {
-      text-align: center;
-      opacity: 0.6;
-      font-size: 0.9em;
-      margin: 32px 0 16px;
+    .notice {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 4px;
     }
   </style>
 </head>
 
 <body>
 <header>
-  <img src="./icons/icon-512.png" alt="Steggy">
-  <strong>Steggy ステギー</strong>
+  <img src="assets/icon-512.png" alt="Steggy">
+  <strong>Steggy 2.0 <span style="opacity:.7">ステギー</span></strong>
 </header>
 
 <main>
-  <select id="mode">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
-    <option value="sstv-decode">SSTV Decode</option>
-  </select>
+  <section>
+    <label>Mode</label>
+    <select id="mode">
+      <option value="encrypt">Encrypt</option>
+      <option value="decrypt">Decrypt</option>
+      <option value="sstv-decode">SSTV Decode</option>
+    </select>
+  </section>
 
-  <input id="imageInput" type="file" accept="image/*">
-  <input id="audioInput" type="file" accept="audio/*" class="hidden">
+  <section>
+    <label>Image</label>
+    <input type="file" id="imageInput" accept="image/*">
+  </section>
 
-  <textarea id="protectedMessage" placeholder="Protected message"></textarea>
-  <textarea id="decoyMessage" placeholder="Decoy message"></textarea>
+  <section id="encryptSection">
+    <label>Protected Message</label>
+    <textarea id="protectedMsg" rows="5"></textarea>
 
-  <select id="method">
-    <option value="none">No encryption</option>
-    <option value="aes">AES-GCM</option>
-    <option value="pgp">PGP</option>
-  </select>
+    <label>Decoy Message</label>
+    <textarea id="decoyMsg" rows="3"></textarea>
+  </section>
 
-  <input id="password" type="password" placeholder="AES password">
+  <section id="decryptSection" style="display:none">
+    <div class="notice">Decrypted output will appear below.</div>
+  </section>
 
-  <button id="toggleAdvanced">Advanced Settings</button>
+  <section>
+    <button id="toggleAdvanced">Advanced Settings</button>
+    <div id="advanced">
+      <label>Encryption Method</label>
+      <select id="method">
+        <option value="none">None</option>
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+      </select>
 
-  <section id="advanced" class="hidden">
-    <h3>PGP Keys</h3>
+      <div id="aesFields" style="display:none">
+        <label>Password</label>
+        <input type="password" id="aesPassword">
+      </div>
 
-    <button id="generatePGP">Generate PGP Key Pair</button>
+      <div id="pgpFields" style="display:none">
+        <label>Public Key</label>
+        <textarea id="pgpPublic" rows="4"></textarea>
 
-    <textarea id="pgpPublicKey" placeholder="PGP Public Key"></textarea>
-    <textarea id="pgpPrivateKey" placeholder="PGP Private Key"></textarea>
-    <input id="pgpPassphrase" type="password" placeholder="PGP Passphrase">
+        <label>Private Key</label>
+        <textarea id="pgpPrivate" rows="4"></textarea>
 
-    <div class="row">
-      <button id="downloadPublic" class="secondary">Download Public Key</button>
-      <button id="downloadPrivate" class="secondary">Download Private Key</button>
+        <label>Passphrase</label>
+        <input type="password" id="pgpPass">
+        <button id="genKeys">Generate PGP Keys</button>
+        <button id="downloadPub">Download Public Key</button>
+        <button id="downloadPriv">Download Private Key</button>
+      </div>
     </div>
   </section>
 
-  <button id="run">Run</button>
-  <button id="downloadImage" class="secondary hidden">Download Image</button>
+  <section>
+    <button id="run">Run</button>
+  </section>
 
-  <canvas id="canvas" class="hidden"></canvas>
+  <section id="output"></section>
 
-  <textarea id="output" class="hidden" readonly></textarea>
+  <footer class="notice">
+    Created by Dan
+  </footer>
 </main>
 
-<footer>
-  Created by Dan
-</footer>
-
-<script type="module" src="./ui/app.js"></script>
+<script type="module" src="ui/app.js"></script>
 </body>
 </html>
