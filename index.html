@@ -4,49 +4,39 @@
   <meta charset="UTF-8">
   <title>Steggy 2.0 ステギー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <link rel="icon" href="icons/icon-512.png">
 
   <style>
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: system-ui, sans-serif;
       background: #0e0e11;
       color: #eaeaea;
     }
-
     header {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 12px;
     }
-
     header img {
       width: 32px;
       height: 32px;
     }
-
     main {
       padding: 12px;
       max-width: 720px;
-      margin: 0 auto;
+      margin: auto;
     }
-
     section {
       margin-bottom: 16px;
     }
-
     label {
       display: block;
       margin-top: 10px;
       font-size: 14px;
     }
-
-    input,
-    textarea,
-    select,
-    button {
+    input, textarea, select, button {
       width: 100%;
       margin-top: 6px;
       padding: 10px;
@@ -56,34 +46,24 @@
       border-radius: 6px;
       font-size: 14px;
     }
-
-    textarea {
-      resize: vertical;
-    }
-
     button {
       cursor: pointer;
     }
-
     #advanced {
       margin-top: 12px;
       padding-top: 12px;
       border-top: 1px solid #333;
     }
-
     #output img {
       max-width: 100%;
-      display: block;
-      margin-top: 12px;
+      margin-top: 10px;
       border-radius: 6px;
     }
-
     .notice {
       font-size: 12px;
-      opacity: 0.75;
+      opacity: 0.7;
       margin-top: 6px;
     }
-
     footer {
       margin-top: 32px;
       text-align: center;
@@ -96,14 +76,14 @@
 <body>
 
 <header>
-  <img src="icons/icon-512.png" alt="Steggy icon">
-  <strong>Steggy 2.0 <span style="opacity:0.7">ステギー</span></strong>
+  <img src="icons/icon-512.png" alt="Steggy">
+  <strong>Steggy 2.0 <span style="opacity:.7">ステギー</span></strong>
 </header>
 
 <main>
 
   <section>
-    <label for="mode">Mode</label>
+    <label>Mode</label>
     <select id="mode">
       <option value="encrypt">Encrypt</option>
       <option value="decrypt">Decrypt</option>
@@ -112,29 +92,27 @@
   </section>
 
   <section>
-    <label for="imageInput">Image</label>
+    <label id="imageLabel">Image</label>
     <input type="file" id="imageInput" accept="image/*">
   </section>
 
+  <section id="sstvSection" style="display:none">
+    <label>Audio File (SSTV)</label>
+    <input type="file" id="sstvInput" accept="audio/*">
+  </section>
+
   <section id="encryptSection">
-    <label for="protectedMsg">Protected Message</label>
+    <label>Protected Message</label>
     <textarea id="protectedMsg" rows="6"></textarea>
 
-    <label for="decoyMsg">Decoy Message</label>
+    <label>Decoy Message</label>
     <textarea id="decoyMsg" rows="4"></textarea>
   </section>
 
-  <section id="decryptSection" style="display:none">
-    <div class="notice">Decrypted content will appear below.</div>
-  </section>
-
   <section>
-    <button id="toggleAdvanced" type="button">
-      Advanced Settings
-    </button>
-
+    <button id="toggleAdvanced" type="button">Advanced Settings</button>
     <div id="advanced">
-      <label for="method">Encryption Method</label>
+      <label>Encryption Method</label>
       <select id="method">
         <option value="none">None</option>
         <option value="aes">AES-GCM</option>
@@ -142,18 +120,18 @@
       </select>
 
       <div id="aesFields">
-        <label for="aesPassword">AES Password</label>
+        <label>Password</label>
         <input type="password" id="aesPassword">
       </div>
 
       <div id="pgpFields">
-        <label for="pgpPublic">PGP Public Key</label>
+        <label>PGP Public Key</label>
         <textarea id="pgpPublic" rows="5"></textarea>
 
-        <label for="pgpPrivate">PGP Private Key</label>
+        <label>PGP Private Key</label>
         <textarea id="pgpPrivate" rows="5"></textarea>
 
-        <label for="pgpPass">PGP Passphrase</label>
+        <label>PGP Passphrase</label>
         <input type="password" id="pgpPass">
 
         <button id="genKeys" type="button">Generate PGP Keys</button>
@@ -167,11 +145,11 @@
     <button id="run" type="button">Run</button>
   </section>
 
+  <section id="hashPanel" class="notice"></section>
+
   <section id="output"></section>
 
-  <footer>
-    Created by Dan
-  </footer>
+  <footer>Created by Dan</footer>
 
 </main>
 
