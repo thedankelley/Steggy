@@ -3,68 +3,96 @@ import { generatePGPKeypair } from "../modules/steggy-pgp.js";
 
 const $ = id => document.getElementById(id);
 
-const state = {
-  image: null
+const uiState = {
+  advancedOpen: false,
+  imageFile: null
 };
 
-$("toggleAdvanced").onclick = () => {
-  $("advanced").style.display =
-    $("advanced").style.display === "none" ? "block" : "none";
-};
+/* ---------- Initial UI Setup ---------- */
 
-$("method").onchange = () => {
-  $("aesFields").style.display = $("method").value === "aes" ? "block" : "none";
-  $("pgpFields").style.display = $("method").value === "pgp" ? "block" : "none";
-};
+$("advanced").style.display = "none";
+$("aesFields").style.display = "none";
+$("pgpFields").style.display = "none";
 
-$("mode").onchange = () => {
-  const m = $("mode").value;
-  $("encryptSection").style.display = m === "encrypt" ? "block" : "none";
-  $("decryptSection").style.display = m === "decrypt" ? "block" : "none";
-};
+/* ---------- Mode Switching ---------- */
 
-$("imageInput").onchange = e => {
-  state.image = e.target.files[0];
-};
+$("mode").addEventListener("change", () => {
+  const mode = $("mode").value;
 
-$("genKeys").onclick = async () => {
-  const kp = await generatePGPKeypair();
-  $("pgpPublic").value = kp.publicKey;
-  $("pgpPrivate").value = kp.privateKey;
-};
+  $("encryptSection").style.display = mode === "encrypt" ? "block" : "none";
+  $("decryptSection").style.display = mode === "decrypt" ? "block" : "none";
+});
 
-function download(name, text) {
+/* ---------- Advanced Toggle ---------- */
+
+$("toggleAdvanced").addEventListener("click", () => {
+  uiState.advancedOpen = !uiState.advancedOpen;
+  $("advanced").style.display = uiState.advancedOpen ? "block" : "none";
+});
+
+/* ---------- Method Selection ---------- */
+
+$("method").addEventListener("change", () => {
+  const method = $("method").value;
+
+  $("aesFields").style.display = method === "aes" ? "block" : "none";
+  $("pgpFields").style.display = method === "pgp" ? "block" : "none";
+});
+
+/* ---------- Image Load ---------- */
+
+$("imageInput").addEventListener("change", e => {
+  uiState.imageFile = e.target.files[0] || null;
+});
+
+/* ---------- PGP ---------- */
+
+$("genKeys").addEventListener("click", async () => {
+  const keys = await generatePGPKeypair();
+  $("pgpPublic").value = keys.publicKey;
+  $("pgpPrivate").value = keys.privateKey;
+});
+
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/plain" });
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text]));
-  a.download = name;
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
   a.click();
 }
 
-$("downloadPub").onclick = () =>
-  download("public.asc", $("pgpPublic").value);
-$("downloadPriv").onclick = () =>
-  download("private.asc", $("pgpPrivate").value);
+$("downloadPub").addEventListener("click", () => {
+  downloadText("steggy_public.asc", $("pgpPublic").value);
+});
 
-$("run").onclick = async () => {
-  if (!state.image) return alert("Select an image");
+$("downloadPriv").addEventListener("click", () => {
+  downloadText("steggy_private.asc", $("pgpPrivate").value);
+});
+
+/* ---------- Run ---------- */
+
+$("run").addEventListener("click", async () => {
+  if (!uiState.imageFile) {
+    alert("Please select an image.");
+    return;
+  }
 
   const img = new Image();
-  img.src = URL.createObjectURL(state.image);
+  img.src = URL.createObjectURL(uiState.imageFile);
   await img.decode();
 
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
+
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0);
 
   let imageData = ctx.getImageData(0, 0, img.width, img.height);
 
   try {
-    let result;
-
     if ($("mode").value === "encrypt") {
-      result = await encryptImageData(
+      const result = await encryptImageData(
         imageData,
         $("protectedMsg").value,
         $("decoyMsg").value,
@@ -74,7 +102,19 @@ $("run").onclick = async () => {
           pgpPublicKey: $("pgpPublic").value
         }
       );
+
       ctx.putImageData(result, 0, 0);
+
+      const outImg = document.createElement("img");
+      outImg.src = canvas.toDataURL("image/png");
+
+      const dl = document.createElement("a");
+      dl.href = outImg.src;
+      dl.download = "steggy.png";
+      dl.textContent = "Download image";
+
+      $("output").innerHTML = "";
+      $("output").append(outImg, dl);
     }
 
     if ($("mode").value === "decrypt") {
@@ -83,22 +123,11 @@ $("run").onclick = async () => {
         pgpPrivateKey: $("pgpPrivate").value,
         pgpPassphrase: $("pgpPass").value
       });
-      $("output").innerText = msg;
-      return;
+
+      $("output").textContent = msg;
     }
 
-    const outImg = document.createElement("img");
-    outImg.src = canvas.toDataURL("image/png");
-
-    const dl = document.createElement("a");
-    dl.href = outImg.src;
-    dl.download = "steggy.png";
-    dl.textContent = "Download image";
-
-    $("output").innerHTML = "";
-    $("output").append(outImg, dl);
-
-  } catch (e) {
-    alert(e.message);
+  } catch (err) {
+    alert(err.message);
   }
-};
+});
