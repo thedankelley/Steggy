@@ -1,57 +1,77 @@
-import { encryptImageData, decryptImageData } from "../core/steggy-core.js";
-import { generatePGPKeypair } from "../modules/steggy-pgp.js";
-
 const $ = id => document.getElementById(id);
 
 const uiState = {
   advancedOpen: false,
-  imageFile: null
+  imageFile: null,
+  cryptoReady: false,
+  core: null,
+  pgp: null
 };
 
-/* ---------- Initial UI Setup ---------- */
+/* ---------- UI ALWAYS WIRES FIRST ---------- */
 
-$("advanced").style.display = "none";
-$("aesFields").style.display = "none";
-$("pgpFields").style.display = "none";
+function initUI() {
+  $("advanced").style.display = "none";
+  $("aesFields").style.display = "none";
+  $("pgpFields").style.display = "none";
 
-/* ---------- Mode Switching ---------- */
+  $("toggleAdvanced").addEventListener("click", () => {
+    uiState.advancedOpen = !uiState.advancedOpen;
+    $("advanced").style.display = uiState.advancedOpen ? "block" : "none";
+  });
 
-$("mode").addEventListener("change", () => {
-  const mode = $("mode").value;
+  $("method").addEventListener("change", () => {
+    const m = $("method").value;
+    $("aesFields").style.display = m === "aes" ? "block" : "none";
+    $("pgpFields").style.display = m === "pgp" ? "block" : "none";
+  });
 
-  $("encryptSection").style.display = mode === "encrypt" ? "block" : "none";
-  $("decryptSection").style.display = mode === "decrypt" ? "block" : "none";
-});
+  $("mode").addEventListener("change", () => {
+    const m = $("mode").value;
+    $("encryptSection").style.display = m === "encrypt" ? "block" : "none";
+    $("decryptSection").style.display = m === "decrypt" ? "block" : "none";
+  });
 
-/* ---------- Advanced Toggle ---------- */
+  $("imageInput").addEventListener("change", e => {
+    uiState.imageFile = e.target.files[0] || null;
+  });
 
-$("toggleAdvanced").addEventListener("click", () => {
-  uiState.advancedOpen = !uiState.advancedOpen;
-  $("advanced").style.display = uiState.advancedOpen ? "block" : "none";
-});
+  $("genKeys").addEventListener("click", async () => {
+    if (!uiState.pgp) {
+      alert("PGP module not loaded");
+      return;
+    }
+    const keys = await uiState.pgp.generatePGPKeypair();
+    $("pgpPublic").value = keys.publicKey;
+    $("pgpPrivate").value = keys.privateKey;
+  });
 
-/* ---------- Method Selection ---------- */
+  $("downloadPub").addEventListener("click", () =>
+    downloadText("steggy_public.asc", $("pgpPublic").value)
+  );
 
-$("method").addEventListener("change", () => {
-  const method = $("method").value;
+  $("downloadPriv").addEventListener("click", () =>
+    downloadText("steggy_private.asc", $("pgpPrivate").value)
+  );
 
-  $("aesFields").style.display = method === "aes" ? "block" : "none";
-  $("pgpFields").style.display = method === "pgp" ? "block" : "none";
-});
+  $("run").addEventListener("click", runAction);
+}
 
-/* ---------- Image Load ---------- */
+/* ---------- SAFE MODULE LOAD ---------- */
 
-$("imageInput").addEventListener("change", e => {
-  uiState.imageFile = e.target.files[0] || null;
-});
+async function loadCrypto() {
+  try {
+    uiState.core = await import("../core/steggy-core.js");
+    uiState.pgp = await import("../modules/steggy-pgp.js");
+    uiState.cryptoReady = true;
+    console.log("Steggy crypto loaded");
+  } catch (err) {
+    console.error(err);
+    alert("Crypto modules failed to load. Check folder paths.");
+  }
+}
 
-/* ---------- PGP ---------- */
-
-$("genKeys").addEventListener("click", async () => {
-  const keys = await generatePGPKeypair();
-  $("pgpPublic").value = keys.publicKey;
-  $("pgpPrivate").value = keys.privateKey;
-});
+/* ---------- HELPERS ---------- */
 
 function downloadText(filename, text) {
   const blob = new Blob([text], { type: "text/plain" });
@@ -61,17 +81,14 @@ function downloadText(filename, text) {
   a.click();
 }
 
-$("downloadPub").addEventListener("click", () => {
-  downloadText("steggy_public.asc", $("pgpPublic").value);
-});
+/* ---------- RUN ---------- */
 
-$("downloadPriv").addEventListener("click", () => {
-  downloadText("steggy_private.asc", $("pgpPrivate").value);
-});
+async function runAction() {
+  if (!uiState.cryptoReady) {
+    alert("Crypto system not ready yet.");
+    return;
+  }
 
-/* ---------- Run ---------- */
-
-$("run").addEventListener("click", async () => {
   if (!uiState.imageFile) {
     alert("Please select an image.");
     return;
@@ -84,7 +101,6 @@ $("run").addEventListener("click", async () => {
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-
   const ctx = canvas.getContext("2d");
   ctx.drawImage(img, 0, 0);
 
@@ -92,7 +108,7 @@ $("run").addEventListener("click", async () => {
 
   try {
     if ($("mode").value === "encrypt") {
-      const result = await encryptImageData(
+      const out = await uiState.core.encryptImageData(
         imageData,
         $("protectedMsg").value,
         $("decoyMsg").value,
@@ -103,31 +119,37 @@ $("run").addEventListener("click", async () => {
         }
       );
 
-      ctx.putImageData(result, 0, 0);
-
-      const outImg = document.createElement("img");
-      outImg.src = canvas.toDataURL("image/png");
-
-      const dl = document.createElement("a");
-      dl.href = outImg.src;
-      dl.download = "steggy.png";
-      dl.textContent = "Download image";
-
-      $("output").innerHTML = "";
-      $("output").append(outImg, dl);
+      ctx.putImageData(out, 0, 0);
+      showImage(canvas);
     }
 
     if ($("mode").value === "decrypt") {
-      const msg = await decryptImageData(imageData, {
+      const msg = await uiState.core.decryptImageData(imageData, {
         password: $("aesPassword").value,
         pgpPrivateKey: $("pgpPrivate").value,
         pgpPassphrase: $("pgpPass").value
       });
-
       $("output").textContent = msg;
     }
-
-  } catch (err) {
-    alert(err.message);
+  } catch (e) {
+    alert(e.message);
   }
-});
+}
+
+function showImage(canvas) {
+  const img = document.createElement("img");
+  img.src = canvas.toDataURL("image/png");
+
+  const dl = document.createElement("a");
+  dl.href = img.src;
+  dl.download = "steggy.png";
+  dl.textContent = "Download image";
+
+  $("output").innerHTML = "";
+  $("output").append(img, dl);
+}
+
+/* ---------- BOOT ---------- */
+
+initUI();
+loadCrypto();
