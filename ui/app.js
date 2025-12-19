@@ -1,85 +1,74 @@
 const $ = id => document.getElementById(id);
 
 let core, pgp, sstv;
-
-/* ---------- INIT ---------- */
+let imageFile = null;
+let sstvFile = null;
 
 async function init() {
   core = await import("../core/steggy-core.js");
   pgp  = await import("../modules/steggy-pgp.js");
   sstv = await import("../modules/steggy-sstv.js");
-
   wireUI();
 }
 
 function wireUI() {
 
-  /* ----- Advanced toggle ----- */
-  let advOpen = false;
   $("advanced").style.display = "none";
+  let adv = false;
 
   $("toggleAdvanced").onclick = () => {
-    advOpen = !advOpen;
-    $("advanced").style.display = advOpen ? "block" : "none";
+    adv = !adv;
+    $("advanced").style.display = adv ? "block" : "none";
   };
 
-  /* ----- Method selection ----- */
   $("method").onchange = () => {
-    const m = $("method").value;
-    $("aesFields").style.display = m === "aes" ? "block" : "none";
-    $("pgpFields").style.display = m === "pgp" ? "block" : "none";
+    $("aesFields").style.display = $("method").value === "aes" ? "block" : "none";
+    $("pgpFields").style.display = $("method").value === "pgp" ? "block" : "none";
   };
 
-  $("aesFields").style.display = "none";
-  $("pgpFields").style.display = "none";
-
-  /* ----- Mode switching ----- */
   $("mode").onchange = () => {
     const m = $("mode").value;
-
-    $("encryptSection").style.display = m === "encrypt" ? "block" : "none";
-    $("sstvSection").style.display   = m === "sstv-decode" ? "block" : "none";
-    $("imageInput").style.display   = m !== "sstv-decode" ? "block" : "none";
+    $("sstvSection").style.display = m === "sstv-decode" ? "block" : "none";
+    $("imageInput").style.display = m === "sstv-decode" ? "none" : "block";
   };
-
-  /* ----- File inputs ----- */
-  let imageFile = null;
-  let sstvFile  = null;
 
   $("imageInput").onchange = e => imageFile = e.target.files[0] || null;
-  $("sstvInput").onchange  = e => sstvFile  = e.target.files[0] || null;
 
-  /* ----- PGP buttons ----- */
+  $("sstvInput").onchange = e => {
+    const f = e.target.files[0];
+    if (!f || !f.type.includes("wav")) {
+      alert("Please select a WAV file");
+      e.target.value = "";
+      return;
+    }
+    sstvFile = f;
+  };
+
   $("genKeys").onclick = async () => {
-    const keys = await pgp.generateKeyPair();
-    $("pgpPublic").value  = keys.publicKey;
-    $("pgpPrivate").value = keys.privateKey;
+    try {
+      const keys = await pgp.generatePGPKeypair();
+      $("pgpPublic").value  = keys.publicKey;
+      $("pgpPrivate").value = keys.privateKey;
+    } catch (e) {
+      alert("PGP generation failed: " + e.message);
+    }
   };
 
-  $("downloadPub").onclick = () => {
-    if (!$("pgpPublic").value) return alert("No public key");
-    download("public.asc", $("pgpPublic").value);
-  };
+  $("downloadPub").onclick = () => download("public.asc", $("pgpPublic").value);
+  $("downloadPriv").onclick = () => download("private.asc", $("pgpPrivate").value);
 
-  $("downloadPriv").onclick = () => {
-    if (!$("pgpPrivate").value) return alert("No private key");
-    download("private.asc", $("pgpPrivate").value);
-  };
-
-  /* ----- Run button ----- */
   $("run").onclick = async () => {
     $("output").innerHTML = "";
 
     try {
-      /* SSTV decode */
       if ($("mode").value === "sstv-decode") {
-        if (!sstvFile) throw new Error("Select SSTV audio");
+        if (!sstvFile) throw new Error("No SSTV file");
         const img = await sstv.decodeSSTV(sstvFile);
         $("output").appendChild(img);
         return;
       }
 
-      if (!imageFile) throw new Error("Select image");
+      if (!imageFile) throw new Error("No image");
 
       const img = new Image();
       img.src = URL.createObjectURL(imageFile);
@@ -88,23 +77,20 @@ function wireUI() {
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
-
       const ctx = canvas.getContext("2d");
       ctx.drawImage(img, 0, 0);
 
       let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
       if ($("mode").value === "encrypt") {
-        data = await core.encryptImageData(
-          data,
+        data = await core.encryptImageData(data,
           $("protectedMsg").value,
           $("decoyMsg").value,
           {
             method: $("method").value,
             password: $("aesPassword").value,
             pgpPublicKey: $("pgpPublic").value
-          }
-        );
+          });
         ctx.putImageData(data, 0, 0);
       }
 
@@ -134,15 +120,12 @@ function wireUI() {
   };
 }
 
-/* ---------- UTIL ---------- */
-
 function download(name, text) {
+  if (!text) return alert("Nothing to download");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([text]));
   a.download = name;
   a.click();
 }
-
-/* ---------- START ---------- */
 
 init();
