@@ -1,142 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Steggy 2.0 | ステギー</title>
-
+  <meta charset="utf-8">
+  <title>Steggy ステギー</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#121212">
-
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icons/icon-192.png">
-
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="ui/styles.css">
 </head>
-
 <body class="dark">
 
-<header class="top-bar">
-  <div class="brand">
-    <img src="icons/icon-192.png" class="logo" alt="Steggy">
-    <div>
-      <div class="title">Steggy 2.0</div>
-      <div class="subtitle">ステギー</div>
-    </div>
-  </div>
-
-  <div class="actions">
-    <button id="themeToggle">🌗</button>
-    <button id="guideBtn">📘</button>
-  </div>
+<header>
+  <img src="icons/icon-512.png" class="logo">
+  <h1>Steggy <span class="jp">ステギー</span></h1>
 </header>
 
-<main class="container">
-
-<section class="card">
-  <label>Mode</label>
-  <select id="modeSelect">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
-  </select>
-</section>
-
-<section class="card">
-  <label>Image</label>
-  <input type="file" id="imageInput" accept="image/*">
-</section>
-
-<section class="card hidden" id="sstvSection">
-  <label>SSTV WAV</label>
-  <input type="file" id="sstvInput" accept="audio/wav">
-</section>
-
-<section class="card">
-  <label>Protected Message</label>
-  <textarea id="payloadInput" rows="6"></textarea>
-</section>
-
-<section class="card">
-  <label>Decoy Message</label>
-  <textarea id="decoyInput" rows="4"></textarea>
-</section>
-
-<button class="expand-btn" id="advancedToggle">
-  Advanced Options
-</button>
-
-<section id="advancedPanel" class="card hidden">
-
-  <label>Encryption Mode</label>
-  <select id="cryptoMode">
-    <option value="none">None</option>
-    <option value="aes">AES</option>
-    <option value="pgp">PGP</option>
-    <option value="both">PGP + AES</option>
-  </select>
-
-  <div id="aesSection" class="subcard hidden">
-    <label>AES Password</label>
-    <input type="password" id="aesPassword">
-  </div>
-
-  <div id="pgpSection" class="subcard hidden">
-    <button id="pgpGenerate">Generate PGP Keys</button>
-
-    <label>Public Key</label>
-    <textarea id="pgpPublic" rows="4"></textarea>
-    <button id="downloadPublic">Download Public</button>
-
-    <label>Private Key</label>
-    <textarea id="pgpPrivate" rows="4"></textarea>
-    <input type="file" id="pgpPrivateFile">
-    <button id="downloadPrivate">Download Private</button>
-
-    <button id="pgpEncryptPayload">
-      Encrypt Payload with Public Key
-    </button>
-  </div>
-
-  <div class="subcard">
-    <label>Fragmentation</label>
-    <select id="fragmentMode">
-      <option value="none">Disabled</option>
-      <option value="auto">Enabled</option>
+<main>
+  <section>
+    <label>Mode</label>
+    <select id="mode">
+      <option value="encrypt">Encrypt</option>
+      <option value="decrypt">Decrypt</option>
     </select>
-  </div>
+  </section>
 
-  <div class="subcard">
-    <label>Metadata</label>
-    <select id="metadataMode">
-      <option value="strip">Strip Metadata</option>
-      <option value="preserve">Preserve Metadata</option>
-    </select>
-  </div>
+  <section>
+    <label>Carrier Image</label>
+    <input type="file" id="imageInput" accept="image/*">
+    <canvas id="previewCanvas"></canvas>
+    <div id="imageHash"></div>
+  </section>
 
-</section>
+  <section id="encryptSection">
+    <label>Protected Message</label>
+    <textarea id="protectedMessage" rows="6"></textarea>
 
-<button class="primary" id="runBtn">Run</button>
+    <label>Decoy Message (optional)</label>
+    <textarea id="decoyMessage" rows="4"></textarea>
 
-<section class="card hidden" id="outputSection">
-  <label>Result</label>
-  <img id="outputImage">
-  <pre id="outputText"></pre>
-  <a id="downloadLink" download>Download</a>
-</section>
+    <button id="advancedToggle">Advanced Options</button>
 
+    <div id="advancedOptions" hidden>
+      <label>Encryption Mode</label>
+      <select id="cryptoMode">
+        <option value="none">None</option>
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="both">AES + PGP</option>
+      </select>
+
+      <div id="aesOptions" hidden>
+        <label>AES Password</label>
+        <input type="password" id="aesPassword">
+      </div>
+
+      <div id="pgpOptions" hidden>
+        <label>PGP Public Key</label>
+        <textarea id="pgpPublicKey" rows="5"></textarea>
+        <button id="generatePGP">Generate PGP Keys</button>
+        <button id="encryptWithPGP">Encrypt Message with Public Key</button>
+        <button id="downloadPGPPub">Download Public Key</button>
+        <button id="downloadPGPPriv">Download Private Key</button>
+        <textarea id="pgpPrivateKey" rows="5" placeholder="Private key will appear here"></textarea>
+      </div>
+
+      <label>
+        <input type="checkbox" id="fragmentToggle">
+        Enable Fragmentation
+      </label>
+    </div>
+
+    <button id="runEncrypt">Run Encrypt</button>
+  </section>
+
+  <section id="decryptSection" hidden>
+    <label>Extract Options</label>
+    <button id="decryptPGP">Decrypt PGP Payload</button>
+    <input type="file" id="pgpKeyUpload">
+    <textarea id="decryptOutput" rows="8"></textarea>
+  </section>
+
+  <section>
+    <img id="outputImage">
+    <a id="downloadLink">Download Image</a>
+  </section>
 </main>
-
-<div id="guideDialog" class="dialog hidden">
-  <div class="dialog-content">
-    <h2>Steggy Guide</h2>
-    <p>
-      Steggy hides information inside images using layered obfuscation.
-      It is intended for journalists, activists, and people operating
-      under surveillance or censorship.
-    </p>
-    <button id="closeGuide">Close</button>
-  </div>
-</div>
 
 <script type="module" src="ui/app.js"></script>
 </body>
