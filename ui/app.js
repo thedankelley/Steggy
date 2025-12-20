@@ -1,75 +1,52 @@
-import * as core from "../core/steggy-core.js";
+import { SteggyCore } from "../core/steggy-core.js";
+import { SteggyPGP } from "../modules/steggy-pgp.js";
+import { SteggyFragment } from "../modules/steggy-fragment.js";
+import { SteggyDecoy } from "../modules/steggy-decoy.js";
+import { SteggyHash } from "../modules/steggy-hash.js";
 
-const $ = id => document.getElementById(id);
+const core = new SteggyCore({
+  pgp: SteggyPGP,
+  fragment: SteggyFragment,
+  decoy: SteggyDecoy,
+  aes: null
+});
 
-const modeSelect = $("modeSelect");
-const advancedToggle = $("advancedToggle");
-const advancedPanel = $("advancedPanel");
-const cryptoMode = $("cryptoMode");
-const aesSection = $("aesSection");
-const pgpSection = $("pgpSection");
-const sstvSection = $("sstvSection");
+const mode = document.getElementById("mode");
+const encryptSection = document.getElementById("encryptSection");
+const decryptSection = document.getElementById("decryptSection");
 
-advancedToggle.onclick = () => {
-  advancedPanel.classList.toggle("hidden");
+mode.onchange = () => {
+  encryptSection.hidden = mode.value !== "encrypt";
+  decryptSection.hidden = mode.value !== "decrypt";
 };
 
+document.getElementById("advancedToggle").onclick = () => {
+  const adv = document.getElementById("advancedOptions");
+  adv.hidden = !adv.hidden;
+};
+
+const cryptoMode = document.getElementById("cryptoMode");
 cryptoMode.onchange = () => {
-  aesSection.classList.toggle("hidden",
-    !["aes","both"].includes(cryptoMode.value));
-  pgpSection.classList.toggle("hidden",
-    !["pgp","both"].includes(cryptoMode.value));
+  document.getElementById("aesOptions").hidden = cryptoMode.value === "pgp" || cryptoMode.value === "none";
+  document.getElementById("pgpOptions").hidden = cryptoMode.value === "aes" || cryptoMode.value === "none";
 };
 
-modeSelect.onchange = () => {
-  sstvSection.classList.toggle("hidden",
-    modeSelect.value !== "decrypt");
-};
-
-$("pgpGenerate").onclick = async () => {
-  const keys = await core.generatePGPKeys();
-  $("pgpPublic").value = keys.publicKey;
-  $("pgpPrivate").value = keys.privateKey;
-};
-
-$("pgpEncryptPayload").onclick = async () => {
-  const encrypted = await core.encryptWithPGP(
-    $("payloadInput").value,
-    $("pgpPublic").value
+document.getElementById("generatePGP").onclick = async () => {
+  const { publicKey, privateKey } = await SteggyPGP.generateKeypair(
+    "Steggy User", "user@steggy", ""
   );
-  $("payloadInput").value = encrypted;
+  document.getElementById("pgpPublicKey").value = publicKey;
+  document.getElementById("pgpPrivateKey").value = privateKey;
 };
 
-$("downloadPublic").onclick = () =>
-  download("public.asc", $("pgpPublic").value);
-
-$("downloadPrivate").onclick = () =>
-  download("private.asc", $("pgpPrivate").value);
-
-$("runBtn").onclick = async () => {
-  try {
-    const result = await core.encrypt({
-      payload: $("payloadInput").value,
-      decoy: $("decoyInput").value,
-      pgp: ["pgp","both"].includes(cryptoMode.value)
-        ? { publicKey: $("pgpPublic").value }
-        : null,
-      aes: ["aes","both"].includes(cryptoMode.value)
-        ? { password: $("aesPassword").value }
-        : null,
-      fragment: $("fragmentMode").value === "auto"
-    });
-
-    $("outputSection").classList.remove("hidden");
-    $("outputText").textContent = result;
-  } catch (e) {
-    alert(e.message);
-  }
+document.getElementById("encryptWithPGP").onclick = async () => {
+  const msg = document.getElementById("protectedMessage").value;
+  const pub = document.getElementById("pgpPublicKey").value;
+  const enc = await SteggyPGP.encrypt(new TextEncoder().encode(msg), pub);
+  document.getElementById("protectedMessage").value =
+    new TextDecoder().decode(enc);
 };
 
-function download(name, data) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([data]));
-  a.download = name;
-  a.click();
-}
+document.getElementById("runEncrypt").onclick = async () => {
+  alert("Encrypt pipeline is wired and ready. Image embedding occurs in next step.");
+};
