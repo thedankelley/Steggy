@@ -1,52 +1,81 @@
-import { SteggyCore } from "../core/steggy-core.js";
-import { SteggyPGP } from "../modules/steggy-pgp.js";
-import { SteggyFragment } from "../modules/steggy-fragment.js";
-import { SteggyDecoy } from "../modules/steggy-decoy.js";
-import { SteggyHash } from "../modules/steggy-hash.js";
+import { SteggySSTV } from "../modules/steggy-sstv.js";
+import { SteggySSTVDecode } from "../modules/steggy-sstv-decode.js";
 
-const core = new SteggyCore({
-  pgp: SteggyPGP,
-  fragment: SteggyFragment,
-  decoy: SteggyDecoy,
-  aes: null
+const modeSelect = document.getElementById("modeSelect");
+
+const sstvEncodeSection = document.getElementById("sstvEncodeSection");
+const sstvDecodeSection = document.getElementById("sstvDecodeSection");
+
+modeSelect.addEventListener("change", () => {
+  sstvEncodeSection.classList.add("hidden");
+  sstvDecodeSection.classList.add("hidden");
+
+  if (modeSelect.value === "sstv-encode") {
+    sstvEncodeSection.classList.remove("hidden");
+  }
+  if (modeSelect.value === "sstv-decode") {
+    sstvDecodeSection.classList.remove("hidden");
+  }
 });
 
-const mode = document.getElementById("mode");
-const encryptSection = document.getElementById("encryptSection");
-const decryptSection = document.getElementById("decryptSection");
+/* ---------- SSTV ENCODE ---------- */
 
-mode.onchange = () => {
-  encryptSection.hidden = mode.value !== "encrypt";
-  decryptSection.hidden = mode.value !== "decrypt";
-};
+const sstvImageInput = document.getElementById("sstvImageInput");
+const sstvMode = document.getElementById("sstvMode");
+const sstvEncodeBtn = document.getElementById("sstvEncodeBtn");
+const sstvAudio = document.getElementById("sstvAudio");
 
-document.getElementById("advancedToggle").onclick = () => {
-  const adv = document.getElementById("advancedOptions");
-  adv.hidden = !adv.hidden;
-};
+sstvEncodeBtn.addEventListener("click", async () => {
+  const file = sstvImageInput.files[0];
+  if (!file) {
+    alert("Please select an image.");
+    return;
+  }
 
-const cryptoMode = document.getElementById("cryptoMode");
-cryptoMode.onchange = () => {
-  document.getElementById("aesOptions").hidden = cryptoMode.value === "pgp" || cryptoMode.value === "none";
-  document.getElementById("pgpOptions").hidden = cryptoMode.value === "aes" || cryptoMode.value === "none";
-};
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  await img.decode();
 
-document.getElementById("generatePGP").onclick = async () => {
-  const { publicKey, privateKey } = await SteggyPGP.generateKeypair(
-    "Steggy User", "user@steggy", ""
-  );
-  document.getElementById("pgpPublicKey").value = publicKey;
-  document.getElementById("pgpPrivateKey").value = privateKey;
-};
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
 
-document.getElementById("encryptWithPGP").onclick = async () => {
-  const msg = document.getElementById("protectedMessage").value;
-  const pub = document.getElementById("pgpPublicKey").value;
-  const enc = await SteggyPGP.encrypt(new TextEncoder().encode(msg), pub);
-  document.getElementById("protectedMessage").value =
-    new TextDecoder().decode(enc);
-};
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
-document.getElementById("runEncrypt").onclick = async () => {
-  alert("Encrypt pipeline is wired and ready. Image embedding occurs in next step.");
-};
+  try {
+    const wavBlob = SteggySSTV.encode(imageData, sstvMode.value);
+    sstvAudio.src = URL.createObjectURL(wavBlob);
+    sstvAudio.classList.remove("hidden");
+  } catch (e) {
+    alert(e.message);
+  }
+});
+
+/* ---------- SSTV DECODE ---------- */
+
+const sstvWavInput = document.getElementById("sstvWavInput");
+const sstvDecodeBtn = document.getElementById("sstvDecodeBtn");
+const sstvDecodedImage = document.getElementById("sstvDecodedImage");
+
+sstvDecodeBtn.addEventListener("click", async () => {
+  const file = sstvWavInput.files[0];
+  if (!file) {
+    alert("Please select a WAV file.");
+    return;
+  }
+
+  try {
+    const imageData = await SteggySSTVDecode.decode(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = imageData.width;
+    canvas.height = imageData.height;
+    canvas.getContext("2d").putImageData(imageData, 0, 0);
+
+    sstvDecodedImage.src = canvas.toDataURL("image/png");
+    sstvDecodedImage.classList.remove("hidden");
+  } catch (e) {
+    alert("Decode failed.");
+  }
+});
