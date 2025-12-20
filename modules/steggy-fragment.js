@@ -1,39 +1,25 @@
-import { crc32 } from "./steggy-crc.js";
+const CHUNK_SIZE = 1024;
 
-export function fragmentPayload(data, fragmentSize = 512) {
-  const bytes = new TextEncoder().encode(data);
-  const total = Math.ceil(bytes.length / fragmentSize);
-  const fragments = [];
-
-  for (let i = 0; i < total; i++) {
-    const payload = bytes.slice(i * fragmentSize, (i + 1) * fragmentSize);
-    const checksum = crc32(payload);
-
-    fragments.push({
-      index: i,
-      total,
-      payload,
-      checksum
-    });
+export function fragment(bytes) {
+  const chunks = [];
+  for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+    chunks.push(bytes.slice(i, i + CHUNK_SIZE));
   }
-  return fragments;
+  return concat(chunks);
 }
 
-export function defragmentPayload(fragments) {
-  fragments.sort((a, b) => a.index - b.index);
+export function reassemble(bytes) {
+  return bytes;
+}
 
-  if (fragments.length !== fragments[0].total) {
-    throw new Error("Incomplete payload");
+function concat(chunks) {
+  let total = 0;
+  chunks.forEach(c => total += c.length);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const c of chunks) {
+    out.set(c, offset);
+    offset += c.length;
   }
-
-  const combined = [];
-
-  for (const f of fragments) {
-    if (crc32(f.payload) !== f.checksum) {
-      throw new Error("Corrupted fragment detected");
-    }
-    combined.push(...f.payload);
-  }
-
-  return new TextDecoder().decode(new Uint8Array(combined));
+  return out;
 }
