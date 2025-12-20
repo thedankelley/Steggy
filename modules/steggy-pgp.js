@@ -1,13 +1,10 @@
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@5.11.0/+esm";
 
-/* ---------- Key Generation ---------- */
-
-export async function generatePGPKeypair() {
+export async function generateKeyPair() {
   const { privateKey, publicKey } = await openpgp.generateKey({
     type: "rsa",
-    rsaBits: 4096,
-    userIDs: [{ name: "Steggy User", email: "user@steggy.local" }],
-    format: "armored"
+    rsaBits: 2048,
+    userIDs: [{ name: "Steggy User" }]
   });
 
   return {
@@ -16,45 +13,25 @@ export async function generatePGPKeypair() {
   };
 }
 
-/* ---------- Encryption ---------- */
-
-export async function pgpEncrypt(message, publicKeyArmored) {
-  if (!publicKeyArmored) {
-    throw new Error("PGP public key is required");
-  }
-
-  const publicKey = await openpgp.readKey({
-    armoredKey: publicKeyArmored
-  });
+export async function encrypt(bytes, publicKeyArmored) {
+  const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
+  const message = await openpgp.createMessage({ binary: bytes });
 
   const encrypted = await openpgp.encrypt({
-    message: await openpgp.createMessage({ text: message }),
+    message,
     encryptionKeys: publicKey
   });
 
-  return encrypted;
+  return new TextEncoder().encode(encrypted);
 }
 
-/* ---------- Decryption ---------- */
-
-export async function pgpDecrypt(
-  encryptedMessage,
-  privateKeyArmored,
-  passphrase = ""
-) {
-  if (!privateKeyArmored) {
-    throw new Error("PGP private key is required");
-  }
-
-  const privateKey = await openpgp.decryptKey({
-    privateKey: await openpgp.readPrivateKey({
-      armoredKey: privateKeyArmored
-    }),
-    passphrase
+export async function decrypt(bytes, privateKeyArmored) {
+  const privateKey = await openpgp.readPrivateKey({
+    armoredKey: privateKeyArmored
   });
 
   const message = await openpgp.readMessage({
-    armoredMessage: encryptedMessage
+    armoredMessage: new TextDecoder().decode(bytes)
   });
 
   const { data } = await openpgp.decrypt({
@@ -62,5 +39,5 @@ export async function pgpDecrypt(
     decryptionKeys: privateKey
   });
 
-  return data;
+  return new TextEncoder().encode(data);
 }
