@@ -1,206 +1,255 @@
+import {
+  encryptImageData,
+  decryptImageData
+} from "../core/steggy-core.js";
+
+import {
+  generatePGPKeyPair,
+  pgpEncrypt,
+  pgpDecrypt
+} from "../core/steggy-pgp.js";
+
+import * as sstv from "../core/steggy-sstv.js";
+import * as sstvDecode from "../core/steggy-sstv-decode.js";
+
+/* ================= STATE ================= */
+
+const state = {
+  mode: "encrypt",
+  method: "aes",
+  threatModel: "journalist",
+  imageData: null,
+  sstvFile: null
+};
+
+/* ================= DOM ================= */
+
 const $ = id => document.getElementById(id);
 
-let core, pgp, sstv;
-let imageFile = null;
-let sstvFile = null;
+const encryptBtn = $("runEncrypt");
+const decryptBtn = $("runDecrypt");
+const advToggle = $("advancedToggle");
+const advPanel = $("advancedPanel");
 
-async function init() {
-  core = await import("../core/steggy-core.js");
-  pgp  = await import("../modules/steggy-pgp.js");
-  sstv = await import("../modules/steggy-sstv.js");
-  wireUI();
+const pgpSection = $("pgpSection");
+const aesSection = $("aesSection");
+const sstvSection = $("sstvSection");
+
+const imageInput = $("imageInput");
+const outputImg = $("outputImage");
+const downloadBtn = $("downloadImage");
+
+const threatSelect = $("threatModel");
+const methodSelect = $("cryptoMethod");
+
+/* ================= INIT ================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+  bindEvents();
+  applyThreatModel("journalist");
+  updateVisibility();
+});
+
+/* ================= EVENTS ================= */
+
+function bindEvents() {
+  advToggle.addEventListener("click", () => {
+    advPanel.classList.toggle("hidden");
+  });
+
+  threatSelect.addEventListener("change", e => {
+    applyThreatModel(e.target.value);
+  });
+
+  methodSelect.addEventListener("change", e => {
+    state.method = e.target.value;
+    updateVisibility();
+  });
+
+  imageInput.addEventListener("change", handleImageUpload);
+
+  encryptBtn.addEventListener("click", runEncrypt);
+  decryptBtn.addEventListener("click", runDecrypt);
+
+  $("generatePGP").addEventListener("click", generatePGP);
+  $("encryptWithPGP").addEventListener("click", encryptPayloadWithPGP);
+  $("decryptWithPGP").addEventListener("click", decryptExtractedPGP);
+
+  $("sstvDecodeBtn").addEventListener("click", runSSTVDecode);
 }
 
-/* ================= UI WIRING ================= */
+/* ================= VISIBILITY ================= */
 
-function wireUI() {
+function updateVisibility() {
+  pgpSection.classList.toggle(
+    "hidden",
+    !(state.method === "pgp" || state.method === "both")
+  );
 
-  /* Initial state */
-  $("sstvSection").style.display = "none";
-  $("pgpFields").style.display = "none";
-  $("aesFields").style.display = "block";
-  $("advanced").style.display = "none";
+  aesSection.classList.toggle(
+    "hidden",
+    !(state.method === "aes" || state.method === "both")
+  );
 
-  /* ---------- Advanced ---------- */
-  let adv = false;
-  $("toggleAdvanced").onclick = () => {
-    adv = !adv;
-    $("advanced").style.display = adv ? "block" : "none";
-  };
-
-  /* ---------- Mode ---------- */
-  $("mode").onchange = () => {
-    const m = $("mode").value;
-    $("sstvSection").style.display = m === "sstv-decode" ? "block" : "none";
-    $("imageInput").style.display = m === "sstv-decode" ? "none" : "block";
-  };
-
-  /* ---------- Method ---------- */
-  $("method").onchange = () => {
-    const m = $("method").value;
-    $("aesFields").style.display = (m === "aes" || m === "both") ? "block" : "none";
-    $("pgpFields").style.display = (m === "pgp" || m === "both") ? "block" : "none";
-  };
-
-  /* ---------- File Inputs ---------- */
-  $("imageInput").onchange = e => imageFile = e.target.files[0] || null;
-
-  $("sstvInput").onchange = e => {
-    const f = e.target.files[0];
-    if (!f || !f.type.includes("wav")) {
-      alert("Select a WAV file");
-      e.target.value = "";
-      return;
-    }
-    sstvFile = f;
-  };
-
-  $("pgpPrivateUpload").onchange = async e => {
-    const f = e.target.files[0];
-    if (!f) return;
-    $("pgpPrivate").value = await f.text();
-  };
-
-  /* ---------- PGP ---------- */
-  $("genKeys").onclick = async () => {
-    const keys = await pgp.generatePGPKeypair();
-    $("pgpPublic").value  = keys.publicKey;
-    $("pgpPrivate").value = keys.privateKey;
-  };
-
-  $("pgpEncryptBtn").onclick = async () => {
-    if (!$("pgpPublic").value) return alert("Public key required");
-    const encrypted = await pgp.pgpEncrypt(
-      $("protectedMsg").value,
-      $("pgpPublic").value
-    );
-    $("protectedMsg").value = encrypted;
-  };
-
-  $("downloadPub").onclick  = () => download("public.asc",  $("pgpPublic").value);
-  $("downloadPriv").onclick = () => download("private.asc", $("pgpPrivate").value);
-
-  /* ---------- Run ---------- */
-  $("run").onclick = async () => {
-    $("output").innerHTML = "";
-    $("hashes").innerHTML = "";
-
-    try {
-      /* ===== SSTV DECODE ===== */
-      if ($("mode").value === "sstv-decode") {
-        const img = await sstv.decodeSSTV(sstvFile);
-        $("output").appendChild(img);
-        return;
-      }
-
-      /* ===== SSTV ENCODE ===== */
-      if ($("mode").value === "sstv-encode") {
-        if (!imageFile) throw new Error("Select image");
-        const img = await loadImage(imageFile);
-        const wav = await sstv.encodeSSTV(img);
-        downloadBlob("steggy-sstv.wav", wav);
-        return;
-      }
-
-      /* ===== IMAGE STEGO ===== */
-      if (!imageFile) throw new Error("Select image");
-
-      const inputHash = await sha256File(imageFile);
-
-      const img = await loadImage(imageFile);
-      const canvas = document.createElement("canvas");
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0);
-
-      let data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-
-      if ($("mode").value === "encrypt") {
-        data = await core.encryptImageData(
-          data,
-          $("protectedMsg").value,
-          $("decoyMsg").value,
-          {
-            method: $("method").value,
-            password: $("aesPassword").value,
-            pgpPublicKey: $("pgpPublic").value
-          }
-        );
-        ctx.putImageData(data, 0, 0);
-      }
-
-      if ($("mode").value === "decrypt") {
-        const msg = await core.decryptImageData(data, {
-          password: $("aesPassword").value,
-          pgpPrivateKey: $("pgpPrivate").value,
-          pgpPassphrase: $("pgpPass").value
-        });
-        $("output").textContent = msg;
-        return;
-      }
-
-      const outDataUrl = canvas.toDataURL("image/png");
-      const outBlob = await (await fetch(outDataUrl)).blob();
-      const outHash = await sha256Blob(outBlob);
-
-      const outImg = document.createElement("img");
-      outImg.src = outDataUrl;
-      $("output").appendChild(outImg);
-
-      downloadBlob("steggy.png", outBlob);
-
-      showHashes(inputHash, outHash);
-
-    } catch (e) {
-      alert(e.message);
-    }
-  };
+  sstvSection.classList.toggle(
+    "hidden",
+    state.mode !== "decrypt"
+  );
 }
 
-/* ================= UTILITIES ================= */
+/* ================= THREAT MODELS ================= */
 
-async function loadImage(file) {
+function applyThreatModel(model) {
+  state.threatModel = model;
+
+  if (model === "journalist") {
+    state.method = "both";
+    methodSelect.value = "both";
+    $("stripMetadata").checked = true;
+    $("enableDecoy").checked = true;
+  }
+
+  if (model === "activist") {
+    state.method = "pgp";
+    methodSelect.value = "pgp";
+    $("stripMetadata").checked = true;
+    $("enableDecoy").checked = true;
+  }
+
+  if (model === "emergency") {
+    state.method = "none";
+    methodSelect.value = "none";
+    $("enableSSTV").checked = true;
+  }
+
+  updateVisibility();
+}
+
+/* ================= IMAGE HANDLING ================= */
+
+async function handleImageUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
   const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0);
+    state.imageData = ctx.getImageData(0, 0, img.width, img.height);
+  };
   img.src = URL.createObjectURL(file);
-  await img.decode();
-  return img;
 }
 
-function download(name, text) {
-  if (!text) return alert("Nothing to download");
-  downloadBlob(name, new Blob([text]));
+/* ================= ENCRYPT ================= */
+
+async function runEncrypt() {
+  if (!state.imageData) {
+    alert("No image loaded");
+    return;
+  }
+
+  try {
+    const protectedMsg = $("protectedPayload").value;
+    const decoyMsg = $("enableDecoy").checked
+      ? $("decoyPayload").value
+      : null;
+
+    const opts = collectOptions();
+
+    const result = await encryptImageData(
+      state.imageData,
+      protectedMsg,
+      decoyMsg,
+      opts
+    );
+
+    renderOutput(result);
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
-function downloadBlob(name, blob) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
+/* ================= DECRYPT ================= */
+
+async function runDecrypt() {
+  try {
+    const opts = collectOptions();
+    const result = await decryptImageData(state.imageData, opts);
+    $("decryptOutput").value = result;
+  } catch (err) {
+    alert(err.message);
+  }
 }
 
-async function sha256File(file) {
-  return sha256ArrayBuffer(await file.arrayBuffer());
+/* ================= OUTPUT ================= */
+
+function renderOutput(imageData) {
+  const canvas = document.createElement("canvas");
+  canvas.width = imageData.width;
+  canvas.height = imageData.height;
+  const ctx = canvas.getContext("2d");
+  ctx.putImageData(imageData, 0, 0);
+
+  const url = canvas.toDataURL("image/png");
+  outputImg.src = url;
+  outputImg.classList.remove("hidden");
+
+  downloadBtn.onclick = () => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "steggy-output.png";
+    a.click();
+  };
 }
 
-async function sha256Blob(blob) {
-  return sha256ArrayBuffer(await blob.arrayBuffer());
+/* ================= OPTIONS ================= */
+
+function collectOptions() {
+  return {
+    method: state.method,
+    password: $("aesPassword")?.value || "",
+    pgpPublicKey: $("pgpPublicKey")?.value || "",
+    pgpPrivateKey: $("pgpPrivateKey")?.value || "",
+    pgpPassphrase: $("pgpPassphrase")?.value || ""
+  };
 }
 
-async function sha256ArrayBuffer(buf) {
-  const hash = await crypto.subtle.digest("SHA-256", buf);
-  return [...new Uint8Array(hash)]
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+/* ================= PGP ================= */
+
+async function generatePGP() {
+  const keys = await generatePGPKeyPair();
+  $("pgpPublicKey").value = keys.publicKey;
+  $("pgpPrivateKey").value = keys.privateKey;
 }
 
-function showHashes(input, output) {
-  $("hashes").innerHTML = `
-    <p><strong>Input Image SHA-256</strong><br>${input}</p>
-    <p><strong>Output Image SHA-256</strong><br>${output}</p>
-  `;
+async function encryptPayloadWithPGP() {
+  const plaintext = $("protectedPayload").value;
+  const pub = $("pgpPublicKey").value;
+  const encrypted = await pgpEncrypt(plaintext, pub);
+  $("protectedPayload").value = encrypted;
 }
 
-/* ================= START ================= */
+async function decryptExtractedPGP() {
+  const encrypted = $("decryptOutput").value;
+  const priv = $("pgpPrivateKey").value;
+  const pass = $("pgpPassphrase").value;
+  const decrypted = await pgpDecrypt(encrypted, priv, pass);
+  $("decryptOutput").value = decrypted;
+}
 
-init();
+/* ================= SSTV ================= */
+
+async function runSSTVDecode() {
+  const file = $("sstvFile").files[0];
+  if (!file) {
+    alert("No WAV file selected");
+    return;
+  }
+
+  const img = await sstvDecode.decode(file);
+  outputImg.src = img;
+  outputImg.classList.remove("hidden");
+}
