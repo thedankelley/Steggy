@@ -1,223 +1,175 @@
-import { crc32 } from "./steggy-crc.js";
+// steggy-core.js
+import { SteggyCRC } from "./steggy-crc.js";
 
-import * as decoy from "../modules/steggy-decoy.js";
-import * as fragment from "../modules/steggy-fragment.js";
-import * as hash from "../modules/steggy-hash.js";
-import * as pgp from "../modules/steggy-pgp.js";
-import * as sstv from "../modules/steggy-sstv.js";
+export class SteggyCore {
+  constructor(modules = {}) {
+    this.modules = modules;
+    this.VERSION = 2;
+  }
 
-/*
- Flags
-*/
-const FLAG_AES = 0x01;
-const FLAG_PGP = 0x02;
-const FLAG_FRAGMENT = 0x04;
-const FLAG_DECOY = 0x08;
+  /* --------------------------------------------------
+     Container Format
+     --------------------------------------------------
+     [MAGIC 4]  S T G Y
+     [VER 1]
+     [FLAGS 1]
+     [HEADER_LEN 2]
+     [HEADER JSON]
+     [PAYLOAD BYTES + CRC]
+  */
 
-const MAGIC = [0x53, 0x54, 0x45, 0x47]; // "STEG"
-const VERSION = 1;
+  static MAGIC = [0x53, 0x54, 0x47, 0x59];
 
-/*
- Public API
-*/
-export async function encrypt(options) {
-  validateEncryptOptions(options);
+  /* --------------------------------------------------
+     Capacity calculation
+     -------------------------------------------------- */
+  calculateCapacity(imageData) {
+    if (!imageData || !imageData.data) {
+      throw new Error("Invalid ImageData");
+    }
+    const pixels = imageData.data.length / 4;
+    return Math.floor(pixels * 3 / 8);
+  }
 
-  let protectedPayload = textToBytes(options.payload);
-  let decoyPayload = options.decoy
-    ? textToBytes(options.decoy)
-    : new Uint8Array(0);
+  /* --------------------------------------------------
+     Build container
+     -------------------------------------------------- */
+  buildContainer(headerObj, payloadBytes) {
+    const headerJson = JSON.stringify(headerObj);
+    const headerBytes = new TextEncoder().encode(headerJson);
 
-  let flags = 0;
+    const payloadWithCRC = SteggyCRC.appendCRC(payloadBytes);
 
-  if (options.pgp) {
-    protectedPayload = await pgp.encrypt(
-      protectedPayload,
-      options.pgp.publicKey
+    const totalLen =
+      4 + 1 + 1 + 2 +
+      headerBytes.length +
+      payloadWithCRC.length;
+
+    const out = new Uint8Array(totalLen);
+    let o = 0;
+
+    out.set(SteggyCore.MAGIC, o); o += 4;
+    out[o++] = this.VERSION;
+    out[o++] = headerObj.flags || 0;
+    out[o++] = (headerBytes.length >>> 8) & 0xFF;
+    out[o++] = headerBytes.length & 0xFF;
+    out.set(headerBytes, o); o += headerBytes.length;
+    out.set(payloadWithCRC, o);
+
+    return out;
+  }
+
+  /* --------------------------------------------------
+     Parse container
+     -------------------------------------------------- */
+  parseContainer(containerBytes) {
+    let o = 0;
+
+    for (let i = 0; i < 4; i++) {
+      if (containerBytes[o++] !== SteggyCore.MAGIC[i]) {
+        throw new Error("Invalid Steggy container");
+      }
+    }
+
+    const version = containerBytes[o++];
+    if (version !== this.VERSION) {
+      throw new Error("Unsupported Steggy version");
+    }
+
+    const flags = containerBytes[o++];
+    const headerLen = (containerBytes[o++] << 8) | containerBytes[o++];
+    const headerJson = new TextDecoder().decode(
+      containerBytes.slice(o, o + headerLen)
     );
-    flags |= FLAG_PGP;
+    o += headerLen;
+
+    const header = JSON.parse(headerJson);
+    const payloadWithCRC = containerBytes.slice(o);
+    const payload = SteggyCRC.verifyAndStrip(payloadWithCRC);
+
+    return { header, payload, flags };
   }
 
-  if (options.aes) {
-    protectedPayload = await options.aes.encrypt(
-      protectedPayload,
-      options.aes.password
-    );
-    flags |= FLAG_AES;
-  }
-
-  if (options.fragment) {
-    protectedPayload = fragment.fragment(protectedPayload);
-    flags |= FLAG_FRAGMENT;
-  }
-
-  if (decoyPayload.length > 0) {
-    flags |= FLAG_DECOY;
-  }
-
-  const container = buildContainer(
-    flags,
+  /* --------------------------------------------------
+     Encrypt orchestration
+     -------------------------------------------------- */
+  async encrypt({
+    imageData,
     protectedPayload,
-    decoyPayload
-  );
+    decoyPayload = null,
+    options = {}
+  }) {
+    const capacity = this.calculateCapacity(imageData);
 
-  return container;
-}
+    let payload = protectedPayload;
 
-export async function decrypt(containerBytes, options) {
-  const parsed = parseContainer(containerBytes);
-
-  let payload = parsed.protectedPayload;
-
-  if (parsed.flags & FLAG_FRAGMENT) {
-    payload = fragment.reassemble(payload);
-  }
-
-  if (parsed.flags & FLAG_AES) {
-    if (!options.aes) {
-      throw new Error("AES password required");
+    if (options.useAES) {
+      payload = await this.modules.aes.encrypt(payload, options.aesPassword);
     }
-    payload = await options.aes.decrypt(
-      payload,
-      options.aes.password
-    );
-  }
 
-  if (parsed.flags & FLAG_PGP) {
-    if (!options.pgp) {
-      throw new Error("PGP private key required");
+    if (options.usePGP) {
+      payload = await this.modules.pgp.encrypt(payload, options.pgpPublicKey);
     }
-    payload = await pgp.decrypt(
-      payload,
-      options.pgp.privateKey
-    );
-  }
 
-  return {
-    protected: bytesToText(payload),
-    decoy: parsed.decoyPayload.length
-      ? bytesToText(parsed.decoyPayload)
-      : null,
-    flags: parsed.flags
-  };
-}
-
-/*
- Container helpers
-*/
-function buildContainer(flags, protectedPayload, decoyPayload) {
-  const headerSize = 4 + 1 + 1 + 4 + 4;
-  const totalSize =
-    headerSize +
-    protectedPayload.length +
-    decoyPayload.length +
-    4;
-
-  const buffer = new Uint8Array(totalSize);
-  let offset = 0;
-
-  buffer.set(MAGIC, offset);
-  offset += 4;
-
-  buffer[offset++] = VERSION;
-  buffer[offset++] = flags;
-
-  writeUint32(buffer, offset, protectedPayload.length);
-  offset += 4;
-
-  writeUint32(buffer, offset, decoyPayload.length);
-  offset += 4;
-
-  buffer.set(protectedPayload, offset);
-  offset += protectedPayload.length;
-
-  buffer.set(decoyPayload, offset);
-  offset += decoyPayload.length;
-
-  const crc = crc32(buffer.slice(0, offset));
-  writeUint32(buffer, offset, crc);
-
-  return buffer;
-}
-
-function parseContainer(bytes) {
-  let offset = 0;
-
-  for (let i = 0; i < 4; i++) {
-    if (bytes[i] !== MAGIC[i]) {
-      throw new Error("Invalid container magic");
+    if (options.fragment) {
+      payload = this.modules.fragment.fragment(payload, capacity);
     }
-  }
-  offset += 4;
 
-  const version = bytes[offset++];
-  if (version !== VERSION) {
-    throw new Error("Unsupported container version");
-  }
+    if (decoyPayload) {
+      payload = this.modules.decoy.combine(decoyPayload, payload);
+    }
 
-  const flags = bytes[offset++];
+    if (payload.length > capacity) {
+      throw new Error("Payload exceeds image capacity");
+    }
 
-  const protectedLen = readUint32(bytes, offset);
-  offset += 4;
+    const header = {
+      flags: this._buildFlags(options),
+      fragment: !!options.fragment,
+      decoy: !!decoyPayload,
+      aes: !!options.useAES,
+      pgp: !!options.usePGP,
+      timestamp: Date.now()
+    };
 
-  const decoyLen = readUint32(bytes, offset);
-  offset += 4;
-
-  const protectedPayload = bytes.slice(
-    offset,
-    offset + protectedLen
-  );
-  offset += protectedLen;
-
-  const decoyPayload = bytes.slice(
-    offset,
-    offset + decoyLen
-  );
-  offset += decoyLen;
-
-  const storedCrc = readUint32(bytes, offset);
-  const calcCrc = crc32(bytes.slice(0, offset));
-
-  if (storedCrc !== calcCrc) {
-    throw new Error("CRC mismatch, data corrupted");
+    return this.buildContainer(header, payload);
   }
 
-  return {
-    flags,
-    protectedPayload,
-    decoyPayload
-  };
-}
+  /* --------------------------------------------------
+     Decrypt orchestration
+     -------------------------------------------------- */
+  async decrypt(containerBytes, options = {}) {
+    const { header, payload } = this.parseContainer(containerBytes);
+    let data = payload;
 
-/*
- Utilities
-*/
-function writeUint32(buf, offset, value) {
-  buf[offset] = (value >>> 24) & 0xff;
-  buf[offset + 1] = (value >>> 16) & 0xff;
-  buf[offset + 2] = (value >>> 8) & 0xff;
-  buf[offset + 3] = value & 0xff;
-}
+    if (header.decoy && options.extractDecoy) {
+      data = this.modules.decoy.extractDecoy(data);
+    }
 
-function readUint32(buf, offset) {
-  return (
-    (buf[offset] << 24) |
-    (buf[offset + 1] << 16) |
-    (buf[offset + 2] << 8) |
-    buf[offset + 3]
-  ) >>> 0;
-}
+    if (header.fragment) {
+      data = this.modules.fragment.reassemble(data);
+    }
 
-function textToBytes(text) {
-  return new TextEncoder().encode(text);
-}
+    if (header.pgp && options.pgpPrivateKey) {
+      data = await this.modules.pgp.decrypt(data, options.pgpPrivateKey);
+    }
 
-function bytesToText(bytes) {
-  return new TextDecoder().decode(bytes);
-}
+    if (header.aes && options.aesPassword) {
+      data = await this.modules.aes.decrypt(data, options.aesPassword);
+    }
 
-function validateEncryptOptions(options) {
-  if (!options || !options.payload) {
-    throw new Error("Payload required");
+    return { header, data };
+  }
+
+  /* --------------------------------------------------
+     Flags helper
+     -------------------------------------------------- */
+  _buildFlags(options) {
+    let f = 0;
+    if (options.useAES) f |= 0x01;
+    if (options.usePGP) f |= 0x02;
+    if (options.fragment) f |= 0x04;
+    if (options.decoy) f |= 0x08;
+    return f;
   }
 }
