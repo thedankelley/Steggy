@@ -11,34 +11,38 @@ async function init() {
   wireUI();
 }
 
+/* ================= UI WIRING ================= */
+
 function wireUI() {
 
+  /* Initial state */
   $("sstvSection").style.display = "none";
   $("pgpFields").style.display = "none";
   $("aesFields").style.display = "block";
+  $("advanced").style.display = "none";
 
-  /* ----- Advanced ----- */
+  /* ---------- Advanced ---------- */
   let adv = false;
   $("toggleAdvanced").onclick = () => {
     adv = !adv;
     $("advanced").style.display = adv ? "block" : "none";
   };
 
-  /* ----- Mode ----- */
+  /* ---------- Mode ---------- */
   $("mode").onchange = () => {
     const m = $("mode").value;
     $("sstvSection").style.display = m === "sstv-decode" ? "block" : "none";
     $("imageInput").style.display = m === "sstv-decode" ? "none" : "block";
   };
 
-  /* ----- Method ----- */
+  /* ---------- Method ---------- */
   $("method").onchange = () => {
     const m = $("method").value;
     $("aesFields").style.display = (m === "aes" || m === "both") ? "block" : "none";
     $("pgpFields").style.display = (m === "pgp" || m === "both") ? "block" : "none";
   };
 
-  /* ----- File Inputs ----- */
+  /* ---------- File Inputs ---------- */
   $("imageInput").onchange = e => imageFile = e.target.files[0] || null;
 
   $("sstvInput").onchange = e => {
@@ -57,10 +61,10 @@ function wireUI() {
     $("pgpPrivate").value = await f.text();
   };
 
-  /* ----- PGP Actions ----- */
+  /* ---------- PGP ---------- */
   $("genKeys").onclick = async () => {
     const keys = await pgp.generatePGPKeypair();
-    $("pgpPublic").value = keys.publicKey;
+    $("pgpPublic").value  = keys.publicKey;
     $("pgpPrivate").value = keys.privateKey;
   };
 
@@ -73,26 +77,37 @@ function wireUI() {
     $("protectedMsg").value = encrypted;
   };
 
-  $("downloadPub").onclick = () => download("public.asc", $("pgpPublic").value);
+  $("downloadPub").onclick  = () => download("public.asc",  $("pgpPublic").value);
   $("downloadPriv").onclick = () => download("private.asc", $("pgpPrivate").value);
 
-  /* ----- Run ----- */
+  /* ---------- Run ---------- */
   $("run").onclick = async () => {
     $("output").innerHTML = "";
+    $("hashes").innerHTML = "";
 
     try {
+      /* ===== SSTV DECODE ===== */
       if ($("mode").value === "sstv-decode") {
         const img = await sstv.decodeSSTV(sstvFile);
         $("output").appendChild(img);
         return;
       }
 
-      if (!imageFile) throw new Error("No image selected");
+      /* ===== SSTV ENCODE ===== */
+      if ($("mode").value === "sstv-encode") {
+        if (!imageFile) throw new Error("Select image");
+        const img = await loadImage(imageFile);
+        const wav = await sstv.encodeSSTV(img);
+        downloadBlob("steggy-sstv.wav", wav);
+        return;
+      }
 
-      const img = new Image();
-      img.src = URL.createObjectURL(imageFile);
-      await img.decode();
+      /* ===== IMAGE STEGO ===== */
+      if (!imageFile) throw new Error("Select image");
 
+      const inputHash = await sha256File(imageFile);
+
+      const img = await loadImage(imageFile);
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
@@ -113,17 +128,6 @@ function wireUI() {
           }
         );
         ctx.putImageData(data, 0, 0);
-
-        const out = document.createElement("img");
-        out.src = canvas.toDataURL("image/png");
-        $("output").appendChild(out);
-
-        const a = document.createElement("a");
-        a.href = out.src;
-        a.download = "steggy.png";
-        a.textContent = "Download image";
-        $("output").appendChild(a);
-        return;
       }
 
       if ($("mode").value === "decrypt") {
@@ -133,7 +137,20 @@ function wireUI() {
           pgpPassphrase: $("pgpPass").value
         });
         $("output").textContent = msg;
+        return;
       }
+
+      const outDataUrl = canvas.toDataURL("image/png");
+      const outBlob = await (await fetch(outDataUrl)).blob();
+      const outHash = await sha256Blob(outBlob);
+
+      const outImg = document.createElement("img");
+      outImg.src = outDataUrl;
+      $("output").appendChild(outImg);
+
+      downloadBlob("steggy.png", outBlob);
+
+      showHashes(inputHash, outHash);
 
     } catch (e) {
       alert(e.message);
@@ -141,12 +158,49 @@ function wireUI() {
   };
 }
 
+/* ================= UTILITIES ================= */
+
+async function loadImage(file) {
+  const img = new Image();
+  img.src = URL.createObjectURL(file);
+  await img.decode();
+  return img;
+}
+
 function download(name, text) {
   if (!text) return alert("Nothing to download");
+  downloadBlob(name, new Blob([text]));
+}
+
+function downloadBlob(name, blob) {
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text]));
+  a.href = URL.createObjectURL(blob);
   a.download = name;
   a.click();
 }
+
+async function sha256File(file) {
+  return sha256ArrayBuffer(await file.arrayBuffer());
+}
+
+async function sha256Blob(blob) {
+  return sha256ArrayBuffer(await blob.arrayBuffer());
+}
+
+async function sha256ArrayBuffer(buf) {
+  const hash = await crypto.subtle.digest("SHA-256", buf);
+  return [...new Uint8Array(hash)]
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function showHashes(input, output) {
+  $("hashes").innerHTML = `
+    <p><strong>Input Image SHA-256</strong><br>${input}</p>
+    <p><strong>Output Image SHA-256</strong><br>${output}</p>
+  `;
+}
+
+/* ================= START ================= */
 
 init();
