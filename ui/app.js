@@ -2,80 +2,64 @@ import { SteggySSTV } from "../modules/steggy-sstv.js";
 import { SteggySSTVDecode } from "../modules/steggy-sstv-decode.js";
 
 const modeSelect = document.getElementById("modeSelect");
+const encodeSection = document.getElementById("sstvEncodeSection");
+const decodeSection = document.getElementById("sstvDecodeSection");
 
-const sstvEncodeSection = document.getElementById("sstvEncodeSection");
-const sstvDecodeSection = document.getElementById("sstvDecodeSection");
+modeSelect.onchange = () => {
+  encodeSection.classList.toggle("hidden", modeSelect.value !== "sstv-encode");
+  decodeSection.classList.toggle("hidden", modeSelect.value !== "sstv-decode");
+};
 
-modeSelect.addEventListener("change", () => {
-  sstvEncodeSection.classList.add("hidden");
-  sstvDecodeSection.classList.add("hidden");
+const fragInput = document.createElement("input");
+fragInput.type = "number";
+fragInput.min = 1;
+fragInput.value = 1;
+fragInput.style.marginTop = "0.5rem";
+encodeSection.appendChild(fragInput);
 
-  if (modeSelect.value === "sstv-encode") {
-    sstvEncodeSection.classList.remove("hidden");
-  }
-  if (modeSelect.value === "sstv-decode") {
-    sstvDecodeSection.classList.remove("hidden");
-  }
-});
-
-/* ---------- SSTV ENCODE ---------- */
-
-const sstvImageInput = document.getElementById("sstvImageInput");
-const sstvMode = document.getElementById("sstvMode");
-const sstvEncodeBtn = document.getElementById("sstvEncodeBtn");
-const sstvAudio = document.getElementById("sstvAudio");
-
-sstvEncodeBtn.addEventListener("click", async () => {
-  const file = sstvImageInput.files[0];
-  if (!file) {
-    alert("Please select an image.");
-    return;
-  }
+document.getElementById("sstvEncodeBtn").onclick = async () => {
+  const imgFile = document.getElementById("sstvImageInput").files[0];
+  if (!imgFile) return alert("Select image");
 
   const img = new Image();
-  img.src = URL.createObjectURL(file);
+  img.src = URL.createObjectURL(imgFile);
   await img.decode();
 
   const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
+  canvas.getContext("2d").drawImage(img, 0, 0);
 
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const frames = SteggySSTV.encode(
+    canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height),
+    document.getElementById("sstvMode").value,
+    parseInt(fragInput.value)
+  );
 
-  try {
-    const wavBlob = SteggySSTV.encode(imageData, sstvMode.value);
-    sstvAudio.src = URL.createObjectURL(wavBlob);
-    sstvAudio.classList.remove("hidden");
-  } catch (e) {
-    alert(e.message);
-  }
-});
+  frames.forEach((wav, i) => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(wav);
+    a.download = `sstv_fragment_${i + 1}.wav`;
+    a.textContent = `Download Fragment ${i + 1}`;
+    encodeSection.appendChild(a);
+    encodeSection.appendChild(document.createElement("br"));
+  });
+};
 
-/* ---------- SSTV DECODE ---------- */
-
-const sstvWavInput = document.getElementById("sstvWavInput");
-const sstvDecodeBtn = document.getElementById("sstvDecodeBtn");
-const sstvDecodedImage = document.getElementById("sstvDecodedImage");
-
-sstvDecodeBtn.addEventListener("click", async () => {
-  const file = sstvWavInput.files[0];
-  if (!file) {
-    alert("Please select a WAV file.");
-    return;
-  }
+document.getElementById("sstvDecodeBtn").onclick = async () => {
+  const files = [...document.getElementById("sstvWavInput").files];
+  if (!files.length) return alert("Select WAV files");
 
   try {
-    const imageData = await SteggySSTVDecode.decode(file);
+    const imageData = await SteggySSTVDecode.decodeMultiple(files);
     const canvas = document.createElement("canvas");
     canvas.width = imageData.width;
     canvas.height = imageData.height;
     canvas.getContext("2d").putImageData(imageData, 0, 0);
 
-    sstvDecodedImage.src = canvas.toDataURL("image/png");
-    sstvDecodedImage.classList.remove("hidden");
+    document.getElementById("sstvDecodedImage").src = canvas.toDataURL();
+    document.getElementById("sstvDecodedImage").classList.remove("hidden");
   } catch (e) {
-    alert("Decode failed.");
+    alert(e.message);
   }
-});
+};
