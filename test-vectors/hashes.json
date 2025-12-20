@@ -1,5 +1,7 @@
 {
-  "cover.png": "",
-  "stego_plain.png": "",
-  "payload_short.txt": ""
+  "plaintext.txt": "SHA256_HASH_HERE",
+  "image-input.png": "SHA256_HASH_HERE",
+  "image-output-aes.png": "SHA256_HASH_HERE",
+  "image-output-pgp.png": "SHA256_HASH_HERE",
+  "image-output-both.png": "SHA256_HASH_HERE"
 }
