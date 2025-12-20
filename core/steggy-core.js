@@ -1,137 +1,109 @@
-import { pgpEncrypt, pgpDecrypt } from "../modules/steggy-pgp.js";
+import { fragmentPayload, defragmentPayload } from "./steggy-fragment.js";
+import { aesEncrypt, aesDecrypt } from "./steggy-aes.js";
+import { pgpEncrypt, pgpDecrypt } from "./steggy-pgp.js";
 
-const enc = new TextEncoder();
-const dec = new TextDecoder();
+const HEADER = "STEG";
 
-function crc32(buf) {
-  let crc = ~0;
-  for (let b of buf) {
-    crc ^= b;
-    for (let i = 0; i < 8; i++) {
-      crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1));
+export async function encryptImageData(imageData, protectedMsg, decoyMsg, opts) {
+  let payload = protectedMsg;
+
+  if (opts.method === "aes" || opts.method === "both") {
+    payload = await aesEncrypt(payload, opts.password);
+  }
+
+  if (opts.method === "pgp" || opts.method === "both") {
+    payload = await pgpEncrypt(payload, opts.pgpPublicKey);
+  }
+
+  const fragments = fragmentPayload(payload);
+  embedFragments(imageData.data, fragments);
+
+  if (decoyMsg) {
+    const decoyFragments = fragmentPayload(decoyMsg);
+    embedFragments(imageData.data, decoyFragments, true);
+  }
+
+  return imageData;
+}
+
+export async function decryptImageData(imageData, opts) {
+  const fragments = extractFragments(imageData.data);
+  let payload = defragmentPayload(fragments);
+
+  if (opts.pgpPrivateKey) {
+    payload = await pgpDecrypt(payload, opts.pgpPrivateKey, opts.pgpPassphrase);
+  }
+
+  if (opts.password) {
+    payload = await aesDecrypt(payload, opts.password);
+  }
+
+  return payload;
+}
+
+/* ================= LOW LEVEL ================= */
+
+function embedFragments(data, fragments, decoy = false) {
+  let offset = decoy ? 1 : 0;
+
+  fragments.forEach(fragment => {
+    const header = [
+      ...HEADER.split("").map(c => c.charCodeAt(0)),
+      fragment.index,
+      fragment.total,
+      fragment.payload.length
+    ];
+
+    const block = [...header, ...fragment.payload];
+
+    for (let i = 0; i < block.length; i++) {
+      const idx = (offset + i) * 4;
+      if (idx >= data.length) throw new Error("Image too small");
+      data[idx] = (data[idx] & 0xFE) | (block[i] & 1);
     }
-  }
-  return (~crc >>> 0).toString(16);
+
+    offset += block.length;
+  });
 }
 
-async function aesKey(password, salt) {
-  const base = await crypto.subtle.importKey(
-    "raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
-    { name: "PBKDF2", salt, iterations: 100000, hash: "SHA-256" },
-    base,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
+function extractFragments(data) {
+  const fragments = [];
+  let i = 0;
+
+  while (i < data.length) {
+    const h = readBits(data, i, 4);
+    if (h !== HEADER) break;
+
+    const index = readByte(data, i + 4);
+    const total = readByte(data, i + 5);
+    const len   = readByte(data, i + 6);
+
+    const payload = readBytes(data, i + 7, len);
+    fragments.push({ index, total, payload });
+
+    i += 7 + len;
+  }
+
+  if (!fragments.length) throw new Error("No fragments found");
+  return fragments;
 }
 
-async function aesEncrypt(text, password) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await aesKey(password, salt);
-  const data = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    enc.encode(text)
-  );
-  return { iv: [...iv], salt: [...salt], data: [...new Uint8Array(data)] };
+function readBits(data, offset, len) {
+  let s = "";
+  for (let i = 0; i < len; i++) {
+    s += String.fromCharCode(data[(offset + i) * 4] & 1);
+  }
+  return s;
 }
 
-async function aesDecrypt(obj, password) {
-  const key = await aesKey(password, new Uint8Array(obj.salt));
-  const plain = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: new Uint8Array(obj.iv) },
-    key,
-    new Uint8Array(obj.data)
-  );
-  return dec.decode(plain);
+function readByte(data, offset) {
+  return data[offset * 4] & 0xFF;
 }
 
-function capacity(imageData) {
-  return Math.floor(imageData.data.length / 4);
-}
-
-function fragment(buf, max) {
-  const parts = [];
-  for (let i = 0; i < buf.length; i += max) {
-    parts.push(buf.slice(i, i + max));
+function readBytes(data, offset, len) {
+  const out = [];
+  for (let i = 0; i < len; i++) {
+    out.push(data[(offset + i) * 4] & 0xFF);
   }
-  return parts;
-}
-
-export async function encryptImageData(imageData, protectedMsg, decoyMsg, options) {
-  let protectedPayload = protectedMsg;
-
-  if (options.method === "pgp") {
-    protectedPayload = await pgpEncrypt(protectedMsg, options.pgpPublicKey);
-  }
-
-  if (options.method === "aes") {
-    protectedPayload = await aesEncrypt(protectedMsg, options.password);
-  }
-
-  const container = {
-    magic: "STEGGY",
-    version: "2.0",
-    method: options.method,
-    protected: protectedPayload,
-    decoy: decoyMsg
-  };
-
-  let raw = enc.encode(JSON.stringify(container));
-  container.crc32 = crc32(raw);
-  raw = enc.encode(JSON.stringify(container));
-
-  const cap = capacity(imageData);
-  if (raw.length > cap) {
-    throw new Error("Payload exceeds image capacity");
-  }
-
-  const fragments = fragment(raw, cap);
-  const out = new Uint8ClampedArray(imageData.data);
-
-  let offset = 0;
-  for (let frag of fragments) {
-    for (let i = 0; i < frag.length; i++) {
-      out[(offset + i) * 4] =
-        (out[(offset + i) * 4] & 0xFE) | (frag[i] & 1);
-    }
-    offset += frag.length;
-  }
-
-  return new ImageData(out, imageData.width, imageData.height);
-}
-
-export async function decryptImageData(imageData, options) {
-  const bits = [];
-  for (let i = 0; i < imageData.data.length; i += 4) {
-    bits.push(imageData.data[i] & 1);
-  }
-
-  let container;
-  try {
-    container = JSON.parse(dec.decode(new Uint8Array(bits)));
-  } catch {
-    throw new Error("Invalid payload");
-  }
-
-  const { crc32: crc, ...rest } = container;
-  const check = crc32(enc.encode(JSON.stringify(rest)));
-  if (crc !== check) throw new Error("CRC mismatch");
-
-  if (container.method === "pgp") {
-    return pgpDecrypt(
-      container.protected,
-      options.pgpPrivateKey,
-      options.pgpPassphrase
-    );
-  }
-
-  if (container.method === "aes") {
-    return aesDecrypt(container.protected, options.password);
-  }
-
-  return container.protected;
+  return out;
 }
