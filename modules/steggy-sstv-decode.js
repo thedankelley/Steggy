@@ -1,39 +1,51 @@
 // steggy-sstv-decode.js
-// SSTV WAV decoder (offline-safe)
+// Fragment-aware SSTV decoder
+
+import { crc32 } from "../core/steggy-crc.js";
 
 export class SteggySSTVDecode {
-  static async decode(wavFile) {
-    const ctx = new AudioContext();
-    const buf = await wavFile.arrayBuffer();
-    const audio = await ctx.decodeAudioData(buf);
-    const data = audio.getChannelData(0);
 
-    // NOTE:
-    // This is a *practical decoder*, not forensic-grade.
-    // Works reliably with Steggy-generated SSTV.
+  static async decodeMultiple(files) {
+    const fragments = [];
 
-    const width = 320;
-    const height = 256;
-    const img = new Uint8ClampedArray(width * height * 4);
+    for (const file of files) {
+      const bytes = await this._decodeWav(file);
 
-    let ptr = 0;
-    const sampleRate = audio.sampleRate;
+      const magic = String.fromCharCode(...bytes.slice(0, 4));
+      if (magic !== "SSTV") continue;
 
-    const freqAt = (i) =>
-      Math.abs(data[i]) * 800 + 1500;
+      const index = bytes[4];
+      const total = bytes[5];
+      const expectedCrc = new DataView(bytes.buffer).getUint32(6);
 
-    for (let y = 0; y < height; y++) {
-      for (let c = 0; c < 3; c++) {
-        for (let x = 0; x < width; x++) {
-          const f = freqAt(ptr++);
-          const v = Math.max(0, Math.min(255, ((f - 1500) / 800) * 255));
-          const idx = (y * width + x) * 4;
-          img[idx + c] = v;
-          img[idx + 3] = 255;
-        }
+      const payload = bytes.slice(10);
+      const actualCrc = crc32(payload);
+
+      if (expectedCrc !== actualCrc) {
+        throw new Error(`CRC mismatch on fragment ${index}`);
       }
+
+      fragments[index] = { payload, total };
     }
 
-    return new ImageData(img, width, height);
+    if (fragments.length !== fragments[0].total) {
+      throw new Error("Missing SSTV fragments");
+    }
+
+    const fullData = fragments.flatMap(f => [...f.payload]);
+    return this._rebuildImage(fullData);
+  }
+
+  static async _decodeWav(file) {
+    const buf = await file.arrayBuffer();
+    return new Uint8Array(buf.slice(44));
+  }
+
+  static _rebuildImage(data) {
+    // Assume original dimensions embedded externally
+    const width = 320;
+    const height = data.length / (width * 4);
+
+    return new ImageData(new Uint8ClampedArray(data), width, height);
   }
 }
