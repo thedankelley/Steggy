@@ -1,90 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Steggy ステギー</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="ui/styles.css">
+  <meta charset="UTF-8" />
+  <title>Steggy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #121212;
+      color: #eee;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    header img {
+      width: 36px;
+      height: 36px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin: 0;
+    }
+
+    section {
+      background: #1e1e1e;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 0.75rem;
+      font-weight: 600;
+    }
+
+    select, input, button {
+      width: 100%;
+      margin-top: 0.25rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: none;
+      font-size: 1rem;
+    }
+
+    button {
+      background: #3f51b5;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      background: #555;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    img.preview {
+      max-width: 100%;
+      margin-top: 1rem;
+      border-radius: 8px;
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+  </style>
 </head>
-<body class="dark">
 
-<header>
-  <img src="icons/icon-512.png" class="logo">
-  <h1>Steggy <span class="jp">ステギー</span></h1>
-</header>
+<body>
+  <header>
+    <img src="icons/icon-512.png" alt="Steggy" />
+    <h1>Steggy</h1>
+  </header>
 
-<main>
   <section>
-    <label>Mode</label>
-    <select id="mode">
-      <option value="encrypt">Encrypt</option>
-      <option value="decrypt">Decrypt</option>
+    <label for="modeSelect">Operation Mode</label>
+    <select id="modeSelect">
+      <option value="stego">Image Steganography</option>
+      <option value="sstv-encode">SSTV Encode (Image → Audio)</option>
+      <option value="sstv-decode">SSTV Decode (Audio → Image)</option>
     </select>
   </section>
 
-  <section>
-    <label>Carrier Image</label>
-    <input type="file" id="imageInput" accept="image/*">
-    <canvas id="previewCanvas"></canvas>
-    <div id="imageHash"></div>
+  <!-- SSTV ENCODE -->
+  <section id="sstvEncodeSection" class="hidden">
+    <h2>SSTV Encode</h2>
+
+    <label>Image (320×256 PNG)</label>
+    <input type="file" id="sstvImageInput" accept="image/png" />
+
+    <label>SSTV Mode</label>
+    <select id="sstvMode">
+      <option value="MARTIN_M1">Martin M1</option>
+      <option value="SCOTTIE_S1">Scottie S1</option>
+    </select>
+
+    <button id="sstvEncodeBtn">Generate SSTV Audio</button>
+
+    <audio id="sstvAudio" controls class="hidden"></audio>
   </section>
 
-  <section id="encryptSection">
-    <label>Protected Message</label>
-    <textarea id="protectedMessage" rows="6"></textarea>
+  <!-- SSTV DECODE -->
+  <section id="sstvDecodeSection" class="hidden">
+    <h2>SSTV Decode</h2>
 
-    <label>Decoy Message (optional)</label>
-    <textarea id="decoyMessage" rows="4"></textarea>
+    <label>WAV File</label>
+    <input type="file" id="sstvWavInput" accept="audio/wav" />
 
-    <button id="advancedToggle">Advanced Options</button>
+    <button id="sstvDecodeBtn">Decode SSTV</button>
 
-    <div id="advancedOptions" hidden>
-      <label>Encryption Mode</label>
-      <select id="cryptoMode">
-        <option value="none">None</option>
-        <option value="aes">AES-GCM</option>
-        <option value="pgp">PGP</option>
-        <option value="both">AES + PGP</option>
-      </select>
-
-      <div id="aesOptions" hidden>
-        <label>AES Password</label>
-        <input type="password" id="aesPassword">
-      </div>
-
-      <div id="pgpOptions" hidden>
-        <label>PGP Public Key</label>
-        <textarea id="pgpPublicKey" rows="5"></textarea>
-        <button id="generatePGP">Generate PGP Keys</button>
-        <button id="encryptWithPGP">Encrypt Message with Public Key</button>
-        <button id="downloadPGPPub">Download Public Key</button>
-        <button id="downloadPGPPriv">Download Private Key</button>
-        <textarea id="pgpPrivateKey" rows="5" placeholder="Private key will appear here"></textarea>
-      </div>
-
-      <label>
-        <input type="checkbox" id="fragmentToggle">
-        Enable Fragmentation
-      </label>
-    </div>
-
-    <button id="runEncrypt">Run Encrypt</button>
+    <img id="sstvDecodedImage" class="preview hidden" />
   </section>
 
-  <section id="decryptSection" hidden>
-    <label>Extract Options</label>
-    <button id="decryptPGP">Decrypt PGP Payload</button>
-    <input type="file" id="pgpKeyUpload">
-    <textarea id="decryptOutput" rows="8"></textarea>
-  </section>
-
-  <section>
-    <img id="outputImage">
-    <a id="downloadLink">Download Image</a>
-  </section>
-</main>
-
-<script type="module" src="ui/app.js"></script>
+  <script type="module" src="ui/app.js"></script>
 </body>
 </html>
