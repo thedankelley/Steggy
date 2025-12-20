@@ -2,96 +2,142 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Steggy 2.0</title>
+  <title>Steggy 2.0 | ステギー</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      background: #111;
-      color: #eee;
-      font-family: system-ui, sans-serif;
-      padding: 1rem;
-    }
-    select, textarea, input, button {
-      width: 100%;
-      margin: 0.4rem 0;
-      padding: 0.5rem;
-      background: #222;
-      color: #eee;
-      border: 1px solid #444;
-    }
-    button { cursor: pointer; }
-    textarea { min-height: 90px; }
-    #advanced {
-      display: none;
-      border-top: 1px solid #333;
-      margin-top: 1rem;
-      padding-top: 1rem;
-    }
-    #output img {
-      max-width: 100%;
-      margin-top: 1rem;
-    }
-  </style>
+  <meta name="theme-color" content="#121212">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="ui/styles.css">
 </head>
 
-<body>
-<h1>Steggy 2.0 ステギー</h1>
+<body class="dark">
 
-<label>Mode</label>
-<select id="mode">
-  <option value="encrypt">Encrypt</option>
-  <option value="decrypt">Decrypt</option>
-  <option value="sstv-encode">SSTV Encode</option>
-  <option value="sstv-decode">SSTV Decode</option>
-</select>
+<header class="top-bar">
+  <div class="brand">
+    <img src="icons/icon-192.png" class="logo" alt="Steggy">
+    <div>
+      <div class="title">Steggy 2.0</div>
+      <div class="subtitle">ステギー</div>
+    </div>
+  </div>
 
-<input type="file" id="imageInput">
+  <div class="actions">
+    <button id="themeToggle">🌗</button>
+    <button id="guideBtn">📘</button>
+  </div>
+</header>
 
-<div id="sstvSection">
-  <label>SSTV WAV File</label>
-  <input type="file" id="sstvInput"
-    accept="audio/wav,audio/wave,audio/x-wav">
+<main class="container">
+
+<section class="card">
+  <label>Mode</label>
+  <select id="modeSelect">
+    <option value="encrypt">Encrypt</option>
+    <option value="decrypt">Decrypt</option>
+  </select>
+</section>
+
+<section class="card">
+  <label>Image</label>
+  <input type="file" id="imageInput" accept="image/*">
+</section>
+
+<section class="card hidden" id="sstvSection">
+  <label>SSTV WAV</label>
+  <input type="file" id="sstvInput" accept="audio/wav">
+</section>
+
+<section class="card">
+  <label>Protected Message</label>
+  <textarea id="payloadInput" rows="6"></textarea>
+</section>
+
+<section class="card">
+  <label>Decoy Message</label>
+  <textarea id="decoyInput" rows="4"></textarea>
+</section>
+
+<button class="expand-btn" id="advancedToggle">
+  Advanced Options
+</button>
+
+<section id="advancedPanel" class="card hidden">
+
+  <label>Encryption Mode</label>
+  <select id="cryptoMode">
+    <option value="none">None</option>
+    <option value="aes">AES</option>
+    <option value="pgp">PGP</option>
+    <option value="both">PGP + AES</option>
+  </select>
+
+  <div id="aesSection" class="subcard hidden">
+    <label>AES Password</label>
+    <input type="password" id="aesPassword">
+  </div>
+
+  <div id="pgpSection" class="subcard hidden">
+    <button id="pgpGenerate">Generate PGP Keys</button>
+
+    <label>Public Key</label>
+    <textarea id="pgpPublic" rows="4"></textarea>
+    <button id="downloadPublic">Download Public</button>
+
+    <label>Private Key</label>
+    <textarea id="pgpPrivate" rows="4"></textarea>
+    <input type="file" id="pgpPrivateFile">
+    <button id="downloadPrivate">Download Private</button>
+
+    <button id="pgpEncryptPayload">
+      Encrypt Payload with Public Key
+    </button>
+  </div>
+
+  <div class="subcard">
+    <label>Fragmentation</label>
+    <select id="fragmentMode">
+      <option value="none">Disabled</option>
+      <option value="auto">Enabled</option>
+    </select>
+  </div>
+
+  <div class="subcard">
+    <label>Metadata</label>
+    <select id="metadataMode">
+      <option value="strip">Strip Metadata</option>
+      <option value="preserve">Preserve Metadata</option>
+    </select>
+  </div>
+
+</section>
+
+<button class="primary" id="runBtn">Run</button>
+
+<section class="card hidden" id="outputSection">
+  <label>Result</label>
+  <img id="outputImage">
+  <pre id="outputText"></pre>
+  <a id="downloadLink" download>Download</a>
+</section>
+
+</main>
+
+<div id="guideDialog" class="dialog hidden">
+  <div class="dialog-content">
+    <h2>Steggy Guide</h2>
+    <p>
+      Steggy hides information inside images using layered obfuscation.
+      It is intended for journalists, activists, and people operating
+      under surveillance or censorship.
+    </p>
+    <button id="closeGuide">Close</button>
+  </div>
 </div>
 
-<label>Encryption Method</label>
-<select id="method">
-  <option value="aes">AES-GCM</option>
-  <option value="pgp">PGP</option>
-  <option value="both">AES + PGP</option>
-</select>
-
-<div id="aesFields">
-  <input type="password" id="aesPassword" placeholder="AES Password">
-</div>
-
-<div id="pgpFields">
-  <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
-  <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
-
-  <input type="file" id="pgpPrivateUpload" accept=".asc,.txt">
-
-  <input type="password" id="pgpPass" placeholder="PGP Passphrase (optional)">
-
-  <button id="genKeys">Generate PGP Keys</button>
-  <button id="pgpEncryptBtn">Encrypt Message with Public Key</button>
-  <button id="downloadPub">Download Public Key</button>
-  <button id="downloadPriv">Download Private Key</button>
-</div>
-
-<textarea id="protectedMsg" placeholder="Protected message"></textarea>
-<textarea id="decoyMsg" placeholder="Decoy message"></textarea>
-
-<button id="toggleAdvanced">Advanced Settings</button>
-<div id="advanced">
-  <p>Advanced features enabled.</p>
-</div>
-
-<button id="run">Run</button>
-
-<div id="output"></div>
-
-<div id="hashes"></div>
-  
 <script type="module" src="ui/app.js"></script>
 </body>
 </html>
