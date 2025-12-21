@@ -31,7 +31,7 @@ header img {
 }
 
 main {
-  max-width: 900px;
+  max-width: 960px;
   margin: auto;
   padding: 16px;
 }
@@ -78,7 +78,7 @@ button.secondary {
 #guideModal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0,0,0,0.9);
   padding: 24px;
   overflow-y: auto;
 }
@@ -107,16 +107,32 @@ button.secondary {
 <section>
   <h2>Mode</h2>
   <select id="modeSelect">
-    <option value="encrypt">Encrypt</option>
-    <option value="decrypt">Decrypt</option>
+    <option value="encrypt">Encrypt Image</option>
+    <option value="decrypt">Decrypt Image</option>
     <option value="sstv-encode">SSTV Encode</option>
     <option value="sstv-decode">SSTV Decode</option>
   </select>
 </section>
 
-<section>
+<section id="imageSection">
   <h2>Image</h2>
   <input type="file" id="imageInput" accept="image/*">
+</section>
+
+<section id="sstvSection" class="hidden">
+  <h2>SSTV</h2>
+
+  <div id="sstvEncodeControls" class="hidden">
+    <p>Encode image into SSTV audio.</p>
+  </div>
+
+  <div id="sstvDecodeControls" class="hidden">
+    <input type="file" id="sstvWavInput" accept=".wav">
+    <div class="row">
+      <button id="sstvMicStart">🎙 Start Listening</button>
+      <button id="sstvMicStop" disabled>⏹ Stop and Decode</button>
+    </div>
+  </div>
 </section>
 
 <section>
@@ -131,6 +147,7 @@ button.secondary {
 
 <section id="advancedSection" class="hidden">
   <h2>Encryption</h2>
+
   <select id="encryptionMode">
     <option value="aes">AES-GCM</option>
     <option value="pgp">PGP</option>
@@ -139,6 +156,7 @@ button.secondary {
 
   <div id="pgpSection" class="hidden">
     <button id="generatePGP">Generate PGP Keys</button>
+
     <textarea id="pgpPublic" placeholder="Public Key"></textarea>
     <textarea id="pgpPrivate" placeholder="Private Key"></textarea>
 
@@ -168,16 +186,21 @@ button.secondary {
 <div id="guideModal" class="hidden">
   <h2>Steggy Guide</h2>
   <p>
-    Steggy hides information inside images and audio without using
-    conventional encrypted messaging apps.
+    Steggy hides information inside images or audio without relying
+    on messaging services or servers.
   </p>
 
-  <h3>Threat Models</h3>
-  <ul>
-    <li><b>Casual:</b> Low-risk privacy</li>
-    <li><b>Journalist:</b> Metadata stripping, decoys, fragmentation</li>
-    <li><b>Hostile:</b> PGP, fragmentation, decoys, forensic resistance</li>
-  </ul>
+  <h3>SSTV Mode</h3>
+  <p>
+    SSTV converts images into audio signals that can be transmitted
+    over radio, phone lines, or recorded media.
+  </p>
+
+  <h3>Security Review</h3>
+  <p>
+    Steggy exposes hashes, CRC checks, and deterministic outputs
+    for third-party verification.
+  </p>
 
   <button id="closeGuide">Close</button>
 </div>
