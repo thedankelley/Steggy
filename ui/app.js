@@ -1,9 +1,13 @@
 import { embedMessage, extractMessage } from "../core/steggy-core.js";
-import { fragmentPayload, reassembleFragments } from "../modules/steggy-fragment.js";
 import { generatePGPKeypair, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
+import { decodeSSTVFromWav } from "../modules/steggy-sstv-decode.js";
+import { SSTVMicDecoder } from "../modules/steggy-sstv-mic.js";
 import { hashData } from "../modules/steggy-hash.js";
 
 const $ = id => document.getElementById(id);
+
+const statusBox = $("status");
+const output = $("output");
 
 $("guideBtn").onclick = () => $("guideModal").classList.remove("hidden");
 $("closeGuide").onclick = () => $("guideModal").classList.add("hidden");
@@ -12,9 +16,20 @@ $("advancedToggle").onclick = () =>
   $("advancedSection").classList.toggle("hidden");
 
 $("encryptionMode").onchange = () =>
-  $("pgpSection").classList.toggle("hidden",
+  $("pgpSection").classList.toggle(
+    "hidden",
     $("encryptionMode").value === "aes"
   );
+
+$("modeSelect").onchange = () => {
+  const mode = $("modeSelect").value;
+
+  $("sstvSection").classList.toggle("hidden", !mode.startsWith("sstv"));
+  $("sstvEncodeControls").classList.toggle("hidden", mode !== "sstv-encode");
+  $("sstvDecodeControls").classList.toggle("hidden", mode !== "sstv-decode");
+
+  $("imageSection").classList.toggle("hidden", mode.startsWith("sstv"));
+};
 
 $("generatePGP").onclick = async () => {
   const keys = await generatePGPKeypair();
@@ -39,30 +54,55 @@ $("decryptWithPGP").onclick = async () => {
   );
 };
 
+const micDecoder = new SSTVMicDecoder(
+  canvas => {
+    output.innerHTML = "";
+    output.appendChild(canvas);
+    statusBox.textContent = "SSTV decoded from microphone";
+  },
+  msg => statusBox.textContent = msg
+);
+
+$("sstvMicStart").onclick = () => micDecoder.start();
+$("sstvMicStop").onclick = () => micDecoder.stop();
+
 $("runBtn").onclick = async () => {
+  output.innerHTML = "";
+  statusBox.textContent = "Processing…";
+
   const mode = $("modeSelect").value;
-  const img = $("imageInput").files[0];
-  $("output").innerHTML = "";
 
   if (mode === "encrypt") {
+    const img = $("imageInput").files[0];
     const result = await embedMessage(img, {
       protected: $("protectedMessage").value,
       decoy: $("decoyMessage").value,
       encryption: $("encryptionMode").value
     });
 
-    $("output").appendChild(result.canvas);
-    showHash(result.canvas);
+    output.appendChild(result.canvas);
+    await showHash(result.canvas);
+    statusBox.textContent = "Image generated";
   }
 
   if (mode === "decrypt") {
+    const img = $("imageInput").files[0];
     const extracted = await extractMessage(img);
     $("protectedMessage").value = extracted.protected;
     $("decoyMessage").value = extracted.decoy;
+    statusBox.textContent = "Message extracted";
+  }
+
+  if (mode === "sstv-decode") {
+    const wav = $("sstvWavInput").files[0];
+    const buf = await wav.arrayBuffer();
+    const canvas = await decodeSSTVFromWav(buf);
+    output.appendChild(canvas);
+    statusBox.textContent = "SSTV decoded from WAV";
   }
 };
 
-function showHash(canvas) {
+async function showHash(canvas) {
   canvas.toBlob(async blob => {
     const buf = await blob.arrayBuffer();
     $("hashes").textContent = "SHA-256: " + await hashData(buf);
