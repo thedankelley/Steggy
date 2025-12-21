@@ -1,45 +1,20 @@
 # Steggy Test Vectors
 
-These test vectors verify correctness and reproducibility.
+This folder contains known-good images and payloads
+used to verify Steggy functionality.
 
-All hashes use SHA-256.
+## How to Create a Test Vector
 
----
+1. Embed a known message into an image
+2. Compute SHA-256 of:
+   - Original image
+   - Stego image
+   - Extracted payload
+3. Record hashes here
 
-## Plaintext
+## Why This Matters
 
-File: plaintext.txt
-
-Expected content:
-"Steggy test message."
-
----
-
-## AES Test
-
-Password:
-test-password-123
-
----
-
-## PGP Test
-
-Public/Private key pair generated via Steggy UI.
-Keys are included for verification only.
-
----
-
-## Images
-
-image-input.png is a fixed PNG with no metadata.
-
-image-output-*.png are generated outputs.
-
----
-
-## Verification
-
-1. Upload image-output-aes.png
-2. Enter AES password
-3. Extract payload
-4. Result must equal plaintext.txt
+Test vectors allow:
+- Regression testing
+- External cryptographic review
+- Reproducible verification
