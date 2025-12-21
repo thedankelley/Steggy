@@ -1,4 +1,5 @@
 import { embedMessage, extractMessage } from "../core/steggy-core.js";
+import { fragmentPayload, reassembleFragments } from "../modules/steggy-fragment.js";
 import { generatePGPKeypair, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
 import { decodeSSTVFromWav } from "../modules/steggy-sstv-decode.js";
 import { SSTVMicDecoder } from "../modules/steggy-sstv-mic.js";
@@ -14,6 +15,20 @@ const pgpSection = $("pgpSection");
 const runBtn = $("runBtn");
 const statusBox = $("status");
 const outputImage = $("outputImage");
+
+const fragmentationToggle = document.createElement("input");
+fragmentationToggle.type = "checkbox";
+fragmentationToggle.id = "fragmentToggle";
+
+const fragmentCountInput = document.createElement("input");
+fragmentCountInput.type = "number";
+fragmentCountInput.min = 2;
+fragmentCountInput.value = 2;
+fragmentCountInput.id = "fragmentCount";
+
+advancedSection.appendChild(document.createElement("hr"));
+advancedSection.appendChild(labelWrap("Enable Fragmentation", fragmentationToggle));
+advancedSection.appendChild(labelWrap("Fragments per message", fragmentCountInput));
 
 advancedToggle.onclick = () => {
   advancedSection.classList.toggle("hidden");
@@ -32,13 +47,8 @@ $("generatePGP").onclick = async () => {
   $("pgpPrivate").value = privateKey;
 };
 
-$("downloadPublic").onclick = () => {
-  download("public.asc", $("pgpPublic").value);
-};
-
-$("downloadPrivate").onclick = () => {
-  download("private.asc", $("pgpPrivate").value);
-};
+$("downloadPublic").onclick = () => download("public.asc", $("pgpPublic").value);
+$("downloadPrivate").onclick = () => download("private.asc", $("pgpPrivate").value);
 
 $("encryptWithPGP").onclick = async () => {
   const encrypted = await encryptPGP(
@@ -64,6 +74,8 @@ modeSelect.onchange = () => {
     "hidden",
     modeSelect.value !== "sstv-decode"
   );
+
+  $("imageInput").multiple = modeSelect.value === "decrypt";
 };
 
 const micDecoder = new SSTVMicDecoder(
@@ -84,8 +96,28 @@ runBtn.onclick = async () => {
 
   if (modeSelect.value === "encrypt") {
     const img = $("imageInput").files[0];
+    let payload = $("protectedMessage").value;
+
+    if (fragmentationToggle.checked) {
+      const fragments = fragmentPayload(payload, {
+        parts: Number(fragmentCountInput.value)
+      });
+
+      for (const fragment of fragments) {
+        const result = await embedMessage(img, {
+          protected: fragment,
+          decoy: $("decoyMessage").value,
+          encryption: encryptionMode.value
+        });
+        outputImage.appendChild(result.canvas);
+      }
+
+      statusBox.textContent = "Fragmented images generated";
+      return;
+    }
+
     const result = await embedMessage(img, {
-      protected: $("protectedMessage").value,
+      protected: payload,
       decoy: $("decoyMessage").value,
       encryption: encryptionMode.value
     });
@@ -94,17 +126,24 @@ runBtn.onclick = async () => {
     statusBox.textContent = "Image generated";
 
   } else if (modeSelect.value === "decrypt") {
-    const img = $("imageInput").files[0];
-    const extracted = await extractMessage(img);
+    const files = Array.from($("imageInput").files);
+    const fragments = [];
 
-    let msg = extracted.protected;
-    if (encryptionMode.value !== "aes") {
-      msg = await decryptPGP(msg, $("pgpPrivate").value);
+    for (const file of files) {
+      const extracted = await extractMessage(file);
+      fragments.push(extracted.protected);
     }
 
-    $("protectedMessage").value = msg;
-    $("decoyMessage").value = extracted.decoy;
-    statusBox.textContent = "Message extracted";
+    let message = fragments.length > 1
+      ? reassembleFragments(fragments)
+      : fragments[0];
+
+    if (encryptionMode.value !== "aes") {
+      message = await decryptPGP(message, $("pgpPrivate").value);
+    }
+
+    $("protectedMessage").value = message;
+    statusBox.textContent = "Message reassembled";
 
   } else if (modeSelect.value === "sstv-decode") {
     const wav = $("sstvWavInput").files[0];
@@ -114,3 +153,11 @@ runBtn.onclick = async () => {
     statusBox.textContent = "SSTV decoded from WAV";
   }
 };
+
+function labelWrap(text, el) {
+  const label = document.createElement("label");
+  label.style.display = "block";
+  label.textContent = text;
+  label.appendChild(el);
+  return label;
+}
