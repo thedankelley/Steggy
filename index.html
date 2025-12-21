@@ -55,6 +55,7 @@ textarea, input, select, button {
 button {
   background: #3f51b5;
   color: white;
+  cursor: pointer;
 }
 
 button.secondary {
@@ -81,6 +82,7 @@ button.secondary {
   background: rgba(0,0,0,0.9);
   padding: 24px;
   overflow-y: auto;
+  z-index: 999;
 }
 </style>
 </head>
@@ -88,21 +90,12 @@ button.secondary {
 <body>
 
 <header>
-  <img src="./icons/icon-192.png">
+  <img src="./icons/icon-192.png" alt="Steggy">
   <h1>Steggy 2.0</h1>
   <button id="guideBtn" class="secondary">📘 Guide</button>
 </header>
 
 <main>
-
-<section>
-  <h2>Threat Model</h2>
-  <select id="threatPreset">
-    <option value="casual">Casual Privacy</option>
-    <option value="journalist">Journalist / Activist</option>
-    <option value="hostile">Hostile Adversary</option>
-  </select>
-</section>
 
 <section>
   <h2>Mode</h2>
@@ -123,14 +116,14 @@ button.secondary {
   <h2>SSTV</h2>
 
   <div id="sstvEncodeControls" class="hidden">
-    <p>Encode image into SSTV audio.</p>
+    <p>SSTV audio will be generated from the image.</p>
   </div>
 
   <div id="sstvDecodeControls" class="hidden">
     <input type="file" id="sstvWavInput" accept=".wav">
     <div class="row">
-      <button id="sstvMicStart">🎙 Start Listening</button>
-      <button id="sstvMicStop" disabled>⏹ Stop and Decode</button>
+      <button id="sstvMicStart">🎙 Start Mic</button>
+      <button id="sstvMicStop">⏹ Stop & Decode</button>
     </div>
   </div>
 </section>
@@ -142,7 +135,9 @@ button.secondary {
   <h3>Decoy Message</h3>
   <textarea id="decoyMessage" rows="3"></textarea>
 
-  <button id="advancedToggle" class="secondary">Advanced Options</button>
+  <button id="advancedToggle" class="secondary">
+    Advanced Options
+  </button>
 </section>
 
 <section id="advancedSection" class="hidden">
@@ -157,8 +152,8 @@ button.secondary {
   <div id="pgpSection" class="hidden">
     <button id="generatePGP">Generate PGP Keys</button>
 
-    <textarea id="pgpPublic" placeholder="Public Key"></textarea>
-    <textarea id="pgpPrivate" placeholder="Private Key"></textarea>
+    <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
+    <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
 
     <div class="row">
       <button id="downloadPublic">Download Public</button>
@@ -186,20 +181,13 @@ button.secondary {
 <div id="guideModal" class="hidden">
   <h2>Steggy Guide</h2>
   <p>
-    Steggy hides information inside images or audio without relying
-    on messaging services or servers.
+    Steggy allows you to hide information inside images or audio
+    without relying on centralized messaging systems.
   </p>
 
-  <h3>SSTV Mode</h3>
   <p>
-    SSTV converts images into audio signals that can be transmitted
-    over radio, phone lines, or recorded media.
-  </p>
-
-  <h3>Security Review</h3>
-  <p>
-    Steggy exposes hashes, CRC checks, and deterministic outputs
-    for third-party verification.
+    Use PGP for high-risk scenarios. Use decoys and fragmentation
+    to resist coercive extraction.
   </p>
 
   <button id="closeGuide">Close</button>
