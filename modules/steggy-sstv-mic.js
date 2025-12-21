@@ -1,24 +1,53 @@
-// steggy-sstv-mic.js
-// Live SSTV capture via microphone (optional)
+// modules/steggy-sstv-mic.js
 
-export class SteggySSTVMic {
-  static async listen(durationMs = 60000) {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const ctx = new AudioContext();
-    const source = ctx.createMediaStreamSource(stream);
-    const recorder = ctx.createScriptProcessor(4096, 1, 1);
+import { decodeSSTVFromSamples } from "./steggy-sstv-decode.js";
 
-    const samples = [];
-    source.connect(recorder);
-    recorder.connect(ctx.destination);
+export class SSTVMicDecoder {
+  constructor(onImageDecoded, onStatus) {
+    this.audioContext = null;
+    this.stream = null;
+    this.processor = null;
+    this.samples = [];
+    this.listening = false;
+    this.onImageDecoded = onImageDecoded;
+    this.onStatus = onStatus;
+  }
 
-    recorder.onaudioprocess = e => {
-      samples.push(...e.inputBuffer.getChannelData(0));
+  async start() {
+    if (this.listening) return;
+
+    this.audioContext = new AudioContext({ sampleRate: 44100 });
+    this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    const source = this.audioContext.createMediaStreamSource(this.stream);
+    this.processor = this.audioContext.createScriptProcessor(4096, 1, 1);
+
+    source.connect(this.processor);
+    this.processor.connect(this.audioContext.destination);
+
+    this.processor.onaudioprocess = (e) => {
+      const input = e.inputBuffer.getChannelData(0);
+      this.samples.push(...input);
     };
 
-    await new Promise(r => setTimeout(r, durationMs));
-    stream.getTracks().forEach(t => t.stop());
+    this.listening = true;
+    this.onStatus?.("Listening for SSTV signal…");
+  }
 
-    return new Float32Array(samples);
+  async stop() {
+    if (!this.listening) return;
+
+    this.processor.disconnect();
+    this.stream.getTracks().forEach(t => t.stop());
+    await this.audioContext.close();
+
+    this.listening = false;
+    this.onStatus?.("Decoding SSTV signal…");
+
+    const sampleArray = new Float32Array(this.samples);
+    this.samples = [];
+
+    const imageData = await decodeSSTVFromSamples(sampleArray);
+    this.onImageDecoded?.(imageData);
   }
 }
