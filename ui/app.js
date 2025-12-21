@@ -1,32 +1,116 @@
-/* ======================================================
-   EXISTING app.js CONTENT
-   - All encryption logic
-   - All PGP logic
-   - All SSTV logic
-   - All fragment logic
-   - All UI wiring
-   ====================================================== */
+import { embedMessage, extractMessage } from "../core/steggy-core.js";
+import { generatePGPKeypair, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
+import { decodeSSTVFromWav } from "../modules/steggy-sstv-decode.js";
+import { SSTVMicDecoder } from "../modules/steggy-sstv-mic.js";
+import { hashData } from "../modules/steggy-hash.js";
 
-/* ------------------------------------------------------
-   Drop 8: Guidebook wiring (ADDITIVE ONLY)
------------------------------------------------------- */
+const $ = id => document.getElementById(id);
 
-const guideBtn = document.getElementById("guideBtn");
-const guideOverlay = document.getElementById("guideOverlay");
-const guideClose = document.getElementById("guideClose");
+const modeSelect = $("modeSelect");
+const advancedToggle = $("advancedToggle");
+const advancedSection = $("advancedSection");
+const encryptionMode = $("encryptionMode");
+const pgpSection = $("pgpSection");
+const runBtn = $("runBtn");
+const statusBox = $("status");
+const outputImage = $("outputImage");
 
-if (guideBtn && guideOverlay && guideClose) {
-  guideBtn.addEventListener("click", () => {
-    guideOverlay.classList.remove("hidden");
-  });
+advancedToggle.onclick = () => {
+  advancedSection.classList.toggle("hidden");
+};
 
-  guideClose.addEventListener("click", () => {
-    guideOverlay.classList.add("hidden");
-  });
+encryptionMode.onchange = () => {
+  pgpSection.classList.toggle(
+    "hidden",
+    encryptionMode.value === "aes"
+  );
+};
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") {
-      guideOverlay.classList.add("hidden");
-    }
-  });
+$("generatePGP").onclick = async () => {
+  const { publicKey, privateKey } = await generatePGPKeypair();
+  $("pgpPublic").value = publicKey;
+  $("pgpPrivate").value = privateKey;
+};
+
+$("downloadPublic").onclick = () => {
+  download("public.asc", $("pgpPublic").value);
+};
+
+$("downloadPrivate").onclick = () => {
+  download("private.asc", $("pgpPrivate").value);
+};
+
+$("encryptWithPGP").onclick = async () => {
+  const encrypted = await encryptPGP(
+    $("protectedMessage").value,
+    $("pgpPublic").value
+  );
+  $("protectedMessage").value = encrypted;
+};
+
+function download(name, data) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([data]));
+  a.download = name;
+  a.click();
 }
+
+modeSelect.onchange = () => {
+  $("sstvSection").classList.toggle(
+    "hidden",
+    !modeSelect.value.startsWith("sstv")
+  );
+  $("sstvDecodeOptions").classList.toggle(
+    "hidden",
+    modeSelect.value !== "sstv-decode"
+  );
+};
+
+const micDecoder = new SSTVMicDecoder(
+  canvas => {
+    outputImage.innerHTML = "";
+    outputImage.appendChild(canvas);
+    statusBox.textContent = "SSTV decoded from microphone";
+  },
+  msg => statusBox.textContent = msg
+);
+
+$("sstvMicStart").onclick = () => micDecoder.start();
+$("sstvMicStop").onclick = () => micDecoder.stop();
+
+runBtn.onclick = async () => {
+  statusBox.textContent = "Processing…";
+  outputImage.innerHTML = "";
+
+  if (modeSelect.value === "encrypt") {
+    const img = $("imageInput").files[0];
+    const result = await embedMessage(img, {
+      protected: $("protectedMessage").value,
+      decoy: $("decoyMessage").value,
+      encryption: encryptionMode.value
+    });
+
+    outputImage.appendChild(result.canvas);
+    statusBox.textContent = "Image generated";
+
+  } else if (modeSelect.value === "decrypt") {
+    const img = $("imageInput").files[0];
+    const extracted = await extractMessage(img);
+
+    let msg = extracted.protected;
+    if (encryptionMode.value !== "aes") {
+      msg = await decryptPGP(msg, $("pgpPrivate").value);
+    }
+
+    $("protectedMessage").value = msg;
+    $("decoyMessage").value = extracted.decoy;
+    statusBox.textContent = "Message extracted";
+
+  } else if (modeSelect.value === "sstv-decode") {
+    const wav = $("sstvWavInput").files[0];
+    const buf = await wav.arrayBuffer();
+    const canvas = await decodeSSTVFromWav(buf);
+    outputImage.appendChild(canvas);
+    statusBox.textContent = "SSTV decoded from WAV";
+  }
+};
