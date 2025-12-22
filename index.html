@@ -1,198 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Steggy 2.0</title>
+  <meta charset="UTF-8" />
+  <title>Steggy ステギー</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#121212">
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./ui/styles.css" />
 
-<link rel="manifest" href="./manifest.json">
-
-<style>
-body {
-  margin: 0;
-  background: #121212;
-  color: #fff;
-  font-family: system-ui, sans-serif;
-}
-
-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #1e1e1e;
-}
-
-header img {
-  width: 36px;
-  height: 36px;
-}
-
-main {
-  max-width: 960px;
-  margin: auto;
-  padding: 16px;
-}
-
-section {
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
-}
-
-textarea, input, select, button {
-  width: 100%;
-  margin-top: 6px;
-  padding: 10px;
-  border-radius: 6px;
-  border: none;
-  font-size: 1rem;
-}
-
-button {
-  background: #3f51b5;
-  color: white;
-  cursor: pointer;
-}
-
-button.secondary {
-  background: #555;
-}
-
-.hidden {
-  display: none;
-}
-
-.row {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.row > * {
-  flex: 1;
-}
-
-#guideModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.9);
-  padding: 24px;
-  overflow-y: auto;
-  z-index: 999;
-}
-</style>
+  <meta name="theme-color" content="#0f172a" />
 </head>
 
-<body>
+<body class="dark">
 
-<header>
-  <img src="./icons/icon-192.png" alt="Steggy">
-  <h1>Steggy 2.0</h1>
-  <button id="guideBtn" class="secondary">📘 Guide</button>
+<header class="app-header">
+  <div class="title-wrap">
+    <img src="./icons/icon-192.png" class="app-icon" alt="Steggy icon" />
+    <h1>Steggy <span class="jp">ステギー</span></h1>
+  </div>
+
+  <button id="guideBtn" class="icon-btn" title="Guide">
+    📘
+  </button>
 </header>
 
-<main>
+<main class="container">
 
-<section>
-  <h2>Mode</h2>
-  <select id="modeSelect">
-    <option value="encrypt">Encrypt Image</option>
-    <option value="decrypt">Decrypt Image</option>
-    <option value="sstv-encode">SSTV Encode</option>
-    <option value="sstv-decode">SSTV Decode</option>
-  </select>
-</section>
+  <!-- MODE -->
+  <section class="card">
+    <label for="modeSelect">Mode</label>
+    <select id="modeSelect">
+      <option value="encrypt">Encrypt</option>
+      <option value="decrypt">Decrypt</option>
+    </select>
+  </section>
 
-<section id="imageSection">
-  <h2>Image</h2>
-  <input type="file" id="imageInput" accept="image/*">
-</section>
+  <!-- IMAGE INPUT -->
+  <section class="card">
+    <label for="imageInput">Image File(s)</label>
+    <input type="file" id="imageInput" accept="image/*" multiple />
+  </section>
 
-<section id="sstvSection" class="hidden">
-  <h2>SSTV</h2>
+  <!-- MESSAGES -->
+  <section class="card">
+    <label for="protectedMessage">Protected Message</label>
+    <textarea id="protectedMessage" rows="5"></textarea>
 
-  <div id="sstvEncodeControls" class="hidden">
-    <p>SSTV audio will be generated from the image.</p>
-  </div>
+    <label for="decoyMessage">Decoy Message</label>
+    <textarea id="decoyMessage" rows="3"></textarea>
+  </section>
 
-  <div id="sstvDecodeControls" class="hidden">
-    <input type="file" id="sstvWavInput" accept=".wav">
-    <div class="row">
-      <button id="sstvMicStart">🎙 Start Mic</button>
-      <button id="sstvMicStop">⏹ Stop & Decode</button>
+  <!-- ADVANCED OPTIONS -->
+  <section class="card">
+    <button id="advancedToggle" class="primary-btn">
+      Advanced Options
+    </button>
+
+    <div id="advancedSection" class="hidden">
+
+      <!-- ENCRYPTION MODE -->
+      <label for="encryptionMode">Encryption Method</label>
+      <select id="encryptionMode">
+        <option value="none">None</option>
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="pgp+aes">PGP + AES</option>
+      </select>
+
+      <!-- PGP -->
+      <div id="pgpSection" class="card hidden">
+        <h3>PGP</h3>
+
+        <button id="generatePGP">Generate PGP Keys</button>
+
+        <label>Public Key</label>
+        <textarea id="pgpPublic" rows="4"></textarea>
+
+        <label>Private Key</label>
+        <textarea id="pgpPrivate" rows="4"></textarea>
+
+        <div class="btn-row">
+          <button id="encryptWithPGP">Encrypt Message with Public Key</button>
+          <button id="decryptWithPGP">Decrypt Message with Private Key</button>
+        </div>
+      </div>
+
+      <!-- FRAGMENTATION -->
+      <div id="fragmentSection" class="card hidden">
+        <h3>Payload Fragmentation</h3>
+
+        <p class="helper-text">
+          Split the protected message across multiple images.
+        </p>
+
+        <label for="fragmentCount">Fragments</label>
+        <select id="fragmentCount">
+          <option value="1">Disabled</option>
+          <option value="2">2 images</option>
+          <option value="3">3 images</option>
+          <option value="4">4 images</option>
+          <option value="5">5 images</option>
+        </select>
+
+        <p class="warning-text">
+          All fragments are required to decrypt.
+        </p>
+      </div>
+
+      <!-- SSTV ENCODE -->
+      <div id="sstvEncodeSection" class="card hidden">
+        <h3>SSTV Encode</h3>
+
+        <label for="encoderSelect">Encoder</label>
+        <select id="encoderSelect">
+          <option value="none">None</option>
+          <option value="sstv">SSTV (Audio)</option>
+        </select>
+
+        <p class="helper-text">
+          Generates a WAV audio signal from the image for offline transmission.
+        </p>
+      </div>
+
     </div>
-  </div>
-</section>
+  </section>
 
-<section>
-  <h2>Protected Message</h2>
-  <textarea id="protectedMessage" rows="5"></textarea>
+  <!-- RUN -->
+  <section class="card center">
+    <button id="runBtn" class="run-btn">Run</button>
+  </section>
 
-  <h3>Decoy Message</h3>
-  <textarea id="decoyMessage" rows="3"></textarea>
-
-  <button id="advancedToggle" class="secondary">
-    Advanced Options
-  </button>
-</section>
-
-<section id="advancedSection" class="hidden">
-  <h2>Encryption</h2>
-
-  <select id="encryptionMode">
-    <option value="aes">AES-GCM</option>
-    <option value="pgp">PGP</option>
-    <option value="both">PGP + AES</option>
-  </select>
-
-  <div id="pgpSection" class="hidden">
-    <button id="generatePGP">Generate PGP Keys</button>
-
-    <textarea id="pgpPublic" placeholder="PGP Public Key"></textarea>
-    <textarea id="pgpPrivate" placeholder="PGP Private Key"></textarea>
-
-    <div class="row">
-      <button id="downloadPublic">Download Public</button>
-      <button id="downloadPrivate">Download Private</button>
-    </div>
-
-    <button id="encryptWithPGP">Encrypt Message with PGP</button>
-    <button id="decryptWithPGP">Decrypt PGP Payload</button>
-  </div>
-</section>
-
-<section>
-  <button id="runBtn">Run</button>
-</section>
-
-<section>
-  <h2>Status</h2>
-  <div id="status"></div>
-  <div id="hashes"></div>
-  <div id="output"></div>
-</section>
+  <!-- OUTPUT -->
+  <section id="output" class="output"></section>
 
 </main>
 
-<div id="guideModal" class="hidden">
-  <h2>Steggy Guide</h2>
-  <p>
-    Steggy allows you to hide information inside images or audio
-    without relying on centralized messaging systems.
-  </p>
+<!-- GUIDE MODAL -->
+<div id="guideModal" class="modal hidden">
+  <div class="modal-content">
+    <h2>Steggy Guide</h2>
+    <p>
+      Steggy hides information inside images using steganography.
+      It is designed for journalists, researchers, and people in
+      sensitive environments.
+    </p>
 
-  <p>
-    Use PGP for high-risk scenarios. Use decoys and fragmentation
-    to resist coercive extraction.
-  </p>
+    <ul>
+      <li>Protected Message: real secret</li>
+      <li>Decoy Message: plausible false content</li>
+      <li>Fragmentation: split message across images</li>
+      <li>SSTV: emergency offline transmission</li>
+    </ul>
 
-  <button id="closeGuide">Close</button>
+    <button id="closeGuide">Close</button>
+  </div>
 </div>
 
 <script type="module" src="./ui/app.js"></script>
+
 </body>
 </html>
