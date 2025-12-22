@@ -19,14 +19,11 @@
     <h1>Steggy <span class="jp">ステギー</span></h1>
   </div>
 
-  <button id="guideBtn" class="icon-btn" title="Guide">
-    📘
-  </button>
+  <button id="guideBtn" class="icon-btn" title="Guide">📘</button>
 </header>
 
 <main class="container">
 
-  <!-- MODE -->
   <section class="card">
     <label for="modeSelect">Mode</label>
     <select id="modeSelect">
@@ -35,13 +32,11 @@
     </select>
   </section>
 
-  <!-- IMAGE INPUT -->
   <section class="card">
     <label for="imageInput">Image File(s)</label>
     <input type="file" id="imageInput" accept="image/*" multiple />
   </section>
 
-  <!-- MESSAGES -->
   <section class="card">
     <label for="protectedMessage">Protected Message</label>
     <textarea id="protectedMessage" rows="5"></textarea>
@@ -50,7 +45,6 @@
     <textarea id="decoyMessage" rows="3"></textarea>
   </section>
 
-  <!-- ADVANCED OPTIONS -->
   <section class="card">
     <button id="advancedToggle" class="primary-btn">
       Advanced Options
@@ -58,7 +52,6 @@
 
     <div id="advancedSection" class="hidden">
 
-      <!-- ENCRYPTION MODE -->
       <label for="encryptionMode">Encryption Method</label>
       <select id="encryptionMode">
         <option value="none">None</option>
@@ -67,7 +60,6 @@
         <option value="pgp+aes">PGP + AES</option>
       </select>
 
-      <!-- PGP -->
       <div id="pgpSection" class="card hidden">
         <h3>PGP</h3>
 
@@ -80,18 +72,13 @@
         <textarea id="pgpPrivate" rows="4"></textarea>
 
         <div class="btn-row">
-          <button id="encryptWithPGP">Encrypt Message with Public Key</button>
-          <button id="decryptWithPGP">Decrypt Message with Private Key</button>
+          <button id="encryptWithPGP">Encrypt Message</button>
+          <button id="decryptWithPGP">Decrypt Message</button>
         </div>
       </div>
 
-      <!-- FRAGMENTATION -->
       <div id="fragmentSection" class="card hidden">
         <h3>Payload Fragmentation</h3>
-
-        <p class="helper-text">
-          Split the protected message across multiple images.
-        </p>
 
         <label for="fragmentCount">Fragments</label>
         <select id="fragmentCount">
@@ -101,13 +88,8 @@
           <option value="4">4 images</option>
           <option value="5">5 images</option>
         </select>
-
-        <p class="warning-text">
-          All fragments are required to decrypt.
-        </p>
       </div>
 
-      <!-- SSTV ENCODE -->
       <div id="sstvEncodeSection" class="card hidden">
         <h3>SSTV Encode</h3>
 
@@ -116,40 +98,33 @@
           <option value="none">None</option>
           <option value="sstv">SSTV (Audio)</option>
         </select>
-
-        <p class="helper-text">
-          Generates a WAV audio signal from the image for offline transmission.
-        </p>
       </div>
 
     </div>
   </section>
 
-  <!-- RUN -->
   <section class="card center">
     <button id="runBtn" class="run-btn">Run</button>
   </section>
 
-  <!-- OUTPUT -->
   <section id="output" class="output"></section>
 
 </main>
 
 <!-- GUIDE MODAL -->
-<div id="guideModal" class="modal hidden">
+<div id="guideModal" class="modal">
   <div class="modal-content">
     <h2>Steggy Guide</h2>
     <p>
       Steggy hides information inside images using steganography.
-      It is designed for journalists, researchers, and people in
-      sensitive environments.
+      Designed for journalists and people in sensitive environments.
     </p>
 
     <ul>
       <li>Protected Message: real secret</li>
-      <li>Decoy Message: plausible false content</li>
-      <li>Fragmentation: split message across images</li>
-      <li>SSTV: emergency offline transmission</li>
+      <li>Decoy Message: plausible cover</li>
+      <li>Fragmentation: split across images</li>
+      <li>SSTV: offline emergency transmission</li>
     </ul>
 
     <button id="closeGuide">Close</button>
@@ -157,6 +132,5 @@
 </div>
 
 <script type="module" src="./ui/app.js"></script>
-
 </body>
 </html>
