@@ -1,252 +1,162 @@
-// steggy-core.js
-// Steggy 2.0 core orchestration layer
-// Responsible for container format, validation, and module coordination
+// core/steggy-core.js
+// Steggy Core Engine
+// Created by Dan
 
-import { SteggyCRC } from "./steggy-crc.js";
-import { SteggyImageLSB } from "../modules/steggy-image-lsb.js";
+import { crc32 } from './steggy-crc.js';
+
+const STEGGY_MAGIC = new TextEncoder().encode('STEGGY');
+const VERSION = 1;
 
 export class SteggyCore {
-  constructor(modules = {}) {
-    this.modules = modules;
-    this.VERSION = 2;
-  }
-
-  /* ============================================================
-     Container Format
-     ============================================================
-     [0-3]   MAGIC "STGY"
-     [4]     VERSION
-     [5]     FLAGS
-     [6-7]   HEADER LENGTH (uint16)
-     [..]    HEADER JSON
-     [..]    PAYLOAD + CRC32
-  */
-
-  static MAGIC = [0x53, 0x54, 0x47, 0x59];
-
-  /* ============================================================
-     Capacity Calculation
-     ============================================================ */
-  calculateCapacity(imageData) {
-    if (!imageData || !imageData.data) {
-      throw new Error("Invalid ImageData");
-    }
+  static calculateCapacity(imageData) {
     const pixels = imageData.data.length / 4;
+    // 1 bit per channel RGB = 3 bits per pixel
     return Math.floor((pixels * 3) / 8);
   }
 
-  /* ============================================================
-     Container Builder
-     ============================================================ */
-  buildContainer(headerObj, payloadBytes) {
-    const headerJson = JSON.stringify(headerObj);
-    const headerBytes = new TextEncoder().encode(headerJson);
-    const payloadWithCRC = SteggyCRC.appendCRC(payloadBytes);
-
-    const totalLength =
-      4 + // MAGIC
-      1 + // VERSION
-      1 + // FLAGS
-      2 + // HEADER LENGTH
-      headerBytes.length +
-      payloadWithCRC.length;
-
-    const out = new Uint8Array(totalLength);
-    let offset = 0;
-
-    out.set(SteggyCore.MAGIC, offset);
-    offset += 4;
-
-    out[offset++] = this.VERSION;
-    out[offset++] = headerObj.flags || 0;
-
-    out[offset++] = (headerBytes.length >>> 8) & 0xff;
-    out[offset++] = headerBytes.length & 0xff;
-
-    out.set(headerBytes, offset);
-    offset += headerBytes.length;
-
-    out.set(payloadWithCRC, offset);
-
-    return out;
-  }
-
-  /* ============================================================
-     Container Parser
-     ============================================================ */
-  parseContainer(containerBytes) {
-    let offset = 0;
-
-    for (let i = 0; i < 4; i++) {
-      if (containerBytes[offset++] !== SteggyCore.MAGIC[i]) {
-        throw new Error("Invalid Steggy container magic");
-      }
-    }
-
-    const version = containerBytes[offset++];
-    if (version !== this.VERSION) {
-      throw new Error("Unsupported Steggy container version");
-    }
-
-    const flags = containerBytes[offset++];
-    const headerLength =
-      (containerBytes[offset++] << 8) |
-      containerBytes[offset++];
-
-    const headerJson = new TextDecoder().decode(
-      containerBytes.slice(offset, offset + headerLength)
-    );
-    offset += headerLength;
-
-    const header = JSON.parse(headerJson);
-    const payloadWithCRC = containerBytes.slice(offset);
-    const payload = SteggyCRC.verifyAndStrip(payloadWithCRC);
-
-    return { header, payload, flags };
-  }
-
-  /* ============================================================
-     Encrypt Orchestration
-     ============================================================ */
-  async encrypt({
-    imageData,
-    protectedPayload,
-    decoyPayload = null,
-    options = {}
-  }) {
-    if (!imageData) {
-      throw new Error("ImageData required for encryption");
-    }
-
-    let payload = protectedPayload;
-
-    if (options.useAES) {
-      if (!this.modules.aes) {
-        throw new Error("AES module not available");
-      }
-      payload = await this.modules.aes.encrypt(
-        payload,
-        options.aesPassword
-      );
-    }
-
-    if (options.usePGP) {
-      if (!this.modules.pgp) {
-        throw new Error("PGP module not available");
-      }
-      payload = await this.modules.pgp.encrypt(
-        payload,
-        options.pgpPublicKey
-      );
-    }
-
-    if (options.fragment) {
-      if (!this.modules.fragment) {
-        throw new Error("Fragmentation module not available");
-      }
-      payload = this.modules.fragment.fragment(
-        payload,
-        this.calculateCapacity(imageData)
-      );
-    }
-
-    if (decoyPayload) {
-      if (!this.modules.decoy) {
-        throw new Error("Decoy module not available");
-      }
-      payload = this.modules.decoy.combine(decoyPayload, payload);
-    }
-
+  static embed(imageData, payloadBytes, options = {}) {
     const capacity = this.calculateCapacity(imageData);
-    if (payload.length > capacity) {
-      throw new Error("Payload exceeds image capacity");
+    if (payloadBytes.length > capacity) {
+      throw new Error('Payload exceeds image capacity');
     }
 
     const header = {
-      flags: this._buildFlags(options),
-      aes: !!options.useAES,
-      pgp: !!options.usePGP,
-      fragment: !!options.fragment,
-      decoy: !!decoyPayload,
+      version: VERSION,
+      flags: options.flags || {},
+      payloadType: options.payloadType || 0x01,
       timestamp: Date.now()
     };
 
-    const container = this.buildContainer(header, payload);
-    return SteggyImageLSB.embed(imageData, container);
+    const headerBytes = new TextEncoder().encode(JSON.stringify(header));
+
+    const container = this._buildContainer(headerBytes, payloadBytes);
+    this._lsbWrite(imageData, container);
+
+    return imageData;
   }
 
-  /* ============================================================
-     Decrypt Orchestration
-     ============================================================ */
-  async decryptFromImage(imageData, options = {}) {
-    if (!imageData) {
-      throw new Error("ImageData required for decryption");
+  static extract(imageData) {
+    const bytes = this._lsbRead(imageData);
+
+    if (!this._matchMagic(bytes)) {
+      throw new Error('No Steggy payload detected');
     }
 
-    // Probe first 12 bytes to determine header size
-    const probe = SteggyImageLSB.extract(imageData, 12);
-
-    // Bytes 6-7 contain header length
-    const headerLength = (probe[6] << 8) | probe[7];
-    const containerHeaderSize = 8 + headerLength;
-
-    // Extract full container conservatively
-    const maxBytes = this.calculateCapacity(imageData);
-    const containerBytes = SteggyImageLSB.extract(imageData, maxBytes);
-
-    const { header, payload } = this.parseContainer(containerBytes);
-    let data = payload;
-
-    if (header.decoy && options.extractDecoy) {
-      if (!this.modules.decoy) {
-        throw new Error("Decoy module not available");
-      }
-      data = this.modules.decoy.extractDecoy(data);
+    let offset = STEGGY_MAGIC.length;
+    const version = bytes[offset++];
+    if (version !== VERSION) {
+      throw new Error('Unsupported Steggy version');
     }
 
-    if (header.fragment) {
-      if (!this.modules.fragment) {
-        throw new Error("Fragmentation module not available");
-      }
-      data = this.modules.fragment.reassemble(data);
-    }
+    const flags = bytes[offset++];
+    const payloadType = bytes[offset++];
 
-    if (header.pgp && options.pgpPrivateKey) {
-      if (!this.modules.pgp) {
-        throw new Error("PGP module not available");
-      }
-      data = await this.modules.pgp.decrypt(
-        data,
-        options.pgpPrivateKey,
-        options.pgpPassphrase || ""
-      );
-    }
+    const headerLen =
+      (bytes[offset++] << 8) |
+      bytes[offset++];
 
-    if (header.aes && options.aesPassword) {
-      if (!this.modules.aes) {
-        throw new Error("AES module not available");
-      }
-      data = await this.modules.aes.decrypt(
-        data,
-        options.aesPassword
-      );
+    const headerBytes = bytes.slice(offset, offset + headerLen);
+    offset += headerLen;
+
+    const header = JSON.parse(new TextDecoder().decode(headerBytes));
+
+    const payloadEnd = bytes.length - 4;
+    const payload = bytes.slice(offset, payloadEnd);
+
+    const storedCrc =
+      (bytes[payloadEnd] << 24) |
+      (bytes[payloadEnd + 1] << 16) |
+      (bytes[payloadEnd + 2] << 8) |
+      bytes[payloadEnd + 3];
+
+    const calcCrc = crc32(payload);
+    if (storedCrc !== calcCrc) {
+      throw new Error('Payload corrupted or tampered');
     }
 
     return {
       header,
-      data
+      payload,
+      payloadType
     };
   }
 
-  /* ============================================================
-     Flags Helper
-     ============================================================ */
-  _buildFlags(options) {
-    let flags = 0;
-    if (options.useAES) flags |= 0x01;
-    if (options.usePGP) flags |= 0x02;
-    if (options.fragment) flags |= 0x04;
-    if (options.decoy) flags |= 0x08;
-    return flags;
+  static _buildContainer(headerBytes, payloadBytes) {
+    const totalLen =
+      STEGGY_MAGIC.length +
+      1 + 1 + 1 + 2 +
+      headerBytes.length +
+      payloadBytes.length +
+      4;
+
+    const buffer = new Uint8Array(totalLen);
+    let offset = 0;
+
+    buffer.set(STEGGY_MAGIC, offset);
+    offset += STEGGY_MAGIC.length;
+
+    buffer[offset++] = VERSION;
+    buffer[offset++] = 0;
+    buffer[offset++] = 0x01;
+
+    buffer[offset++] = (headerBytes.length >> 8) & 0xff;
+    buffer[offset++] = headerBytes.length & 0xff;
+
+    buffer.set(headerBytes, offset);
+    offset += headerBytes.length;
+
+    buffer.set(payloadBytes, offset);
+    offset += payloadBytes.length;
+
+    const crc = crc32(payloadBytes);
+    buffer[offset++] = (crc >> 24) & 0xff;
+    buffer[offset++] = (crc >> 16) & 0xff;
+    buffer[offset++] = (crc >> 8) & 0xff;
+    buffer[offset++] = crc & 0xff;
+
+    return buffer;
+  }
+
+  static _lsbWrite(imageData, data) {
+    const pixels = imageData.data;
+    let bitIndex = 0;
+
+    for (let i = 0; i < pixels.length && bitIndex < data.length * 8; i++) {
+      if ((i + 1) % 4 === 0) continue;
+
+      const byte = data[Math.floor(bitIndex / 8)];
+      const bit = (byte >> (7 - (bitIndex % 8))) & 1;
+
+      pixels[i] = (pixels[i] & 0xfe) | bit;
+      bitIndex++;
+    }
+  }
+
+  static _lsbRead(imageData) {
+    const pixels = imageData.data;
+    const bits = [];
+
+    for (let i = 0; i < pixels.length; i++) {
+      if ((i + 1) % 4 === 0) continue;
+      bits.push(pixels[i] & 1);
+    }
+
+    const bytes = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let byte = 0;
+      for (let j = 0; j < 8; j++) {
+        byte = (byte << 1) | (bits[i + j] || 0);
+      }
+      bytes.push(byte);
+    }
+
+    return new Uint8Array(bytes);
+  }
+
+  static _matchMagic(bytes) {
+    for (let i = 0; i < STEGGY_MAGIC.length; i++) {
+      if (bytes[i] !== STEGGY_MAGIC[i]) return false;
+    }
+    return true;
   }
 }
