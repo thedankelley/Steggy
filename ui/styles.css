@@ -67,7 +67,6 @@ button {
   padding: 0.5rem;
   border-radius: 8px;
   border: none;
-  font-size: 1rem;
 }
 
 button {
@@ -89,22 +88,22 @@ button {
   gap: 0.5rem;
 }
 
-.output {
+.center {
   text-align: center;
 }
 
-/* MODAL */
+.helper-text {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.6);
-  display: none;
+  display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.modal.show {
-  display: flex;
 }
 
 .modal-content {
