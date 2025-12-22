@@ -1,153 +1,127 @@
-import { embedMessage, extractMessage } from "../core/steggy-core.js";
-import { generatePGPKeypair, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
-import { decodeSSTVFromWav } from "../modules/steggy-sstv-decode.js";
-import { SSTVMicDecoder } from "../modules/steggy-sstv-mic.js";
-import { hashData } from "../modules/steggy-hash.js";
+// ui/app.js — HARDENED VERSION
 
-document.addEventListener("DOMContentLoaded", () => {
+console.log("[Steggy] app.js loading…");
 
-  const $ = id => document.getElementById(id);
+function $(id) {
+  const el = document.getElementById(id);
+  if (!el) console.warn(`[Steggy] Missing element: #${id}`);
+  return el;
+}
 
-  const modeSelect = $("modeSelect");
-  const advancedToggle = $("advancedToggle");
-  const advancedSection = $("advancedSection");
-  const encryptionMode = $("encryptionMode");
-  const pgpSection = $("pgpSection");
-  const statusBox = $("status");
-  const output = $("output");
+// --- SAFE MODULE LOADING ---
+let core = {};
+let pgp = {};
+let sstvDecode = {};
 
-  /* ---------- GUIDE ---------- */
-
-  $("guideBtn").onclick = () =>
-    $("guideModal").classList.remove("hidden");
-
-  $("closeGuide").onclick = () =>
-    $("guideModal").classList.add("hidden");
-
-  /* ---------- ADVANCED ---------- */
-
-  advancedToggle.onclick = () =>
-    advancedSection.classList.toggle("hidden");
-
-  encryptionMode.onchange = () =>
-    pgpSection.classList.toggle(
-      "hidden",
-      encryptionMode.value === "aes"
-    );
-
-  /* ---------- MODE SWITCH ---------- */
-
-  function refreshModeUI() {
-    const mode = modeSelect.value;
-
-    $("sstvSection").classList.toggle("hidden", !mode.startsWith("sstv"));
-    $("sstvEncodeControls").classList.toggle("hidden", mode !== "sstv-encode");
-    $("sstvDecodeControls").classList.toggle("hidden", mode !== "sstv-decode");
-
-    $("imageSection").classList.toggle("hidden", mode.startsWith("sstv"));
+async function loadModules() {
+  try {
+    core = await import("../core/steggy-core.js");
+    console.log("[Steggy] core loaded");
+  } catch (e) {
+    console.error("[Steggy] core failed", e);
   }
 
-  modeSelect.onchange = refreshModeUI;
-  refreshModeUI();
+  try {
+    pgp = await import("../modules/steggy-pgp.js");
+    console.log("[Steggy] pgp loaded");
+  } catch (e) {
+    console.error("[Steggy] pgp failed", e);
+  }
 
-  /* ---------- PGP ---------- */
+  try {
+    sstvDecode = await import("../modules/steggy-sstv-decode.js");
+    console.log("[Steggy] sstv decode loaded");
+  } catch (e) {
+    console.error("[Steggy] sstv decode failed", e);
+  }
+}
 
-  $("generatePGP").onclick = async () => {
-    const keys = await generatePGPKeypair();
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("[Steggy] DOM ready");
+
+  await loadModules();
+
+  // --- GUIDE ---
+  $("guideBtn")?.addEventListener("click", () => {
+    console.log("[Steggy] Guide open");
+    $("guideModal")?.classList.remove("hidden");
+  });
+
+  $("closeGuide")?.addEventListener("click", () => {
+    $("guideModal")?.classList.add("hidden");
+  });
+
+  // --- ADVANCED OPTIONS ---
+  $("advancedToggle")?.addEventListener("click", () => {
+    console.log("[Steggy] Advanced toggle");
+    $("advancedSection")?.classList.toggle("hidden");
+  });
+
+  // --- ENCRYPTION MODE ---
+  $("encryptionMode")?.addEventListener("change", e => {
+    const mode = e.target.value;
+    console.log("[Steggy] Encryption mode:", mode);
+    $("pgpSection")?.classList.toggle("hidden", mode === "aes");
+  });
+
+  // --- PGP ---
+  $("generatePGP")?.addEventListener("click", async () => {
+    if (!pgp.generatePGPKeypair) {
+      alert("PGP module not loaded");
+      return;
+    }
+
+    const keys = await pgp.generatePGPKeypair();
     $("pgpPublic").value = keys.publicKey;
     $("pgpPrivate").value = keys.privateKey;
-  };
+  });
 
-  $("downloadPublic").onclick = () =>
-    download("public.asc", $("pgpPublic").value);
+  $("encryptWithPGP")?.addEventListener("click", async () => {
+    $("protectedMessage").value =
+      await pgp.encryptPGP(
+        $("protectedMessage").value,
+        $("pgpPublic").value
+      );
+  });
 
-  $("downloadPrivate").onclick = () =>
-    download("private.asc", $("pgpPrivate").value);
+  $("decryptWithPGP")?.addEventListener("click", async () => {
+    $("protectedMessage").value =
+      await pgp.decryptPGP(
+        $("protectedMessage").value,
+        $("pgpPrivate").value
+      );
+  });
 
-  $("encryptWithPGP").onclick = async () => {
-    $("protectedMessage").value = await encryptPGP(
-      $("protectedMessage").value,
-      $("pgpPublic").value
-    );
-  };
+  // --- RUN ---
+  $("runBtn")?.addEventListener("click", async () => {
+    console.log("[Steggy] Run clicked");
 
-  $("decryptWithPGP").onclick = async () => {
-    $("protectedMessage").value = await decryptPGP(
-      $("protectedMessage").value,
-      $("pgpPrivate").value
-    );
-  };
-
-  /* ---------- SSTV ---------- */
-
-  const micDecoder = new SSTVMicDecoder(
-    canvas => {
-      output.innerHTML = "";
-      output.appendChild(canvas);
-      statusBox.textContent = "SSTV decoded from microphone";
-    },
-    msg => statusBox.textContent = msg
-  );
-
-  $("sstvMicStart").onclick = () => micDecoder.start();
-  $("sstvMicStop").onclick = () => micDecoder.stop();
-
-  /* ---------- RUN ---------- */
-
-  $("runBtn").onclick = async () => {
-    output.innerHTML = "";
-    statusBox.textContent = "Processing…";
-
-    const mode = modeSelect.value;
+    const mode = $("modeSelect")?.value;
 
     if (mode === "encrypt") {
-      const img = $("imageInput").files[0];
+      if (!core.embedMessage) {
+        alert("Core not loaded");
+        return;
+      }
 
-      const result = await embedMessage(img, {
+      const img = $("imageInput").files[0];
+      const result = await core.embedMessage(img, {
         protected: $("protectedMessage").value,
         decoy: $("decoyMessage").value,
-        encryption: encryptionMode.value
+        encryption: $("encryptionMode").value
       });
 
-      output.appendChild(result.canvas);
-      await showHash(result.canvas);
-      statusBox.textContent = "Image generated";
+      $("output").innerHTML = "";
+      $("output").appendChild(result.canvas);
     }
 
     if (mode === "decrypt") {
       const img = $("imageInput").files[0];
-      const extracted = await extractMessage(img);
-
+      const extracted = await core.extractMessage(img);
       $("protectedMessage").value = extracted.protected;
       $("decoyMessage").value = extracted.decoy;
-
-      statusBox.textContent = "Message extracted";
     }
+  });
 
-    if (mode === "sstv-decode") {
-      const wav = $("sstvWavInput").files[0];
-      const buf = await wav.arrayBuffer();
-      const canvas = await decodeSSTVFromWav(buf);
-
-      output.appendChild(canvas);
-      statusBox.textContent = "SSTV decoded from WAV";
-    }
-  };
-
-  /* ---------- HELPERS ---------- */
-
-  async function showHash(canvas) {
-    canvas.toBlob(async blob => {
-      const buf = await blob.arrayBuffer();
-      $("hashes").textContent =
-        "SHA-256: " + await hashData(buf);
-    });
-  }
-
-  function download(name, data) {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([data]));
-    a.download = name;
-    a.click();
-  }
+  console.log("[Steggy] UI wired successfully");
 });
