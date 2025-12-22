@@ -1,43 +1,57 @@
-// steggy-pgp.js
+// modules/steggy-pgp.js
+
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@5.10.1/+esm";
 
-export class SteggyPGP {
-  static async generateKeypair(name, email, passphrase) {
-    return openpgp.generateKey({
-      type: "rsa",
-      rsaBits: 4096,
-      userIDs: [{ name, email }],
-      passphrase
-    });
+export async function generatePGPKeypair() {
+  const { privateKey, publicKey } = await openpgp.generateKey({
+    type: "rsa",
+    rsaBits: 4096,
+    userIDs: [{ name: "Steggy User" }],
+    format: "armored"
+  });
+
+  return {
+    publicKey,
+    privateKey
+  };
+}
+
+export async function encryptPGP(plaintext, publicKeyArmored) {
+  if (!plaintext || !publicKeyArmored) {
+    throw new Error("Missing plaintext or public key");
   }
 
-  static async encrypt(bytes, publicKeyArmored) {
-    const publicKey = await openpgp.readKey({ armoredKey: publicKeyArmored });
-    const message = await openpgp.createMessage({ binary: bytes });
-    const encrypted = await openpgp.encrypt({
-      message,
-      encryptionKeys: publicKey
-    });
-    return new TextEncoder().encode(encrypted);
+  const publicKey = await openpgp.readKey({
+    armoredKey: publicKeyArmored
+  });
+
+  const message = await openpgp.createMessage({
+    text: plaintext
+  });
+
+  return await openpgp.encrypt({
+    message,
+    encryptionKeys: publicKey
+  });
+}
+
+export async function decryptPGP(ciphertext, privateKeyArmored) {
+  if (!ciphertext || !privateKeyArmored) {
+    throw new Error("Missing ciphertext or private key");
   }
 
-  static async decrypt(bytes, privateKeyArmored, passphrase = "") {
-    const privateKey = await openpgp.readPrivateKey({ armoredKey: privateKeyArmored });
-    const key = passphrase
-      ? await openpgp.decryptKey({ privateKey, passphrase })
-      : privateKey;
+  const privateKey = await openpgp.readPrivateKey({
+    armoredKey: privateKeyArmored
+  });
 
-    const message = await openpgp.readMessage({
-      armoredMessage: new TextDecoder().decode(bytes)
-    });
+  const message = await openpgp.readMessage({
+    armoredMessage: ciphertext
+  });
 
-    const { data } = await openpgp.decrypt({
-      message,
-      decryptionKeys: key
-    });
+  const { data } = await openpgp.decrypt({
+    message,
+    decryptionKeys: privateKey
+  });
 
-    return typeof data === "string"
-      ? new TextEncoder().encode(data)
-      : data;
-  }
+  return data;
 }
