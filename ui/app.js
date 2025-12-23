@@ -2,42 +2,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const $ = id => document.getElementById(id);
 
-  const guide = $("guideModal");
+  const advancedToggle = $("advancedToggle");
+  const advancedPanel = $("advancedPanel");
 
-  $("guideBtn").onclick = () => guide.style.display = "block";
-  $("closeGuide").onclick = () => guide.style.display = "none";
+  advancedToggle.addEventListener("click", () => {
+    advancedPanel.classList.toggle("hidden");
+  });
 
-  $("advancedBtn").onclick = () => {
-    const panel = $("advancedPanel");
-    panel.style.display = panel.style.display === "none" ? "block" : "none";
-  };
+  const guideModal = $("guideModal");
 
-  $("pgpGenerate").onclick = async () => {
-    if (!window.SteggyPGP) {
-      alert("PGP module not loaded");
-      return;
-    }
-    const keys = await window.SteggyPGP.generate();
-    $("pgpPublic").value = keys.publicKey;
-    $("pgpPrivate").value = keys.privateKey;
-  };
+  $("guideButton").addEventListener("click", () => {
+    guideModal.classList.remove("hidden");
+  });
 
-  $("pgpEncrypt").onclick = async () => {
-    const msg = $("payloadInput").value;
-    const pub = $("pgpPublic").value;
-    $("payloadInput").value = await window.SteggyPGP.encrypt(msg, pub);
-  };
+  $("closeGuide").addEventListener("click", () => {
+    guideModal.classList.add("hidden");
+  });
 
-  $("pgpDecrypt").onclick = async () => {
-    const msg = $("payloadInput").value;
-    const priv = $("pgpPrivate").value;
-    $("payloadInput").value = await window.SteggyPGP.decrypt(msg, priv);
-  };
+  $("modeSelect").addEventListener("change", () => {
+    // Visibility logic will be added in Stage 2
+  });
 
-  $("runBtn").onclick = async () => {
-    $("outputText").textContent = "Processing...";
-    // Placeholder run hook
-    $("outputText").textContent = "Run executed. Core wiring next.";
-  };
+  $("runButton").addEventListener("click", () => {
+    $("outputText").textContent = "UI is stable. Logic will be wired next.";
+  });
 
 });
