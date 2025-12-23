@@ -1,57 +1,159 @@
 // modules/steggy-pgp.js
+// PGP cryptography module for Steggy
+// Requires OpenPGP.js (https://openpgpjs.org)
 
-import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@5.10.1/+esm";
+/*
+Design goals:
+- Fully client-side
+- Offline compatible
+- No interference with AES or fragmentation layers
+- Deterministic error handling
+- Explicit user control of keys
+*/
 
-export async function generatePGPKeypair() {
-  const { privateKey, publicKey } = await openpgp.generateKey({
-    type: "rsa",
+let openpgpRef = null;
+
+/**
+ * Initialize OpenPGP reference
+ * Call once at app startup
+ *
+ * @param {object} openpgp
+ */
+export function initPGP(openpgp) {
+  if (!openpgp) {
+    throw new Error('OpenPGP library not provided');
+  }
+  openpgpRef = openpgp;
+}
+
+/**
+ * Generate a PGP key pair
+ *
+ * @param {string} name
+ * @param {string} email
+ * @param {string} passphrase optional
+ * @returns {Promise<object>}
+ */
+export async function generateKeyPair(name, email, passphrase = '') {
+  if (!openpgpRef) {
+    throw new Error('PGP module not initialized');
+  }
+
+  if (!name || !email) {
+    throw new Error('Name and email are required');
+  }
+
+  const result = await openpgpRef.generateKey({
+    type: 'rsa',
     rsaBits: 4096,
-    userIDs: [{ name: "Steggy User" }],
-    format: "armored"
+    userIDs: [{ name, email }],
+    passphrase: passphrase || undefined
   });
 
   return {
-    publicKey,
-    privateKey
+    publicKey: result.publicKey,
+    privateKey: result.privateKey
   };
 }
 
-export async function encryptPGP(plaintext, publicKeyArmored) {
-  if (!plaintext || !publicKeyArmored) {
-    throw new Error("Missing plaintext or public key");
+/**
+ * Encrypt data using a public key
+ *
+ * @param {Uint8Array} data
+ * @param {string} publicKeyArmored
+ * @returns {Promise<Uint8Array>}
+ */
+export async function encryptWithPublicKey(data, publicKeyArmored) {
+  if (!openpgpRef) {
+    throw new Error('PGP module not initialized');
   }
 
-  const publicKey = await openpgp.readKey({
+  if (!(data instanceof Uint8Array)) {
+    throw new Error('Data must be Uint8Array');
+  }
+
+  const publicKey = await openpgpRef.readKey({
     armoredKey: publicKeyArmored
   });
 
-  const message = await openpgp.createMessage({
-    text: plaintext
+  const message = await openpgpRef.createMessage({
+    binary: data
   });
 
-  return await openpgp.encrypt({
+  const encrypted = await openpgpRef.encrypt({
     message,
-    encryptionKeys: publicKey
+    encryptionKeys: publicKey,
+    format: 'binary'
   });
+
+  return new Uint8Array(encrypted);
 }
 
-export async function decryptPGP(ciphertext, privateKeyArmored) {
-  if (!ciphertext || !privateKeyArmored) {
-    throw new Error("Missing ciphertext or private key");
+/**
+ * Decrypt data using a private key
+ *
+ * @param {Uint8Array} encryptedData
+ * @param {string} privateKeyArmored
+ * @param {string} passphrase optional
+ * @returns {Promise<Uint8Array>}
+ */
+export async function decryptWithPrivateKey(
+  encryptedData,
+  privateKeyArmored,
+  passphrase = ''
+) {
+  if (!openpgpRef) {
+    throw new Error('PGP module not initialized');
   }
 
-  const privateKey = await openpgp.readPrivateKey({
+  if (!(encryptedData instanceof Uint8Array)) {
+    throw new Error('Encrypted data must be Uint8Array');
+  }
+
+  let privateKey = await openpgpRef.readPrivateKey({
     armoredKey: privateKeyArmored
   });
 
-  const message = await openpgp.readMessage({
-    armoredMessage: ciphertext
+  if (passphrase) {
+    privateKey = await openpgpRef.decryptKey({
+      privateKey,
+      passphrase
+    });
+  }
+
+  const message = await openpgpRef.readMessage({
+    binaryMessage: encryptedData
   });
 
-  const { data } = await openpgp.decrypt({
+  const { data } = await openpgpRef.decrypt({
     message,
-    decryptionKeys: privateKey
+    decryptionKeys: privateKey,
+    format: 'binary'
   });
 
-  return data;
+  return new Uint8Array(data);
+}
+
+/**
+ * Validate an armored PGP key
+ *
+ * @param {string} armored
+ * @returns {Promise<'public'|'private'>}
+ */
+export async function validateKey(armored) {
+  if (!openpgpRef) {
+    throw new Error('PGP module not initialized');
+  }
+
+  try {
+    await openpgpRef.readKey({ armoredKey: armored });
+    return 'public';
+  } catch (_) {}
+
+  try {
+    await openpgpRef.readPrivateKey({ armoredKey: armored });
+    return 'private';
+  } catch (_) {}
+
+  throw new Error('Invalid PGP key');
 }
