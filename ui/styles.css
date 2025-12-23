@@ -1,7 +1,7 @@
 :root {
   --md-primary: #6750a4;
-  --md-surface: #121212;
-  --md-surface-2: #1e1e1e;
+  --md-bg: #121212;
+  --md-surface: #1e1e1e;
   --md-text: #ffffff;
 }
 
@@ -12,21 +12,26 @@
 
 body {
   margin: 0;
-  background: var(--md-surface);
+  background: var(--md-bg);
   color: var(--md-text);
 }
 
+/* App Bar */
 .top-app-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
-  background: var(--md-surface-2);
+  background: var(--md-surface);
 }
 
 .logo {
   width: 32px;
   height: 32px;
+}
+
+.app-title {
+  font-size: 1.2rem;
 }
 
 .icon-btn {
@@ -35,8 +40,10 @@ body {
   border: none;
   font-size: 20px;
   color: var(--md-text);
+  cursor: pointer;
 }
 
+/* Layout */
 .app-container {
   max-width: 720px;
   margin: auto;
@@ -44,51 +51,58 @@ body {
 }
 
 .card {
-  background: var(--md-surface-2);
+  background: var(--md-surface);
   padding: 16px;
   border-radius: 12px;
   margin-bottom: 16px;
 }
 
+/* Inputs */
 textarea,
 select,
-button,
-input {
+input,
+button {
   width: 100%;
   margin-top: 8px;
 }
 
+button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
 .primary-btn {
   background: var(--md-primary);
-  border: none;
-  padding: 12px;
   color: white;
-  border-radius: 8px;
 }
 
 .text-btn {
   background: none;
-  border: none;
   color: var(--md-primary);
 }
 
+/* Utility */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 /* Modal */
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0,0,0,0.75);
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 1000;
 }
 
 .modal-content {
-  background: var(--md-surface-2);
+  background: var(--md-surface);
   padding: 24px;
   border-radius: 12px;
-  max-width: 400px;
+  max-width: 420px;
+  width: 90%;
 }
