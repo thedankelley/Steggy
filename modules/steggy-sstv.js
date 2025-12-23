@@ -1,99 +1,143 @@
-// steggy-sstv.js
-// Fragment-capable SSTV encoder
+// modules/steggy-sstv.js
+// SSTV image to audio encoder for Steggy
+// Offline, client-side, emergency transmission module
 
-import { crc32 } from "../core/steggy-crc.js";
+/*
+Design intent:
+- Encode images into SSTV audio signals
+- No encryption implied
+- Deterministic output
+- Suitable for radio, phone, or acoustic relay
+- Integrates AFTER steganography if desired
+*/
 
-export class SteggySSTV {
+const SAMPLE_RATE = 44100;
+const TWO_PI = Math.PI * 2;
 
-  static encode(imageData, mode, fragments = 1) {
-    if (fragments < 1) fragments = 1;
+/**
+ * Supported SSTV modes
+ * Durations are approximate and conservative
+ */
+export const SSTV_MODES = {
+  MARTIN_M1: {
+    name: 'Martin M1',
+    width: 320,
+    height: 256,
+    syncPulse: 1200,
+    black: 1500,
+    white: 2300,
+    lineTime: 0.446
+  },
+  SCOTTIE_S1: {
+    name: 'Scottie S1',
+    width: 320,
+    height: 256,
+    syncPulse: 1200,
+    black: 1500,
+    white: 2300,
+    lineTime: 0.432
+  }
+};
 
-    const frames = [];
-    const heightPerFragment = Math.floor(imageData.height / fragments);
-
-    for (let i = 0; i < fragments; i++) {
-      const y = i * heightPerFragment;
-      const h = (i === fragments - 1)
-        ? imageData.height - y
-        : heightPerFragment;
-
-      const fragment = new ImageData(
-        imageData.width,
-        h
-      );
-
-      fragment.data.set(
-        imageData.data.slice(
-          y * imageData.width * 4,
-          (y + h) * imageData.width * 4
-        )
-      );
-
-      const header = new Uint8Array([
-        0x53, 0x53, 0x54, 0x56,       // "SSTV"
-        i,
-        fragments
-      ]);
-
-      const crc = crc32(fragment.data);
-      const meta = new Uint8Array(4);
-      new DataView(meta.buffer).setUint32(0, crc);
-
-      const payload = new Uint8Array([
-        ...header,
-        ...meta,
-        ...fragment.data
-      ]);
-
-      const wav = this._encodeSingle(payload, fragment.width, fragment.height, mode);
-      frames.push(wav);
-    }
-
-    return frames;
+/**
+ * Encode ImageData into SSTV audio samples
+ *
+ * @param {ImageData} imageData
+ * @param {string} modeName
+ * @returns {Float32Array} PCM samples
+ */
+export function encodeSSTV(imageData, modeName = 'MARTIN_M1') {
+  const mode = SSTV_MODES[modeName];
+  if (!mode) {
+    throw new Error('Unsupported SSTV mode');
   }
 
-  static _encodeSingle(bytes, width, height, mode) {
-    // Minimal offline SSTV WAV encoder wrapper
-    // Uses same timing as previous Drop 5
-
-    const sampleRate = 44100;
-    const samples = [];
-
-    for (let b of bytes) {
-      const freq = 1500 + (b / 255) * 800;
-      for (let i = 0; i < 400; i++) {
-        samples.push(Math.sin(2 * Math.PI * freq * i / sampleRate));
-      }
-    }
-
-    return this._toWav(samples, sampleRate);
+  const { width, height, data } = imageData;
+  if (width !== mode.width || height !== mode.height) {
+    throw new Error(
+      `Image must be ${mode.width}x${mode.height} for ${mode.name}`
+    );
   }
 
-  static _toWav(samples, sampleRate) {
-    const buffer = new ArrayBuffer(44 + samples.length * 2);
-    const view = new DataView(buffer);
+  const samples = [];
+  let phase = 0;
 
-    const write = (o, s) => { for (let i = 0; i < s.length; i++) view.setUint8(o + i, s.charCodeAt(i)); };
-
-    write(0, "RIFF");
-    view.setUint32(4, 36 + samples.length * 2, true);
-    write(8, "WAVEfmt ");
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, 1, true);
-    view.setUint32(24, sampleRate, true);
-    view.setUint32(28, sampleRate * 2, true);
-    view.setUint16(32, 2, true);
-    view.setUint16(34, 16, true);
-    write(36, "data");
-    view.setUint32(40, samples.length * 2, true);
-
-    let o = 44;
-    for (let s of samples) {
-      view.setInt16(o, s * 32767, true);
-      o += 2;
+  function tone(freq, duration) {
+    const count = Math.floor(duration * SAMPLE_RATE);
+    for (let i = 0; i < count; i++) {
+      samples.push(Math.sin(phase));
+      phase += (TWO_PI * freq) / SAMPLE_RATE;
     }
-
-    return new Blob([buffer], { type: "audio/wav" });
   }
+
+  function mapColor(value) {
+    return (
+      mode.black +
+      (value / 255) * (mode.white - mode.black)
+    );
+  }
+
+  // VIS header (simplified)
+  tone(1900, 0.3);
+  tone(1200, 0.01);
+  tone(1900, 0.3);
+
+  for (let y = 0; y < height; y++) {
+    // Sync pulse
+    tone(mode.syncPulse, 0.004);
+
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * 4;
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+
+      // Martin order: G, B, R
+      tone(mapColor(g), mode.lineTime / (width * 3));
+      tone(mapColor(b), mode.lineTime / (width * 3));
+      tone(mapColor(r), mode.lineTime / (width * 3));
+    }
+  }
+
+  return new Float32Array(samples);
+}
+
+/**
+ * Convert PCM samples to WAV Blob
+ *
+ * @param {Float32Array} samples
+ * @returns {Blob}
+ */
+export function pcmToWav(samples) {
+  const buffer = new ArrayBuffer(44 + samples.length * 2);
+  const view = new DataView(buffer);
+
+  function writeString(offset, str) {
+    for (let i = 0; i < str.length; i++) {
+      view.setUint8(offset + i, str.charCodeAt(i));
+    }
+  }
+
+  writeString(0, 'RIFF');
+  view.setUint32(4, 36 + samples.length * 2, true);
+  writeString(8, 'WAVE');
+  writeString(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, SAMPLE_RATE, true);
+  view.setUint32(28, SAMPLE_RATE * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeString(36, 'data');
+  view.setUint32(40, samples.length * 2, true);
+
+  let offset = 44;
+  for (let i = 0; i < samples.length; i++) {
+    let s = Math.max(-1, Math.min(1, samples[i]));
+    view.setInt16(offset, s * 0x7fff, true);
+    offset += 2;
+  }
+
+  return new Blob([buffer], { type: 'audio/wav' });
 }
