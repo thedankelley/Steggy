@@ -1,72 +1,142 @@
+:root {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --primary: #7c4dff;
+  --text: #ffffff;
+  --muted: #aaaaaa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #121212;
-  color: #fff;
+  background: var(--bg);
+  color: var(--text);
 }
 
-header {
+.app-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.app-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px;
+  gap: 12px;
 }
 
-.logo {
+.app-icon {
   width: 40px;
   height: 40px;
 }
 
-.jp {
-  font-size: 0.8em;
-  opacity: 0.8;
+.title {
+  font-size: 1.2rem;
 }
 
-main {
-  padding: 10px;
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
-section {
-  margin-bottom: 15px;
+.container {
+  padding: 12px;
+  max-width: 720px;
+  margin: auto;
 }
 
-textarea, select, input, button {
+.card {
+  background: var(--surface);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.field-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+textarea,
+select,
+input[type="file"] {
   width: 100%;
-  margin-top: 5px;
+  margin-top: 4px;
 }
 
-button {
-  padding: 10px;
-  background: #333;
-  color: white;
+.button {
+  width: 100%;
+  padding: 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
+  background: #333;
+  color: var(--text);
 }
 
-button:active {
-  background: #555;
+.button.primary {
+  background: var(--primary);
 }
 
-.panel {
-  background: #1e1e1e;
-  padding: 10px;
+.button.outlined {
+  background: transparent;
+  border: 1px solid var(--muted);
 }
 
-#outputImage {
+.button.small {
+  width: auto;
+  padding: 6px 12px;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+}
+
+.checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.output-image {
   max-width: 100%;
   display: block;
 }
 
-.modal {
+.hidden {
   display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.8);
 }
 
-.modalContent {
-  background: #222;
-  margin: 10% auto;
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--surface);
   padding: 20px;
+  border-radius: 12px;
   max-width: 90%;
+}
+
+.footer {
+  text-align: center;
+  padding: 12px;
+  color: var(--muted);
 }
