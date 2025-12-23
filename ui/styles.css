@@ -1,114 +1,72 @@
-:root {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --text: #e5e7eb;
-  --accent: #38bdf8;
-}
-
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  background: #121212;
+  color: #fff;
 }
 
-.hidden {
-  display: none !important;
-}
-
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #020617;
-}
-
-.title-wrap {
+header {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 10px;
+  padding: 10px;
 }
 
-.app-icon {
-  width: 32px;
-  height: 32px;
+.logo {
+  width: 40px;
+  height: 40px;
 }
 
 .jp {
-  opacity: 0.7;
-  font-size: 0.9em;
-}
-
-.container {
-  max-width: 720px;
-  margin: auto;
-  padding: 1rem;
-}
-
-.card {
-  background: var(--surface);
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-}
-
-label {
-  display: block;
-  margin-top: 0.75rem;
-}
-
-select,
-textarea,
-input[type="file"],
-button {
-  width: 100%;
-  margin-top: 0.25rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: none;
-}
-
-button {
-  background: var(--accent);
-  color: #020617;
-  cursor: pointer;
-}
-
-.primary-btn {
-  background: #22c55e;
-}
-
-.run-btn {
-  font-size: 1.2rem;
-}
-
-.btn-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.center {
-  text-align: center;
-}
-
-.helper-text {
-  font-size: 0.85rem;
+  font-size: 0.8em;
   opacity: 0.8;
 }
 
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+main {
+  padding: 10px;
 }
 
-.modal-content {
-  background: var(--surface);
-  padding: 1.5rem;
-  border-radius: 12px;
-  max-width: 500px;
+section {
+  margin-bottom: 15px;
+}
+
+textarea, select, input, button {
+  width: 100%;
+  margin-top: 5px;
+}
+
+button {
+  padding: 10px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 4px;
+}
+
+button:active {
+  background: #555;
+}
+
+.panel {
+  background: #1e1e1e;
+  padding: 10px;
+}
+
+#outputImage {
+  max-width: 100%;
+  display: block;
+}
+
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+}
+
+.modalContent {
+  background: #222;
+  margin: 10% auto;
+  padding: 20px;
+  max-width: 90%;
 }
