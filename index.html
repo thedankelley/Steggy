@@ -1,145 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<title>Steggy 2.0</title>
+  <title>Steggy</title>
 
-<link rel="stylesheet" href="styles.css">
+  <!-- UI Styles -->
+  <link rel="stylesheet" href="./ui/styles.css" />
 
-<script type="module" src="ui/app.js"></script>
 </head>
-
 <body>
 
-<header class="app-bar">
-  <div class="app-title">
-    <img src="icons/icon-512.png" class="app-icon" alt="Steggy">
-    <div>
-      <div class="title">Steggy</div>
-      <div class="subtitle">ステギー</div>
-    </div>
-  </div>
+  <!-- App Header -->
+  <header class="top-app-bar">
+    <img src="./ui/icons/steggy-logo.svg" alt="Steggy Logo" class="logo" />
+    <h1>Steggy</h1>
 
-  <button id="guideButton" class="icon-button" aria-label="Guide">
-    📖
-  </button>
-</header>
-
-<main class="container">
-
-  <!-- Mode Selection -->
-  <section class="card">
-    <label class="field-label">Mode</label>
-    <select id="modeSelect" class="select">
-      <option value="encrypt">Encrypt Image</option>
-      <option value="decrypt">Decrypt Image</option>
-      <option value="sstvEncode">SSTV Encode</option>
-      <option value="sstvDecode">SSTV Decode</option>
-    </select>
-  </section>
-
-  <!-- Image Input -->
-  <section class="card">
-    <label class="field-label">Image File</label>
-    <input id="imageInput" type="file" accept="image/*">
-  </section>
-
-  <!-- Payload -->
-  <section class="card">
-    <label class="field-label">Protected Message</label>
-    <textarea id="payloadInput" rows="6"></textarea>
-  </section>
-
-  <!-- Decoy -->
-  <section class="card">
-    <label class="field-label">Decoy Message</label>
-    <textarea id="decoyInput" rows="4"></textarea>
-  </section>
-
-  <!-- Advanced Options -->
-  <section class="card">
-    <button id="advancedToggle" class="button outlined">
-      Advanced Options
+    <button id="guideBtn" class="icon-btn" title="Guide">
+      📘
     </button>
+  </header>
 
-    <div id="advancedPanel" class="advanced hidden">
+  <!-- Main App -->
+  <main class="app-container">
 
-      <div class="advanced-section">
-        <h3>Encryption</h3>
-        <select id="encryptionMode" class="select">
-          <option value="aes">AES-GCM</option>
-          <option value="pgp">PGP</option>
-          <option value="both">PGP + AES</option>
-        </select>
+    <!-- Mode Selection -->
+    <section class="card">
+      <label for="modeSelect">Mode</label>
+      <select id="modeSelect">
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="both">PGP + AES</option>
+        <option value="sstv-decode">SSTV Decode</option>
+        <option value="sstv-encode">SSTV Encode</option>
+      </select>
+    </section>
+
+    <!-- Payload -->
+    <section class="card">
+      <label for="payload">Message / Payload</label>
+      <textarea id="payload" rows="5"></textarea>
+
+      <button id="advancedToggle" class="text-btn">
+        Advanced Options
+      </button>
+    </section>
+
+    <!-- Advanced Options -->
+    <section id="advancedPanel" class="card hidden">
+      <div id="pgpPanel" class="hidden">
+        <h3>PGP</h3>
+
+        <button id="generatePGP">Generate PGP Keys</button>
+
+        <label>Public Key</label>
+        <textarea id="pgpPublicKey" rows="4"></textarea>
+
+        <label>Private Key</label>
+        <textarea id="pgpPrivateKey" rows="4"></textarea>
+
+        <button id="downloadPublicKey">Download Public Key</button>
+        <button id="downloadPrivateKey">Download Private Key</button>
+
+        <button id="encryptWithPGP">
+          Encrypt Payload with Public Key
+        </button>
+
+        <button id="decryptWithPGP">
+          Decrypt PGP Payload
+        </button>
+
+        <input type="file" id="pgpKeyUpload" />
       </div>
 
-      <div class="advanced-section">
-        <h3>PGP Keys</h3>
-        <button id="pgpGenerate" class="button">Generate Keys</button>
-        <textarea id="pgpPublicKey" placeholder="Public Key"></textarea>
-        <textarea id="pgpPrivateKey" placeholder="Private Key"></textarea>
-        <div class="button-row">
-          <button id="pgpDownloadPublic" class="button small">Download Public</button>
-          <button id="pgpDownloadPrivate" class="button small">Download Private</button>
-        </div>
+      <div id="sstvPanel" class="hidden">
+        <h3>SSTV</h3>
+        <input type="file" id="sstvFileInput" accept=".wav" />
       </div>
 
-      <div class="advanced-section">
+      <div id="fragmentPanel" class="hidden">
         <h3>Fragmentation</h3>
-        <label class="checkbox">
-          <input type="checkbox" id="fragmentEnable">
-          Enable payload fragmentation
+        <label>
+          <input type="checkbox" id="enableFragmentation" />
+          Enable Fragmentation
         </label>
       </div>
+    </section>
 
-      <div class="advanced-section">
-        <h3>Metadata</h3>
-        <label class="checkbox">
-          <input type="checkbox" id="stripMetadata" checked>
-          Strip image metadata
-        </label>
-      </div>
+    <!-- Run -->
+    <section class="card">
+      <button id="runBtn" class="primary-btn">
+        Run
+      </button>
+    </section>
 
+    <!-- Output -->
+    <section class="card">
+      <h3>Output</h3>
+      <pre id="output"></pre>
+    </section>
+
+  </main>
+
+  <!-- Guidebook Modal -->
+  <div id="guideModal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Steggy Guide</h2>
+      <p>
+        Steggy lets you hide, encrypt, fragment, and transmit messages using
+        images, audio, and cryptography.
+      </p>
+
+      <ul>
+        <li><b>AES:</b> Fast symmetric encryption</li>
+        <li><b>PGP:</b> Public/private key encryption</li>
+        <li><b>SSTV:</b> Image over audio (radio-style)</li>
+        <li><b>Fragmentation:</b> Split payload across multiple images</li>
+      </ul>
+
+      <button id="closeGuide">Close</button>
     </div>
-  </section>
-
-  <!-- Run -->
-  <section class="card">
-    <button id="runButton" class="button primary">
-      Run
-    </button>
-  </section>
-
-  <!-- Output -->
-  <section class="card">
-    <h3>Output</h3>
-    <img id="outputImage" class="output-image">
-    <audio id="outputAudio" controls></audio>
-    <pre id="outputText"></pre>
-    <button id="downloadOutput" class="button outlined">
-      Download Result
-    </button>
-  </section>
-
-</main>
-
-<!-- Guide Modal -->
-<div id="guideModal" class="modal hidden">
-  <div class="modal-content">
-    <h2>Steggy Guide</h2>
-    <p>
-      Steggy is a steganography toolkit for hiding messages inside images and audio.
-      It is designed for journalists, activists, and researchers operating in hostile environments.
-    </p>
-    <button id="closeGuide" class="button primary">Close</button>
   </div>
-</div>
 
-<footer class="footer">
-  <small>Steggy</small>
-</footer>
+  <!-- App Script -->
+  <script type="module" src="./ui/app.js"></script>
 
 </body>
 </html>
