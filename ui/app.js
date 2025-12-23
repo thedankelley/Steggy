@@ -1,21 +1,14 @@
-import { generatePGPKeys } from "../modules/steggy-pgp.js";
-
-/* ---------- ELEMENTS ---------- */
+// ---------- ELEMENTS ----------
 
 const guideBtn = document.getElementById("guideBtn");
 const guideModal = document.getElementById("guideModal");
 const closeGuide = document.getElementById("closeGuide");
 
-const modeSelect = document.getElementById("modeSelect");
 const advancedToggle = document.getElementById("advancedToggle");
 const advancedPanel = document.getElementById("advancedPanel");
 
-const pgpPanel = document.getElementById("pgpPanel");
-const sstvPanel = document.getElementById("sstvPanel");
+// ---------- GUIDE ----------
 
-/* ---------- GUIDE (FIXED) ---------- */
-
-// HARD ENSURE HIDDEN ON LOAD
 guideModal.classList.add("hidden");
 guideModal.setAttribute("aria-hidden", "true");
 
@@ -29,34 +22,27 @@ closeGuide.addEventListener("click", () => {
   guideModal.setAttribute("aria-hidden", "true");
 });
 
-/* ---------- ADVANCED OPTIONS ---------- */
+// ---------- ADVANCED OPTIONS ----------
 
 advancedToggle.addEventListener("click", () => {
   advancedPanel.classList.toggle("hidden");
 });
 
-/* ---------- MODE SWITCHING ---------- */
+// ---------- RUN ----------
 
-modeSelect.addEventListener("change", () => {
-  const mode = modeSelect.value;
+document.getElementById("runBtn").addEventListener("click", () => {
+  const imageMode = document.getElementById("imageMode").value;
+  const sstvMode = document.getElementById("sstvMode").value;
+  const payload = document.getElementById("payload").value;
 
-  pgpPanel.classList.add("hidden");
-  sstvPanel.classList.add("hidden");
+  const fragmentation = document.getElementById("enableFragmentation").checked;
+  const decoy = document.getElementById("enableDecoy").checked;
 
-  if (mode === "pgp" || mode === "both") {
-    pgpPanel.classList.remove("hidden");
-  }
-
-  if (mode.startsWith("sstv")) {
-    sstvPanel.classList.remove("hidden");
-  }
-});
-
-/* ---------- PGP ---------- */
-
-document.getElementById("generatePGP").addEventListener("click", async () => {
-  const keys = await generatePGPKeys();
-
-  document.getElementById("pgpPublicKey").value = keys.publicKey;
-  document.getElementById("pgpPrivateKey").value = keys.privateKey;
+  document.getElementById("output").textContent =
+    `Image Mode: ${imageMode}
+SSTV Mode: ${sstvMode}
+Fragmentation: ${fragmentation}
+Decoy: ${decoy}
+Payload:
+${payload}`;
 });
