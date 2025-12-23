@@ -1,85 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Steggy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Steggy 2.0</title>
+
+<link rel="stylesheet" href="styles.css">
+
+<script type="module" src="core/steggy-core.js"></script>
+<script type="module" src="core/steggy-crc.js"></script>
+
+<script type="module" src="modules/steggy-pgp.js"></script>
+<script type="module" src="modules/steggy-decoy.js"></script>
+<script type="module" src="modules/steggy-fragment.js"></script>
+<script type="module" src="modules/steggy-hash.js"></script>
+<script type="module" src="modules/steggy-sstv.js"></script>
+<script type="module" src="modules/steggy-sstv-decode.js"></script>
+<script type="module" src="modules/steggy-sstv-mic.js"></script>
+
+<script type="module" src="ui/app.js"></script>
 </head>
+
 <body>
 
-<header class="app-header">
-  <img src="icons/icon-512.png" class="app-icon">
+<header>
+  <img src="icons/icon-512.png" class="logo">
   <h1>Steggy <span class="jp">ステギー</span></h1>
+  <button id="guideBtn">📖 Guide</button>
 </header>
 
 <main>
 
+<section>
   <label>Mode</label>
   <select id="modeSelect">
     <option value="encrypt">Encrypt Image</option>
     <option value="decrypt">Decrypt Image</option>
-    <option value="sstv-encode">SSTV Encode (Image → Audio)</option>
-    <option value="sstv-decode">SSTV Decode (Audio → Image)</option>
+    <option value="sstvEncode">SSTV Encode</option>
+    <option value="sstvDecode">SSTV Decode</option>
   </select>
+</section>
 
-  <!-- Encrypt / Decrypt -->
-  <section id="stegSection">
-    <input type="file" id="imageInput" accept="image/*">
+<section>
+  <label>Cover Image</label>
+  <input type="file" id="imageInput" accept="image/*">
+</section>
 
-    <textarea id="payloadInput" placeholder="Protected message"></textarea>
+<section>
+  <label>Protected Message</label>
+  <textarea id="payloadInput" rows="6"></textarea>
+</section>
 
-    <button id="advancedToggle">Advanced Options</button>
+<section>
+  <label>Decoy Message</label>
+  <textarea id="decoyInput" rows="4"></textarea>
+</section>
 
-    <section id="advancedPanel" hidden>
-      <label>Encryption Mode</label>
-      <select id="cryptoMode">
-        <option value="aes">AES-GCM</option>
-        <option value="pgp">PGP</option>
-        <option value="both">PGP + AES</option>
-      </select>
+<section>
+  <button id="advancedBtn">Advanced Options</button>
+</section>
 
-      <section id="pgpPanel" hidden>
-        <input id="pgpName" placeholder="Name">
-        <input id="pgpEmail" placeholder="Email">
-        <input id="pgpPass" placeholder="Passphrase (optional)">
-        <button id="pgpGenerate">Generate PGP Keys</button>
+<section id="advancedPanel" class="panel">
+  <h3>PGP</h3>
+  <button id="pgpGenerate">Generate PGP Keys</button>
+  <textarea id="pgpPublic" placeholder="Public Key"></textarea>
+  <textarea id="pgpPrivate" placeholder="Private Key"></textarea>
+  <button id="pgpEncrypt">Encrypt Payload with Public Key</button>
+  <button id="pgpDecrypt">Decrypt Payload with Private Key</button>
 
-        <textarea id="pgpPublic" placeholder="Public Key"></textarea>
-        <textarea id="pgpPrivate" placeholder="Private Key"></textarea>
+  <h3>Fragmentation</h3>
+  <label><input type="checkbox" id="fragmentEnable"> Enable Fragmentation</label>
 
-        <button id="pgpEncrypt">Encrypt Payload with Public Key</button>
-        <button id="pgpDecrypt">Decrypt Extracted Payload</button>
-      </section>
-    </section>
+  <h3>Metadata</h3>
+  <label><input type="checkbox" id="stripMeta" checked> Strip Metadata</label>
+</section>
 
-    <button id="runSteg">Run</button>
-  </section>
+<section>
+  <button id="runBtn">Run</button>
+</section>
 
-  <!-- SSTV Encode -->
-  <section id="sstvEncodeSection" hidden>
-    <input type="file" id="sstvImageInput" accept="image/*">
-    <select id="sstvMode">
-      <option value="MARTIN_M1">Martin M1</option>
-      <option value="SCOTTIE_S1">Scottie S1</option>
-    </select>
-    <button id="runSSTVEncode">Generate WAV</button>
-    <audio id="sstvAudio" controls></audio>
-  </section>
-
-  <!-- SSTV Decode -->
-  <section id="sstvDecodeSection" hidden>
-    <input type="file" id="sstvWavInput" accept=".wav">
-    <select id="sstvDecodeMode">
-      <option value="MARTIN_M1">Martin M1</option>
-      <option value="SCOTTIE_S1">Scottie S1</option>
-    </select>
-    <button id="runSSTVDecode">Decode Audio</button>
-    <canvas id="sstvCanvas"></canvas>
-  </section>
+<section>
+  <h3>Output</h3>
+  <img id="outputImage">
+  <audio id="outputAudio" controls></audio>
+  <pre id="outputText"></pre>
+  <button id="downloadBtn">Download Result</button>
+</section>
 
 </main>
 
-<script type="module" src="ui/app.js"></script>
+<div id="guideModal" class="modal">
+  <div class="modalContent">
+    <h2>Steggy Guide</h2>
+    <p>
+      Steggy hides messages inside images using steganography.
+      Use Encrypt to hide, Decrypt to extract.
+      SSTV allows offline transmission via audio.
+    </p>
+    <button id="closeGuide">Close</button>
+  </div>
+</div>
+
+<footer>
+  <small>Created by Dan</small>
+</footer>
+
 </body>
 </html>
