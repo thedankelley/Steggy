@@ -3,106 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>Steggy 2.0</title>
 
 <link rel="stylesheet" href="styles.css">
-
-<script type="module" src="core/steggy-core.js"></script>
-<script type="module" src="core/steggy-crc.js"></script>
-
-<script type="module" src="modules/steggy-pgp.js"></script>
-<script type="module" src="modules/steggy-decoy.js"></script>
-<script type="module" src="modules/steggy-fragment.js"></script>
-<script type="module" src="modules/steggy-hash.js"></script>
-<script type="module" src="modules/steggy-sstv.js"></script>
-<script type="module" src="modules/steggy-sstv-decode.js"></script>
-<script type="module" src="modules/steggy-sstv-mic.js"></script>
 
 <script type="module" src="ui/app.js"></script>
 </head>
 
 <body>
 
-<header>
-  <img src="icons/icon-512.png" class="logo">
-  <h1>Steggy <span class="jp">ステギー</span></h1>
-  <button id="guideBtn">📖 Guide</button>
+<header class="app-bar">
+  <div class="app-title">
+    <img src="icons/icon-512.png" class="app-icon" alt="Steggy">
+    <div>
+      <div class="title">Steggy</div>
+      <div class="subtitle">ステギー</div>
+    </div>
+  </div>
+
+  <button id="guideButton" class="icon-button" aria-label="Guide">
+    📖
+  </button>
 </header>
 
-<main>
+<main class="container">
 
-<section>
-  <label>Mode</label>
-  <select id="modeSelect">
-    <option value="encrypt">Encrypt Image</option>
-    <option value="decrypt">Decrypt Image</option>
-    <option value="sstvEncode">SSTV Encode</option>
-    <option value="sstvDecode">SSTV Decode</option>
-  </select>
-</section>
+  <!-- Mode Selection -->
+  <section class="card">
+    <label class="field-label">Mode</label>
+    <select id="modeSelect" class="select">
+      <option value="encrypt">Encrypt Image</option>
+      <option value="decrypt">Decrypt Image</option>
+      <option value="sstvEncode">SSTV Encode</option>
+      <option value="sstvDecode">SSTV Decode</option>
+    </select>
+  </section>
 
-<section>
-  <label>Cover Image</label>
-  <input type="file" id="imageInput" accept="image/*">
-</section>
+  <!-- Image Input -->
+  <section class="card">
+    <label class="field-label">Image File</label>
+    <input id="imageInput" type="file" accept="image/*">
+  </section>
 
-<section>
-  <label>Protected Message</label>
-  <textarea id="payloadInput" rows="6"></textarea>
-</section>
+  <!-- Payload -->
+  <section class="card">
+    <label class="field-label">Protected Message</label>
+    <textarea id="payloadInput" rows="6"></textarea>
+  </section>
 
-<section>
-  <label>Decoy Message</label>
-  <textarea id="decoyInput" rows="4"></textarea>
-</section>
+  <!-- Decoy -->
+  <section class="card">
+    <label class="field-label">Decoy Message</label>
+    <textarea id="decoyInput" rows="4"></textarea>
+  </section>
 
-<section>
-  <button id="advancedBtn">Advanced Options</button>
-</section>
+  <!-- Advanced Options -->
+  <section class="card">
+    <button id="advancedToggle" class="button outlined">
+      Advanced Options
+    </button>
 
-<section id="advancedPanel" class="panel">
-  <h3>PGP</h3>
-  <button id="pgpGenerate">Generate PGP Keys</button>
-  <textarea id="pgpPublic" placeholder="Public Key"></textarea>
-  <textarea id="pgpPrivate" placeholder="Private Key"></textarea>
-  <button id="pgpEncrypt">Encrypt Payload with Public Key</button>
-  <button id="pgpDecrypt">Decrypt Payload with Private Key</button>
+    <div id="advancedPanel" class="advanced hidden">
 
-  <h3>Fragmentation</h3>
-  <label><input type="checkbox" id="fragmentEnable"> Enable Fragmentation</label>
+      <div class="advanced-section">
+        <h3>Encryption</h3>
+        <select id="encryptionMode" class="select">
+          <option value="aes">AES-GCM</option>
+          <option value="pgp">PGP</option>
+          <option value="both">PGP + AES</option>
+        </select>
+      </div>
 
-  <h3>Metadata</h3>
-  <label><input type="checkbox" id="stripMeta" checked> Strip Metadata</label>
-</section>
+      <div class="advanced-section">
+        <h3>PGP Keys</h3>
+        <button id="pgpGenerate" class="button">Generate Keys</button>
+        <textarea id="pgpPublicKey" placeholder="Public Key"></textarea>
+        <textarea id="pgpPrivateKey" placeholder="Private Key"></textarea>
+        <div class="button-row">
+          <button id="pgpDownloadPublic" class="button small">Download Public</button>
+          <button id="pgpDownloadPrivate" class="button small">Download Private</button>
+        </div>
+      </div>
 
-<section>
-  <button id="runBtn">Run</button>
-</section>
+      <div class="advanced-section">
+        <h3>Fragmentation</h3>
+        <label class="checkbox">
+          <input type="checkbox" id="fragmentEnable">
+          Enable payload fragmentation
+        </label>
+      </div>
 
-<section>
-  <h3>Output</h3>
-  <img id="outputImage">
-  <audio id="outputAudio" controls></audio>
-  <pre id="outputText"></pre>
-  <button id="downloadBtn">Download Result</button>
-</section>
+      <div class="advanced-section">
+        <h3>Metadata</h3>
+        <label class="checkbox">
+          <input type="checkbox" id="stripMetadata" checked>
+          Strip image metadata
+        </label>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Run -->
+  <section class="card">
+    <button id="runButton" class="button primary">
+      Run
+    </button>
+  </section>
+
+  <!-- Output -->
+  <section class="card">
+    <h3>Output</h3>
+    <img id="outputImage" class="output-image">
+    <audio id="outputAudio" controls></audio>
+    <pre id="outputText"></pre>
+    <button id="downloadOutput" class="button outlined">
+      Download Result
+    </button>
+  </section>
 
 </main>
 
-<div id="guideModal" class="modal">
-  <div class="modalContent">
+<!-- Guide Modal -->
+<div id="guideModal" class="modal hidden">
+  <div class="modal-content">
     <h2>Steggy Guide</h2>
     <p>
-      Steggy hides messages inside images using steganography.
-      Use Encrypt to hide, Decrypt to extract.
-      SSTV allows offline transmission via audio.
+      Steggy is a steganography toolkit for hiding messages inside images and audio.
+      It is designed for journalists, activists, and researchers operating in hostile environments.
     </p>
-    <button id="closeGuide">Close</button>
+    <button id="closeGuide" class="button primary">Close</button>
   </div>
 </div>
 
-<footer>
-  <small>Created by Dan</small>
+<footer class="footer">
+  <small>Steggy</small>
 </footer>
 
 </body>
