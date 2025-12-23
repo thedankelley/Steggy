@@ -1,30 +1,46 @@
-document.addEventListener("DOMContentLoaded", () => {
+import { generatePGPKeys, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
 
-  const $ = id => document.getElementById(id);
+const modeSelect = document.getElementById("modeSelect");
+const advancedPanel = document.getElementById("advancedPanel");
+const advancedToggle = document.getElementById("advancedToggle");
 
-  const advancedToggle = $("advancedToggle");
-  const advancedPanel = $("advancedPanel");
+const pgpPanel = document.getElementById("pgpPanel");
+const sstvPanel = document.getElementById("sstvPanel");
+const fragmentPanel = document.getElementById("fragmentPanel");
 
-  advancedToggle.addEventListener("click", () => {
-    advancedPanel.classList.toggle("hidden");
-  });
+const guideBtn = document.getElementById("guideBtn");
+const guideModal = document.getElementById("guideModal");
+const closeGuide = document.getElementById("closeGuide");
 
-  const guideModal = $("guideModal");
+advancedToggle.onclick = () => {
+  advancedPanel.classList.toggle("hidden");
+};
 
-  $("guideButton").addEventListener("click", () => {
-    guideModal.classList.remove("hidden");
-  });
+guideBtn.onclick = () => {
+  guideModal.classList.remove("hidden");
+};
 
-  $("closeGuide").addEventListener("click", () => {
-    guideModal.classList.add("hidden");
-  });
+closeGuide.onclick = () => {
+  guideModal.classList.add("hidden");
+};
 
-  $("modeSelect").addEventListener("change", () => {
-    // Visibility logic will be added in Stage 2
-  });
+modeSelect.onchange = () => {
+  const mode = modeSelect.value;
 
-  $("runButton").addEventListener("click", () => {
-    $("outputText").textContent = "UI is stable. Logic will be wired next.";
-  });
+  pgpPanel.classList.add("hidden");
+  sstvPanel.classList.add("hidden");
 
-});
+  if (mode === "pgp" || mode === "both") {
+    pgpPanel.classList.remove("hidden");
+  }
+
+  if (mode.startsWith("sstv")) {
+    sstvPanel.classList.remove("hidden");
+  }
+};
+
+document.getElementById("generatePGP").onclick = async () => {
+  const keys = await generatePGPKeys();
+  document.getElementById("pgpPublicKey").value = keys.publicKey;
+  document.getElementById("pgpPrivateKey").value = keys.privateKey;
+};
