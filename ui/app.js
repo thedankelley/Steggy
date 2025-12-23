@@ -1,30 +1,43 @@
-import { generatePGPKeys, encryptPGP, decryptPGP } from "../modules/steggy-pgp.js";
+import { generatePGPKeys } from "../modules/steggy-pgp.js";
 
-const modeSelect = document.getElementById("modeSelect");
-const advancedPanel = document.getElementById("advancedPanel");
-const advancedToggle = document.getElementById("advancedToggle");
-
-const pgpPanel = document.getElementById("pgpPanel");
-const sstvPanel = document.getElementById("sstvPanel");
-const fragmentPanel = document.getElementById("fragmentPanel");
+/* ---------- ELEMENTS ---------- */
 
 const guideBtn = document.getElementById("guideBtn");
 const guideModal = document.getElementById("guideModal");
 const closeGuide = document.getElementById("closeGuide");
 
-advancedToggle.onclick = () => {
-  advancedPanel.classList.toggle("hidden");
-};
+const modeSelect = document.getElementById("modeSelect");
+const advancedToggle = document.getElementById("advancedToggle");
+const advancedPanel = document.getElementById("advancedPanel");
 
-guideBtn.onclick = () => {
+const pgpPanel = document.getElementById("pgpPanel");
+const sstvPanel = document.getElementById("sstvPanel");
+
+/* ---------- GUIDE (FIXED) ---------- */
+
+// HARD ENSURE HIDDEN ON LOAD
+guideModal.classList.add("hidden");
+guideModal.setAttribute("aria-hidden", "true");
+
+guideBtn.addEventListener("click", () => {
   guideModal.classList.remove("hidden");
-};
+  guideModal.setAttribute("aria-hidden", "false");
+});
 
-closeGuide.onclick = () => {
+closeGuide.addEventListener("click", () => {
   guideModal.classList.add("hidden");
-};
+  guideModal.setAttribute("aria-hidden", "true");
+});
 
-modeSelect.onchange = () => {
+/* ---------- ADVANCED OPTIONS ---------- */
+
+advancedToggle.addEventListener("click", () => {
+  advancedPanel.classList.toggle("hidden");
+});
+
+/* ---------- MODE SWITCHING ---------- */
+
+modeSelect.addEventListener("change", () => {
   const mode = modeSelect.value;
 
   pgpPanel.classList.add("hidden");
@@ -37,10 +50,13 @@ modeSelect.onchange = () => {
   if (mode.startsWith("sstv")) {
     sstvPanel.classList.remove("hidden");
   }
-};
+});
 
-document.getElementById("generatePGP").onclick = async () => {
+/* ---------- PGP ---------- */
+
+document.getElementById("generatePGP").addEventListener("click", async () => {
   const keys = await generatePGPKeys();
+
   document.getElementById("pgpPublicKey").value = keys.publicKey;
   document.getElementById("pgpPrivateKey").value = keys.privateKey;
-};
+});
