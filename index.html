@@ -2,129 +2,101 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Steggy</title>
 
-  <!-- UI Styles -->
   <link rel="stylesheet" href="./ui/styles.css" />
 </head>
-
 <body>
 
-  <!-- Top App Bar -->
-  <header class="top-app-bar">
-    <img src="./ui/icons/steggy-logo.svg" class="logo" alt="Steggy Logo" />
-    <h1 class="app-title">Steggy</h1>
+<header class="top-bar">
+  <img src="./icons/icon-512.png" class="logo" />
+  <h1>Steggy</h1>
 
-    <button id="guideBtn" class="icon-btn" aria-label="Open Guide">
-      📘
+  <button id="guideBtn" class="icon-btn" aria-label="Guide">📘</button>
+</header>
+
+<main class="container">
+
+  <!-- IMAGE MODE -->
+  <section class="card">
+    <label>Image Mode</label>
+    <select id="imageMode">
+      <option value="encrypt">Encrypt Image</option>
+      <option value="decrypt">Decrypt Image</option>
+    </select>
+  </section>
+
+  <!-- SSTV MODE -->
+  <section class="card">
+    <label>SSTV Mode</label>
+    <select id="sstvMode">
+      <option value="none">Disabled</option>
+      <option value="encode">SSTV Encode</option>
+      <option value="decode">SSTV Decode</option>
+    </select>
+  </section>
+
+  <!-- PAYLOAD -->
+  <section class="card">
+    <label>Protected Message</label>
+    <textarea id="payload" rows="4"></textarea>
+
+    <button id="advancedToggle" class="text-btn">
+      Advanced Options
     </button>
-  </header>
+  </section>
 
-  <main class="app-container">
+  <!-- ADVANCED OPTIONS -->
+  <section id="advancedPanel" class="card hidden">
 
-    <!-- Mode -->
-    <section class="card">
-      <label for="modeSelect">Mode</label>
-      <select id="modeSelect">
-        <option value="aes">AES-GCM</option>
-        <option value="pgp">PGP</option>
-        <option value="both">PGP + AES</option>
-        <option value="sstv-encode">SSTV Encode</option>
-        <option value="sstv-decode">SSTV Decode</option>
-      </select>
-    </section>
+    <h3>Advanced Options</h3>
 
-    <!-- Payload -->
-    <section class="card">
-      <label for="payload">Message / Payload</label>
-      <textarea id="payload" rows="5"></textarea>
+    <label>
+      <input type="checkbox" id="enableFragmentation" />
+      Enable Fragmentation
+    </label>
 
-      <button id="advancedToggle" class="text-btn">
-        Advanced Options
-      </button>
-    </section>
+    <label>
+      <input type="checkbox" id="enableDecoy" />
+      Enable Decoy Payload
+    </label>
 
-    <!-- Advanced Options -->
-    <section id="advancedPanel" class="card hidden">
+  </section>
 
-      <!-- PGP -->
-      <div id="pgpPanel" class="hidden">
-        <h3>PGP</h3>
+  <!-- RUN -->
+  <section class="card">
+    <button id="runBtn" class="primary">Run</button>
+  </section>
 
-        <button id="generatePGP">Generate PGP Keys</button>
+  <!-- OUTPUT -->
+  <section class="card">
+    <h3>Output</h3>
+    <pre id="output"></pre>
+  </section>
 
-        <label>Public Key</label>
-        <textarea id="pgpPublicKey" rows="4"></textarea>
+</main>
 
-        <label>Private Key</label>
-        <textarea id="pgpPrivateKey" rows="4"></textarea>
+<!-- GUIDE MODAL -->
+<div id="guideModal" class="modal hidden" aria-hidden="true">
+  <div class="modal-content">
+    <h2>Steggy Guide</h2>
 
-        <button id="downloadPublicKey">Download Public Key</button>
-        <button id="downloadPrivateKey">Download Private Key</button>
+    <p>
+      Steggy hides encrypted messages inside images or SSTV audio.
+    </p>
 
-        <button id="encryptWithPGP">Encrypt Payload with Public Key</button>
-        <button id="decryptWithPGP">Decrypt PGP Payload</button>
+    <ul>
+      <li>Images → Steganography</li>
+      <li>PGP / AES → Encryption</li>
+      <li>SSTV → Audio transmission</li>
+      <li>Fragmentation → Multi-file payloads</li>
+    </ul>
 
-        <label>Upload Private Key</label>
-        <input type="file" id="pgpKeyUpload" />
-      </div>
-
-      <!-- SSTV -->
-      <div id="sstvPanel" class="hidden">
-        <h3>SSTV</h3>
-        <input type="file" id="sstvFileInput" accept=".wav" />
-      </div>
-
-      <!-- Fragmentation -->
-      <div id="fragmentPanel">
-        <h3>Fragmentation</h3>
-        <label>
-          <input type="checkbox" id="enableFragmentation" />
-          Enable Fragmentation
-        </label>
-      </div>
-
-    </section>
-
-    <!-- Run -->
-    <section class="card">
-      <button id="runBtn" class="primary-btn">Run</button>
-    </section>
-
-    <!-- Output -->
-    <section class="card">
-      <h3>Output</h3>
-      <pre id="output"></pre>
-    </section>
-
-  </main>
-
-  <!-- Guide Modal (HARD HIDDEN BY DEFAULT) -->
-  <div id="guideModal" class="modal hidden" aria-hidden="true">
-    <div class="modal-content">
-      <h2>Steggy Guide</h2>
-
-      <p>
-        Steggy lets you hide, encrypt, fragment, and transmit messages using
-        images and audio.
-      </p>
-
-      <ul>
-        <li><b>AES:</b> Symmetric encryption</li>
-        <li><b>PGP:</b> Public/private key encryption</li>
-        <li><b>SSTV:</b> Images over audio</li>
-        <li><b>Fragmentation:</b> Split payloads across files</li>
-      </ul>
-
-      <button id="closeGuide" class="primary-btn">
-        Close Guide
-      </button>
-    </div>
+    <button id="closeGuide" class="primary">Close</button>
   </div>
+</div>
 
-  <!-- App JS -->
-  <script type="module" src="./ui/app.js"></script>
-
+<script type="module" src="./ui/app.js"></script>
 </body>
 </html>
