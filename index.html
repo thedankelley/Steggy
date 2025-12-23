@@ -12,34 +12,48 @@
 <header class="top-bar">
   <img src="./icons/icon-512.png" class="logo" />
   <h1>Steggy</h1>
-
-  <button id="guideBtn" class="icon-btn" aria-label="Guide">📘</button>
+  <button id="guideBtn" class="icon-btn">📘</button>
 </header>
 
 <main class="container">
 
-  <!-- IMAGE MODE -->
+  <!-- MODE -->
   <section class="card">
-    <label>Image Mode</label>
-    <select id="imageMode">
-      <option value="encrypt">Encrypt Image</option>
-      <option value="decrypt">Decrypt Image</option>
+    <label>Mode</label>
+    <select id="modeSelect">
+      <option value="image-encrypt">Image Encrypt</option>
+      <option value="image-decrypt">Image Decrypt</option>
+      <option value="sstv-encode">SSTV Encode</option>
+      <option value="sstv-decode">SSTV Decode</option>
     </select>
   </section>
 
-  <!-- SSTV MODE -->
+  <!-- FILE INPUT -->
   <section class="card">
-    <label>SSTV Mode</label>
-    <select id="sstvMode">
-      <option value="none">Disabled</option>
-      <option value="encode">SSTV Encode</option>
-      <option value="decode">SSTV Decode</option>
+    <label id="fileLabel">Select Image</label>
+    <input type="file" id="fileInput" />
+  </section>
+
+  <!-- CRYPTO -->
+  <section class="card">
+    <label>Encryption</label>
+    <select id="cryptoMode">
+      <option value="none">None</option>
+      <option value="aes">AES</option>
+      <option value="pgp">PGP</option>
+      <option value="aes+pgp">AES + PGP</option>
     </select>
+  </section>
+
+  <!-- DECOY -->
+  <section id="decoySection" class="card hidden">
+    <label>Decoy Payload</label>
+    <textarea id="decoyPayload" rows="3"></textarea>
   </section>
 
   <!-- PAYLOAD -->
   <section class="card">
-    <label>Protected Message</label>
+    <label>Protected Payload</label>
     <textarea id="payload" rows="4"></textarea>
 
     <button id="advancedToggle" class="text-btn">
@@ -47,21 +61,37 @@
     </button>
   </section>
 
-  <!-- ADVANCED OPTIONS -->
-  <section id="advancedPanel" class="card hidden">
+  <!-- PGP -->
+  <section id="pgpSection" class="card hidden">
+    <h3>PGP Options</h3>
 
-    <h3>Advanced Options</h3>
+    <label>Public Key</label>
+    <textarea id="pgpPublic" rows="3"></textarea>
+
+    <label>Private Key</label>
+    <textarea id="pgpPrivate" rows="3"></textarea>
+
+    <button id="pgpGenerate">Generate PGP Keys</button>
+    <button id="pgpEncrypt">Encrypt Payload with PGP</button>
+    <button id="pgpDownload">Download Keys</button>
+  </section>
+
+  <!-- ADVANCED -->
+  <section id="advancedPanel" class="card hidden">
+    <label>
+      <input type="checkbox" id="enableDecoy" />
+      Enable Decoy Payload
+    </label>
 
     <label>
       <input type="checkbox" id="enableFragmentation" />
       Enable Fragmentation
     </label>
 
-    <label>
-      <input type="checkbox" id="enableDecoy" />
-      Enable Decoy Payload
-    </label>
-
+    <div id="fragmentOptions" class="hidden">
+      <label>Fragments</label>
+      <input type="number" id="fragmentCount" min="2" value="2"/>
+    </div>
   </section>
 
   <!-- RUN -->
@@ -77,22 +107,14 @@
 
 </main>
 
-<!-- GUIDE MODAL -->
-<div id="guideModal" class="modal hidden" aria-hidden="true">
+<!-- GUIDE -->
+<div id="guideModal" class="modal hidden">
   <div class="modal-content">
     <h2>Steggy Guide</h2>
-
     <p>
       Steggy hides encrypted messages inside images or SSTV audio.
+      Choose a mode, select encryption, and embed your message.
     </p>
-
-    <ul>
-      <li>Images → Steganography</li>
-      <li>PGP / AES → Encryption</li>
-      <li>SSTV → Audio transmission</li>
-      <li>Fragmentation → Multi-file payloads</li>
-    </ul>
-
     <button id="closeGuide" class="primary">Close</button>
   </div>
 </div>
