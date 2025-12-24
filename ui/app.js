@@ -1,78 +1,50 @@
-import * as core from "../core/steggy-core.js";
-import * as crc from "../core/steggy-crc.js";
-import * as decoy from "../modules/steggy-decoy.js";
-import * as fragment from "../modules/steggy-fragment.js";
-import * as hash from "../modules/steggy-hash.js";
-import * as pgp from "../modules/steggy-pgp.js";
-import * as sstv from "../modules/steggy-sstv.js";
-import * as sstvDecode from "../modules/steggy-sstv-decode.js";
-import * as sstvMic from "../modules/steggy-sstv-mic.js";
+import * as SteggyCore from '../core/steggy-core.js';
+import * as CRC from '../core/steggy-crc.js';
+import * as Hash from '../modules/steggy-hash.js';
+import * as Decoy from '../modules/steggy-decoy.js';
+import * as Fragment from '../modules/steggy-fragment.js';
+import * as PGP from '../modules/steggy-pgp.js';
+import * as SSTV from '../modules/steggy-sstv.js';
+import * as SSTVDecode from '../modules/steggy-sstv-decode.js';
+import * as SSTVMic from '../modules/steggy-sstv-mic.js';
 
-// DOM
-const guideBtn = document.getElementById("guideBtn");
-const guideOverlay = document.getElementById("guideOverlay");
-const closeGuide = document.getElementById("closeGuide");
-const advBtn = document.getElementById("advancedToggle");
-const advSection = document.getElementById("advancedSection");
-const modeSelect = document.getElementById("modeSelect");
-const fileLabel = document.getElementById("fileLabel");
-const fileInput = document.getElementById("fileInput");
-const encryptionType = document.getElementById("encryptionType");
-const pgpOptions = document.getElementById("pgpOptions");
-const enableDecoy = document.getElementById("enableDecoy");
-const decoyText = document.getElementById("decoyText");
-const enableFragment = document.getElementById("enableFragment");
-const fragmentOptions = document.getElementById("fragmentOptions");
-const runBtn = document.getElementById("runBtn");
+document.addEventListener('DOMContentLoaded', () => {
+  const guideBtn = document.getElementById('guide-btn');
+  const guideModal = document.getElementById('guide-modal');
+  const closeGuide = document.getElementById('close-guide');
 
-// Guide toggle
-guideBtn.onclick = () => guideOverlay.classList.remove("hidden");
-closeGuide.onclick = () => guideOverlay.classList.add("hidden");
+  guideBtn.addEventListener('click', () => guideModal.classList.remove('hidden'));
+  closeGuide.addEventListener('click', () => guideModal.classList.add('hidden'));
 
-// Advanced toggle
-advBtn.onclick = () => advSection.classList.toggle("hidden");
+  const advToggle = document.getElementById('advanced-toggle');
+  const advContent = document.getElementById('advanced-content');
+  advToggle.addEventListener('click', () => {
+    advContent.parentElement.classList.toggle('collapsed');
+  });
 
-// Mode selection
-modeSelect.onchange = () => {
-  if (modeSelect.value.includes("sstv-decrypt")) {
-    fileLabel.textContent = "Select WAV";
-    fileInput.accept = ".wav";
-  } else {
-    fileLabel.textContent = "Select Image";
-    fileInput.accept = "image/*";
-  }
-};
+  const encryptionMode = document.getElementById('encryption-mode');
+  const pgpOptions = document.getElementById('pgp-options');
+  encryptionMode.addEventListener('change', () => {
+    const val = encryptionMode.value;
+    pgpOptions.style.display = (val === 'pgp' || val === 'both') ? 'block' : 'none';
+  });
 
-// Encryption type toggle
-encryptionType.onchange = () => {
-  const val = encryptionType.value;
-  pgpOptions.classList.toggle("hidden", !(val === "pgp" || val === "both"));
-};
+  // Placeholders for PGP buttons
+  document.getElementById('generate-pgp').addEventListener('click', () => {
+    console.log('Generate PGP clicked');
+  });
+  document.getElementById('download-pgp-public').addEventListener('click', () => {
+    console.log('Download Public Key');
+  });
+  document.getElementById('download-pgp-private').addEventListener('click', () => {
+    console.log('Download Private Key');
+  });
+  document.getElementById('encrypt-pgp-payload').addEventListener('click', () => {
+    console.log('Encrypt Payload with PGP');
+  });
 
-// Decoy toggle
-enableDecoy.onchange = () => decoyText.classList.toggle("hidden", !enableDecoy.checked);
-
-// Fragment toggle
-enableFragment.onchange = () => fragmentOptions.classList.toggle("hidden", !enableFragment.checked);
-
-// PGP buttons
-document.getElementById("generatePGP").onclick = async () => {
-  const keys = await pgp.generateKeys();
-  document.getElementById("publicKey").value = keys.public;
-  document.getElementById("privateKey").value = keys.private;
-};
-
-document.getElementById("downloadPubKey").onclick = () => pgp.downloadKey("public");
-document.getElementById("downloadPrivKey").onclick = () => pgp.downloadKey("private");
-document.getElementById("encryptPGP").onclick = () => pgp.encryptPayload();
-document.getElementById("decryptPGP").onclick = () => pgp.decryptPayload();
-
-// Run button
-runBtn.onclick = () => core.runSteggy({
-  mode: modeSelect.value,
-  file: fileInput.files[0],
-  payload: document.getElementById("payloadText").value,
-  encryption: encryptionType.value,
-  decoy: enableDecoy.checked ? decoyText.value : null,
-  fragments: enableFragment.checked ? parseInt(document.getElementById("fragmentCount").value) : null
+  // Run button placeholder
+  document.getElementById('run-btn').addEventListener('click', () => {
+    console.log('Run clicked');
+  });
 });
