@@ -1,98 +1,86 @@
-import { generatePGPKeyPair, encryptPGP } from "../modules/steggy-pgp.js";
+// ui/app.js
 
-document.addEventListener("DOMContentLoaded", () => {
+// --- SAFE MODULE LOADING ---
+let pgp = null;
 
-  // -------- Elements --------
-  const modeSelect = document.getElementById("modeSelect");
-  const fileInput = document.getElementById("fileInput");
-  const fileLabel = document.getElementById("fileLabel");
+try {
+  pgp = await import("../modules/steggy-pgp.js");
+} catch (e) {
+  console.warn("PGP module not loaded", e);
+}
 
-  const cryptoSelect = document.getElementById("cryptoSelect");
-  const pgpOptions = document.getElementById("pgpOptions");
+// --- DOM HELPERS ---
+const $ = id => document.getElementById(id);
 
-  const generatePGPBtn = document.getElementById("generatePGPBtn");
-  const downloadPubKeyBtn = document.getElementById("downloadPubKeyBtn");
-  const downloadPrivKeyBtn = document.getElementById("downloadPrivKeyBtn");
-  const encryptWithPGPBtn = document.getElementById("encryptWithPGPBtn");
+// --- GUIDE ---
+$("guideBtn").onclick = () => {
+  $("guideOverlay").classList.remove("hidden");
+};
 
-  const pubKeyField = document.getElementById("pgpPublicKey");
-  const privKeyField = document.getElementById("pgpPrivateKey");
-  const payloadInput = document.getElementById("payloadInput");
+$("closeGuide").onclick = () => {
+  $("guideOverlay").classList.add("hidden");
+};
 
-  const advancedToggle = document.getElementById("advancedToggle");
-  const advancedPanel = document.getElementById("advancedPanel");
+// --- ADVANCED OPTIONS ---
+$("advancedToggle").onclick = () => {
+  $("advancedSection").classList.toggle("hidden");
+};
 
-  const enableDecoy = document.getElementById("enableDecoy");
-  const decoyPayload = document.getElementById("decoyPayload");
+// --- DECOY TOGGLE ---
+$("enableDecoy").onchange = e => {
+  $("decoyLabel").classList.toggle("hidden", !e.target.checked);
+};
 
-  const enableFragmentation = document.getElementById("enableFragmentation");
-  const fragmentCount = document.getElementById("fragmentCount");
+// --- MODE CHANGE ---
+$("modeSelect").onchange = () => {
+  const mode = $("modeSelect").value;
+  const label = $("fileLabel");
 
-  const guideBtn = document.getElementById("guideBtn");
-  const guideModal = document.getElementById("guideModal");
-  const closeGuideBtn = document.getElementById("closeGuideBtn");
-
-  // -------- Helpers --------
-  const show = el => el.classList.remove("hidden");
-  const hide = el => el.classList.add("hidden");
-
-  // -------- Mode Logic --------
-  modeSelect.addEventListener("change", () => {
-    if (modeSelect.value === "sstv-decode") {
-      fileLabel.textContent = "Select WAV";
-      fileInput.accept = ".wav";
-    } else {
-      fileLabel.textContent = "Select Image";
-      fileInput.accept = "image/*";
-    }
-  });
-
-  // -------- Crypto Logic --------
-  cryptoSelect.addEventListener("change", () => {
-    if (cryptoSelect.value === "pgp" || cryptoSelect.value === "pgp+a") {
-      show(pgpOptions);
-    } else {
-      hide(pgpOptions);
-    }
-  });
-
-  // -------- PGP --------
-  generatePGPBtn.onclick = async () => {
-    const { publicKey, privateKey } = await generatePGPKeyPair();
-    pubKeyField.value = publicKey;
-    privKeyField.value = privateKey;
-  };
-
-  downloadPubKeyBtn.onclick = () => download("public.key", pubKeyField.value);
-  downloadPrivKeyBtn.onclick = () => download("private.key", privKeyField.value);
-
-  encryptWithPGPBtn.onclick = async () => {
-    payloadInput.value = await encryptPGP(payloadInput.value, pubKeyField.value);
-  };
-
-  // -------- Advanced --------
-  advancedToggle.onclick = () => {
-    advancedPanel.classList.toggle("hidden");
-  };
-
-  enableDecoy.onchange = () => {
-    enableDecoy.checked ? show(decoyPayload) : hide(decoyPayload);
-  };
-
-  enableFragmentation.onchange = () => {
-    enableFragmentation.checked ? show(fragmentCount) : hide(fragmentCount);
-  };
-
-  // -------- Guide --------
-  guideBtn.onclick = () => show(guideModal);
-  closeGuideBtn.onclick = () => hide(guideModal);
-
-  // -------- Utils --------
-  function download(name, content) {
-    if (!content) return;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([content]));
-    a.download = name;
-    a.click();
+  if (mode === "sstv-decode") {
+    label.firstChild.textContent = "Select WAV ";
+    $("fileInput").accept = ".wav,audio/wav";
+  } else {
+    label.firstChild.textContent = "Select Image ";
+    $("fileInput").accept = "image/*";
   }
-});
+};
+
+// --- CRYPTO SELECT ---
+$("cryptoSelect").onchange = () => {
+  const val = $("cryptoSelect").value;
+  $("pgpSection").classList.toggle(
+    "hidden",
+    !(val === "pgp" || val === "pgp+aeg")
+  );
+};
+
+// --- PGP ---
+$("pgpGenerate").onclick = async () => {
+  if (!pgp?.generateKeyPair) {
+    alert("PGP module not available");
+    return;
+  }
+
+  const keys = await pgp.generateKeyPair();
+  $("pgpPublic").value = keys.publicKey;
+  $("pgpPrivate").value = keys.privateKey;
+};
+
+$("pgpEncrypt").onclick = async () => {
+  if (!pgp?.encrypt) {
+    alert("PGP module not available");
+    return;
+  }
+
+  const encrypted = await pgp.encrypt(
+    $("payloadInput").value,
+    $("pgpPublic").value
+  );
+
+  $("payloadInput").value = encrypted;
+};
+
+// --- RUN ---
+$("runBtn").onclick = () => {
+  alert("Run wired successfully. Core execution next step.");
+};
