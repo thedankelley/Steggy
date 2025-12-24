@@ -1,50 +1,37 @@
-import * as SteggyCore from '../core/steggy-core.js';
-import * as CRC from '../core/steggy-crc.js';
-import * as Hash from '../modules/steggy-hash.js';
-import * as Decoy from '../modules/steggy-decoy.js';
-import * as Fragment from '../modules/steggy-fragment.js';
-import * as PGP from '../modules/steggy-pgp.js';
-import * as SSTV from '../modules/steggy-sstv.js';
-import * as SSTVDecode from '../modules/steggy-sstv-decode.js';
-import * as SSTVMic from '../modules/steggy-sstv-mic.js';
-
 document.addEventListener('DOMContentLoaded', () => {
-  const guideBtn = document.getElementById('guide-btn');
-  const guideModal = document.getElementById('guide-modal');
-  const closeGuide = document.getElementById('close-guide');
+  const modeSelect = document.getElementById('modeSelect');
+  const fileLabel = document.getElementById('fileLabel');
+  const fileInput = document.getElementById('fileInput');
+  const runBtn = document.getElementById('runBtn');
 
-  guideBtn.addEventListener('click', () => guideModal.classList.remove('hidden'));
-  closeGuide.addEventListener('click', () => guideModal.classList.add('hidden'));
+  const guideBtn = document.getElementById('guideBtn');
+  const guideOverlay = document.getElementById('guideOverlay');
+  const closeGuideBtn = document.getElementById('closeGuideBtn');
 
-  const advToggle = document.getElementById('advanced-toggle');
-  const advContent = document.getElementById('advanced-content');
-  advToggle.addEventListener('click', () => {
-    advContent.parentElement.classList.toggle('collapsed');
-  });
+  function updateFileLabel() {
+    const mode = modeSelect.value;
+    if (mode === 'sstv-decode') {
+      fileLabel.textContent = 'Select WAV';
+      fileInput.accept = '.wav';
+    } else {
+      fileLabel.textContent = 'Select Image';
+      fileInput.accept = 'image/*';
+    }
+  }
 
-  const encryptionMode = document.getElementById('encryption-mode');
-  const pgpOptions = document.getElementById('pgp-options');
-  encryptionMode.addEventListener('change', () => {
-    const val = encryptionMode.value;
-    pgpOptions.style.display = (val === 'pgp' || val === 'both') ? 'block' : 'none';
-  });
+  modeSelect.addEventListener('change', updateFileLabel);
 
-  // Placeholders for PGP buttons
-  document.getElementById('generate-pgp').addEventListener('click', () => {
-    console.log('Generate PGP clicked');
-  });
-  document.getElementById('download-pgp-public').addEventListener('click', () => {
-    console.log('Download Public Key');
-  });
-  document.getElementById('download-pgp-private').addEventListener('click', () => {
-    console.log('Download Private Key');
-  });
-  document.getElementById('encrypt-pgp-payload').addEventListener('click', () => {
-    console.log('Encrypt Payload with PGP');
+  runBtn.addEventListener('click', () => {
+    alert('Run pressed. Core wiring comes next.');
   });
 
-  // Run button placeholder
-  document.getElementById('run-btn').addEventListener('click', () => {
-    console.log('Run clicked');
+  guideBtn.addEventListener('click', () => {
+    guideOverlay.classList.remove('hidden');
   });
+
+  closeGuideBtn.addEventListener('click', () => {
+    guideOverlay.classList.add('hidden');
+  });
+
+  updateFileLabel();
 });
