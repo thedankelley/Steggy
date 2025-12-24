@@ -1,105 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Steggy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Material 3 -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+  <!-- App icon -->
+  <link rel="icon" href="./icons/icon-512.png">
 
-  <link rel="stylesheet" href="ui/styles.css">
+  <!-- Styles -->
+  <link rel="stylesheet" href="./ui/styles.css">
+
 </head>
-
 <body>
-<header class="top-bar">
+
+<header class="app-header">
+  <img src="./icons/icon-512.png" class="app-icon" alt="Steggy Icon">
   <div class="title-block">
-    <img src="icons/icon-512.png" class="logo">
-    <div class="title-text">
-      <h1>Steggy</h1>
-      <div class="subtitle">秘密通信ステガノグラフィ</div>
-    </div>
+    <h1>Steggy</h1>
+    <div class="subtitle">ステギー</div>
   </div>
 
-  <button id="guideBtn" class="icon-btn">📘</button>
+  <button id="guideBtn" class="icon-btn" aria-label="Guide">📘</button>
 </header>
 
-<main class="container">
+<main>
 
-  <!-- MODE -->
-  <label>Mode</label>
-  <select id="modeSelect">
-    <option value="image-encrypt">Image Encrypt</option>
-    <option value="image-decrypt">Image Decrypt</option>
-    <option value="sstv-encode">SSTV Encode</option>
-    <option value="sstv-decode">SSTV Decode</option>
-  </select>
+  <section class="card">
+    <label>
+      Mode
+      <select id="modeSelect">
+        <option value="img-encrypt">Image Encrypt</option>
+        <option value="img-decrypt">Image Decrypt</option>
+        <option value="sstv-encode">SSTV Encode</option>
+        <option value="sstv-decode">SSTV Decode</option>
+      </select>
+    </label>
+  </section>
 
-  <!-- FILE INPUT -->
-  <div id="fileInputBlock">
-    <label id="fileLabel">Select Image</label>
-    <input type="file" id="fileInput">
-  </div>
+  <section class="card">
+    <label id="fileLabel">
+      Select Image
+      <input type="file" id="fileInput" accept="image/*">
+    </label>
+  </section>
 
-  <!-- PAYLOAD -->
-  <label>Payload</label>
-  <textarea id="payloadInput"></textarea>
+  <section class="card">
+    <label>
+      Protected Message
+      <textarea id="payloadInput" rows="6"></textarea>
+    </label>
+  </section>
 
-  <!-- CRYPTO -->
-  <label>Encryption</label>
-  <select id="cryptoSelect">
-    <option value="aes">AES</option>
-    <option value="pgp">PGP</option>
-    <option value="pgp+a">PGP + AES</option>
-  </select>
+  <section class="card">
+    <label>
+      Encryption Method
+      <select id="cryptoSelect">
+        <option value="none">None</option>
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="pgp+aeg">PGP + AES</option>
+      </select>
+    </label>
+  </section>
 
-  <!-- PGP OPTIONS -->
-  <div id="pgpOptions" class="panel hidden">
-    <label>Public Key</label>
-    <textarea id="pgpPublicKey"></textarea>
+  <section class="card hidden" id="pgpSection">
+    <h3>PGP</h3>
 
-    <label>Private Key</label>
-    <textarea id="pgpPrivateKey"></textarea>
+    <label>
+      Public Key
+      <textarea id="pgpPublic" rows="4"></textarea>
+    </label>
 
-    <button id="generatePGPBtn">Generate PGP Keys</button>
-    <button id="downloadPubKeyBtn">Download Public Key</button>
-    <button id="downloadPrivKeyBtn">Download Private Key</button>
-    <button id="encryptWithPGPBtn">Encrypt Payload with PGP</button>
-  </div>
+    <label>
+      Private Key
+      <textarea id="pgpPrivate" rows="4"></textarea>
+    </label>
 
-  <!-- ADVANCED -->
-  <button id="advancedToggle" class="secondary">
-    Advanced Options
-  </button>
+    <div class="row">
+      <button id="pgpGenerate">Generate Keys</button>
+      <button id="pgpEncrypt">Encrypt Payload</button>
+    </div>
 
-  <div id="advancedPanel" class="panel hidden">
+    <div class="row">
+      <button id="pgpDownloadPub">Download Public</button>
+      <button id="pgpDownloadPriv">Download Private</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <button id="advancedToggle">Advanced Options</button>
+  </section>
+
+  <section class="card hidden" id="advancedSection">
     <label>
       <input type="checkbox" id="enableDecoy">
       Enable Decoy Payload
     </label>
-    <textarea id="decoyPayload" class="hidden"></textarea>
+
+    <label class="hidden" id="decoyLabel">
+      Decoy Message
+      <textarea id="decoyInput" rows="4"></textarea>
+    </label>
 
     <label>
-      <input type="checkbox" id="enableFragmentation">
+      <input type="checkbox" id="enableFragment">
       Enable Fragmentation
     </label>
-    <input type="number" id="fragmentCount" class="hidden" min="2" max="20">
-  </div>
+  </section>
 
-  <!-- RUN -->
-  <button id="runBtn" class="primary">Run</button>
+  <section class="card">
+    <button id="runBtn">Run</button>
+  </section>
 
 </main>
 
-<!-- GUIDE -->
-<div id="guideModal" class="modal hidden">
-  <div class="modal-content">
+<!-- Guide -->
+<div id="guideOverlay" class="overlay hidden">
+  <div class="modal">
     <h2>Steggy Guide</h2>
-    <p>Steggy allows secure steganographic messaging using images and SSTV.</p>
-    <button id="closeGuideBtn">Close</button>
+    <p>This tool hides or extracts information from images or SSTV signals.</p>
+    <button id="closeGuide">Close</button>
   </div>
 </div>
 
-<script type="module" src=".ui/app.js"></script>
+<!-- App logic -->
+<script type="module" src="./ui/app.js"></script>
+
 </body>
 </html>
