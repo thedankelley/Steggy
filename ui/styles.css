@@ -1,57 +1,40 @@
-* {
-  box-sizing: border-box;
-  font-family: system-ui, sans-serif;
-}
-
 body {
+  font-family: Roboto, sans-serif;
   margin: 0;
-  background: #121212;
-  color: #fff;
+  background: #fafafa;
 }
 
 .top-bar {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 12px;
-  background: #1e1e1e;
-  gap: 12px;
+}
+
+.title-block {
+  display: flex;
+  align-items: center;
 }
 
 .logo {
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  margin-right: 12px;
 }
 
-.icon-btn {
-  margin-left: auto;
-  background: none;
-  border: none;
-  font-size: 20px;
-  color: white;
+.subtitle {
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
 .container {
-  max-width: 720px;
+  max-width: 640px;
   margin: auto;
   padding: 16px;
 }
 
-.card {
-  background: #1e1e1e;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-}
-
-textarea, select, input, button {
-  width: 100%;
-  margin-top: 8px;
-}
-
 button {
+  margin-top: 8px;
   padding: 10px;
-  border-radius: 8px;
-  border: none;
 }
 
 .primary {
@@ -59,28 +42,30 @@ button {
   color: white;
 }
 
-.text-btn {
-  background: none;
-  color: #8ab4f8;
-  margin-top: 8px;
+.secondary {
+  background: #ddd;
+}
+
+.panel {
+  margin-top: 12px;
+  padding: 12px;
+  background: #eee;
 }
 
 .hidden {
-  display: none !important;
+  display: none;
 }
 
 .modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.8);
+  background: rgba(0,0,0,.4);
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
 .modal-content {
-  background: #1e1e1e;
-  padding: 24px;
-  border-radius: 12px;
-  max-width: 420px;
+  background: white;
+  padding: 20px;
 }
