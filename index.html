@@ -1,83 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Steggy</title>
-  <link rel="stylesheet" href="ui/styles.css">
-  <link rel="icon" href="icons/icon-512.png" sizes="512x512">
+
+  <link rel="icon" href="./icons/icon-512.png" />
+  <link rel="stylesheet" href="./ui/styles.css" />
+  <script type="module" src="./ui/app.js"></script>
 </head>
 <body>
-  <header>
-    <div id="logo-container">
-      <img src="icons/icon-512.png" alt="Steggy Logo" id="logo">
+
+<header class="app-header">
+  <div class="title">
+    <img src="./icons/icon-512.png" alt="Steggy logo" />
+    <div>
       <h1>Steggy</h1>
       <small>ステギー</small>
     </div>
-    <button id="guide-btn">Guide</button>
-  </header>
+  </div>
 
-  <main>
-    <section id="mode-section">
-      <label for="mode-select">Mode:</label>
-      <select id="mode-select">
-        <option value="encrypt-image">Encrypt Image</option>
-        <option value="decrypt-image">Decrypt Image</option>
-        <option value="sstv-encode">SSTV Encode</option>
-        <option value="sstv-decode">SSTV Decode</option>
-      </select>
-    </section>
+  <button id="guideBtn" aria-label="Guide">📘</button>
+</header>
 
-    <section id="file-section">
-      <label id="file-label" for="file-input">Select File:</label>
-      <input type="file" id="file-input">
-    </section>
+<main class="container">
 
-    <section id="payload-section">
-      <label for="payload-input">Payload:</label>
-      <textarea id="payload-input"></textarea>
-    </section>
+  <section class="card">
+    <label for="modeSelect">Mode</label>
+    <select id="modeSelect">
+      <option value="image-encrypt">Image Encrypt</option>
+      <option value="image-decrypt">Image Decrypt</option>
+      <option value="sstv-encode">SSTV Encode</option>
+      <option value="sstv-decode">SSTV Decode</option>
+    </select>
+  </section>
 
-    <section id="advanced-section">
-      <button id="advanced-toggle">Advanced Options</button>
-      <div id="advanced-options" hidden>
-        <label for="crypto-select">Crypto Method:</label>
-        <select id="crypto-select">
-          <option value="aes">AES</option>
-          <option value="pgp">PGP</option>
-          <option value="both">AES + PGP</option>
-        </select>
+  <section class="card">
+    <label id="fileLabel" for="fileInput">Select Image</label>
+    <input id="fileInput" type="file" />
+  </section>
 
-        <div id="pgp-fields" hidden>
-          <textarea id="pgp-public"></textarea>
-          <textarea id="pgp-private"></textarea>
-          <button id="pgp-generate">Generate Keys</button>
-          <button id="pgp-download-public">Download Public Key</button>
-          <button id="pgp-download-private">Download Private Key</button>
-          <button id="pgp-encrypt-payload">Encrypt Payload</button>
-        </div>
+  <section class="card">
+    <label for="payloadInput">Protected Message</label>
+    <textarea id="payloadInput" rows="6"
+      placeholder="Enter protected message"></textarea>
+  </section>
 
-        <label>
-          <input type="checkbox" id="decoy-toggle">
-          Enable Decoy Payload
-        </label>
-        <textarea id="decoy-payload" hidden></textarea>
+  <section class="card">
+    <button id="advancedToggle">Advanced Options</button>
+    <div id="advancedPanel" class="hidden"></div>
+  </section>
 
-        <label>
-          <input type="checkbox" id="fragment-toggle">
-          Enable Fragmentation
-        </label>
-        <div id="fragment-options" hidden>
-          <label for="fragment-count">Fragments:</label>
-          <input type="number" id="fragment-count" min="2" max="16" value="2">
-        </div>
-      </div>
-    </section>
+  <section class="card">
+    <button id="runBtn" class="primary">Run</button>
+  </section>
 
-    <button id="run-btn">Run</button>
-    <div id="output-section"></div>
-  </main>
+</main>
 
-  <script type="module" src="ui/app.js"></script>
+<!-- GUIDE OVERLAY -->
+<div id="guideOverlay" class="overlay">
+  <div class="overlay-content">
+    <h2>Steggy Guide</h2>
+    <p>
+      Steggy is a client-side steganography and emergency communication tool.
+    </p>
+    <ul>
+      <li>Hide messages inside images</li>
+      <li>Optional encryption layers</li>
+      <li>Decoy payloads and fragmentation</li>
+      <li>SSTV for offline transmission</li>
+    </ul>
+    <button id="closeGuideBtn">Close</button>
+  </div>
+</div>
+
 </body>
 </html>
