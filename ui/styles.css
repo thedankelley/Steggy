@@ -39,6 +39,23 @@ body {
   margin: 0;
 }
 
+.title small {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  text-align: center;
+}
+
+/* 🔧 FIX: guide button sizing */
+.app-header button {
+  width: auto;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 1.2rem;
+  border-radius: 50%;
+}
+
 .container {
   max-width: 720px;
   margin: 0 auto;
@@ -81,7 +98,7 @@ button.primary {
   background: var(--accent);
 }
 
-/* Overlay is HIDDEN by default */
+/* Overlay hidden by default */
 .overlay {
   display: none;
   position: fixed;
