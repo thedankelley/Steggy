@@ -7,7 +7,6 @@
 
   <link rel="icon" href="./icons/icon-512.png" />
   <link rel="stylesheet" href="./ui/styles.css" />
-
   <script type="module" src="./ui/app.js"></script>
 </head>
 <body>
@@ -26,6 +25,7 @@
 
 <main class="container">
 
+  <!-- MODE -->
   <section class="card">
     <label for="modeSelect">Mode</label>
     <select id="modeSelect">
@@ -36,37 +36,92 @@
     </select>
   </section>
 
+  <!-- FILE INPUT -->
   <section class="card">
     <label id="fileLabel" for="fileInput">Select Image</label>
     <input id="fileInput" type="file" />
   </section>
 
+  <!-- PAYLOAD -->
   <section class="card">
-    <label for="payloadInput">Message Payload</label>
+    <label for="payloadInput">Protected Message</label>
     <textarea id="payloadInput" rows="6"
-      placeholder="Enter your protected message here"></textarea>
+      placeholder="Enter protected message"></textarea>
   </section>
 
+  <!-- ADVANCED OPTIONS -->
+  <section class="card">
+    <button id="advancedToggle">Advanced Options</button>
+
+    <div id="advancedPanel" class="hidden">
+
+      <!-- ENCRYPTION METHOD -->
+      <label for="encryptionSelect">Encryption Method</label>
+      <select id="encryptionSelect">
+        <option value="none">None</option>
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="both">AES + PGP</option>
+      </select>
+
+      <!-- PGP OPTIONS -->
+      <div id="pgpPanel" class="subpanel hidden">
+        <label>PGP Public Key</label>
+        <textarea rows="4"></textarea>
+
+        <label>PGP Private Key</label>
+        <textarea rows="4"></textarea>
+
+        <button>Generate PGP Keys</button>
+        <button>Download Public Key</button>
+        <button>Download Private Key</button>
+        <button>Encrypt Payload with PGP</button>
+      </div>
+
+      <!-- DECOY -->
+      <div class="option-row">
+        <input type="checkbox" id="decoyToggle" />
+        <label for="decoyToggle">Enable Decoy Payload</label>
+      </div>
+
+      <textarea id="decoyInput" rows="4"
+        class="hidden"
+        placeholder="Decoy message"></textarea>
+
+      <!-- FRAGMENTATION -->
+      <div class="option-row">
+        <input type="checkbox" id="fragmentToggle" />
+        <label for="fragmentToggle">Enable Fragmentation</label>
+      </div>
+
+      <div id="fragmentPanel" class="subpanel hidden">
+        <label>Fragments</label>
+        <input type="number" min="2" max="10" value="2" />
+      </div>
+
+    </div>
+  </section>
+
+  <!-- RUN -->
   <section class="card">
     <button id="runBtn" class="primary">Run</button>
   </section>
 
 </main>
 
-<!-- Guide Overlay -->
+<!-- GUIDE -->
 <div id="guideOverlay" class="overlay hidden">
   <div class="overlay-content">
     <h2>Steggy Guide</h2>
     <p>
-      Steggy is a client-side steganography and emergency communications tool.
-      This guide will explain all features once enabled.
+      Steggy is a client-side steganography and emergency communication tool.
     </p>
     <ul>
-      <li>Image steganography</li>
-      <li>PGP and AES encryption</li>
-      <li>Decoy payloads</li>
-      <li>Fragmentation</li>
-      <li>SSTV transmission</li>
+      <li>Hide messages in images</li>
+      <li>Use AES or PGP encryption</li>
+      <li>Decoy payloads for plausible deniability</li>
+      <li>Fragment messages across images</li>
+      <li>SSTV for offline transmission</li>
     </ul>
     <button id="closeGuideBtn">Close</button>
   </div>
