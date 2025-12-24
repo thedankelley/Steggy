@@ -14,7 +14,7 @@
     <h1>Steggy</h1>
     <small>ステギー</small>
   </div>
-  <button id="guideBtn" class="material-button">Guide</button>
+  <button id="guideBtn">Guide</button>
 </header>
 
 <main>
@@ -37,7 +37,7 @@
     <textarea id="payloadText" placeholder="Enter text or leave blank for file payload"></textarea>
   </section>
 
-  <button id="advancedToggle" class="material-button">Advanced Options</button>
+  <button id="advancedToggle">Advanced Options</button>
 
   <section id="advancedSection" class="hidden">
     <div>
@@ -50,26 +50,26 @@
     </div>
 
     <div id="pgpOptions" class="hidden">
-      <button id="generatePGP" class="material-button">Generate PGP Keys</button>
+      <button id="generatePGP">Generate PGP Keys</button>
       <div>
         <label for="publicKey">Public Key</label>
         <textarea id="publicKey" readonly></textarea>
-        <button id="downloadPubKey" class="material-button">Download Public Key</button>
+        <button id="downloadPubKey">Download Public Key</button>
       </div>
       <div>
         <label for="privateKey">Private Key</label>
         <textarea id="privateKey" readonly></textarea>
-        <button id="downloadPrivKey" class="material-button">Download Private Key</button>
+        <button id="downloadPrivKey">Download Private Key</button>
       </div>
-      <button id="encryptPGP" class="material-button">Encrypt Payload with PGP</button>
-      <button id="decryptPGP" class="material-button">Decrypt PGP Payload</button>
+      <button id="encryptPGP">Encrypt Payload with PGP</button>
+      <button id="decryptPGP">Decrypt PGP Payload</button>
       <input type="file" id="uploadPGPKey" />
     </div>
 
     <div>
       <input type="checkbox" id="enableDecoy">
       <label for="enableDecoy">Enable Decoy Payload</label>
-      <textarea id="decoyText" placeholder="Enter decoy payload" class="hidden"></textarea>
+      <textarea id="decoyText" class="hidden"></textarea>
     </div>
 
     <div>
@@ -82,12 +82,12 @@
     </div>
   </section>
 
-  <button id="runBtn" class="material-button">Run</button>
+  <button id="runBtn">Run</button>
 </main>
 
 <div id="guideOverlay" class="hidden">
   <div id="guideContent">
-    <button id="closeGuide" class="material-button">Close Guide</button>
+    <button id="closeGuide">Close Guide</button>
     <div id="guideText">
       <h2>Steggy Guide</h2>
       <p>All features explained clearly for safe communication.</p>
