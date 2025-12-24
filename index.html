@@ -1,11 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Steggy ステギー</title>
+<link rel="stylesheet" href="./ui/styles.css">
+</head>
 <body>
-<h1 id="s">Loading…</h1>
 
-<script type="module">
-  document.getElementById("s").textContent = "Module JS running";
-</script>
+<header>
+  <img src="./icons/icon-512.png" alt="Stegosaurus Icon" id="appIcon">
+  <h1>Steggy</h1>
+  <small>ステギー</small>
+  <button id="guideBtn">Guide</button>
+</header>
 
+<main>
+  <section id="modeSection">
+    <!-- Mode dropdown will go here -->
+  </section>
+
+  <section id="payloadSection">
+    <!-- Payload inputs, decoy, fragmentation, SSTV selection -->
+  </section>
+
+  <section id="advancedSection" class="hidden">
+    <!-- AES, PGP options appear here -->
+  </section>
+
+  <button id="runBtn">Run</button>
+</main>
+
+<div id="guideOverlay" class="hidden">
+  <button id="closeGuide">Close Guide</button>
+  <div id="guideContent">
+    <!-- Guide content -->
+  </div>
+</div>
+
+<script type="module" src="./ui/app.js"></script>
 </body>
 </html>
