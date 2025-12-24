@@ -5,7 +5,9 @@
   --accent: #6366f1;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -33,6 +35,10 @@ body {
   height: 40px;
 }
 
+.title h1 {
+  margin: 0;
+}
+
 .container {
   max-width: 720px;
   margin: 0 auto;
@@ -48,13 +54,12 @@ body {
 
 label {
   display: block;
-  margin: 8px 0 6px;
+  margin-bottom: 6px;
 }
 
 textarea,
 select,
-input[type="file"],
-input[type="number"] {
+input[type="file"] {
   width: 100%;
   background: #020617;
   color: var(--text);
@@ -64,7 +69,6 @@ input[type="number"] {
 }
 
 button {
-  margin-top: 10px;
   background: #1e293b;
   color: var(--text);
   border: none;
@@ -77,31 +81,19 @@ button.primary {
   background: var(--accent);
 }
 
-.option-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.hidden {
-  display: none;
-}
-
-.subpanel {
-  margin-top: 12px;
-  padding: 12px;
-  background: #020617;
-  border-radius: 10px;
-}
-
+/* Overlay is HIDDEN by default */
 .overlay {
+  display: none;
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.75);
-  display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 999;
+}
+
+.overlay.active {
+  display: flex;
 }
 
 .overlay-content {
@@ -109,4 +101,8 @@ button.primary {
   padding: 24px;
   border-radius: 14px;
   max-width: 90%;
+}
+
+.hidden {
+  display: none;
 }
