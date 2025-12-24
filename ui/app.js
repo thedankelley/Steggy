@@ -1,142 +1,79 @@
-import {
-  generatePGPKeyPair,
-  encryptWithPGP
-} from "../modules/steggy-pgp.js";
+import { encryptPayload, decryptPayload } from "./core/steggy-core.js";
+import { embedInImage, extractFromImage } from "./modules/steggy-image.js";
+import { encodeSSTV, decodeSSTV } from "./modules/steggy-sstv.js";
 
-const modeSelect = document.getElementById("modeSelect");
-const fileInput = document.getElementById("fileInput");
-const fileLabel = document.getElementById("fileLabel");
+document.addEventListener("DOMContentLoaded", () => {
+  const runBtn = document.getElementById("runBtn");
 
-const cryptoMode = document.getElementById("cryptoMode");
-const pgpSection = document.getElementById("pgpSection");
+  runBtn.addEventListener("click", async () => {
+    try {
+      const mode = document.getElementById("modeSelect").value;
+      const cryptoMode = document.getElementById("cryptoSelect").value;
 
-const advancedToggle = document.getElementById("advancedToggle");
-const advancedPanel = document.getElementById("advancedPanel");
+      const payload = document.getElementById("payloadInput").value;
+      const aesPassword = document.getElementById("aesPassword")?.value || "";
 
-const enableDecoy = document.getElementById("enableDecoy");
-const decoySection = document.getElementById("decoySection");
+      const pgpPublicKey =
+        document.getElementById("pgpPublicKey")?.value || "";
+      const pgpPrivateKey =
+        document.getElementById("pgpPrivateKey")?.value || "";
 
-const enableFragmentation = document.getElementById("enableFragmentation");
-const fragmentOptions = document.getElementById("fragmentOptions");
+      const fileInput = document.getElementById("carrierFile");
+      const file = fileInput?.files?.[0];
 
-const payloadField = document.getElementById("payload");
+      if (!file && mode !== "decryptText") {
+        alert("Please select a carrier file.");
+        return;
+      }
 
-const pgpPublic = document.getElementById("pgpPublic");
-const pgpPrivate = document.getElementById("pgpPrivate");
-const pgpGenerateBtn = document.getElementById("pgpGenerate");
-const pgpEncryptBtn = document.getElementById("pgpEncrypt");
-const pgpDownloadBtn = document.getElementById("pgpDownload");
+      // -------------------------
+      // ENCRYPT MODES
+      // -------------------------
+      if (mode === "image-encrypt" || mode === "sstv-encrypt") {
+        if (!payload) {
+          alert("Payload is empty.");
+          return;
+        }
 
-const guideBtn = document.getElementById("guideBtn");
-const guideModal = document.getElementById("guideModal");
-const closeGuide = document.getElementById("closeGuide");
+        const encryptedPayload = await encryptPayload({
+          payload,
+          cryptoMode,
+          aesPassword,
+          pgpPublicKey
+        });
 
-// --------------------
-// Guide modal
-// --------------------
-guideBtn.onclick = () => guideModal.classList.remove("hidden");
-closeGuide.onclick = () => guideModal.classList.add("hidden");
+        if (mode === "image-encrypt") {
+          await embedInImage(file, encryptedPayload);
+        } else {
+          await encodeSSTV(file, encryptedPayload);
+        }
+      }
 
-// --------------------
-// Mode handling
-// --------------------
-modeSelect.onchange = () => {
-  const mode = modeSelect.value;
+      // -------------------------
+      // DECRYPT MODES
+      // -------------------------
+      else if (mode === "image-decrypt" || mode === "sstv-decrypt") {
+        let extracted;
 
-  if (mode === "sstv-decode") {
-    fileLabel.textContent = "Select WAV File";
-    fileInput.accept = ".wav";
-  } else {
-    // Image Encrypt, Image Decrypt, SSTV Encode
-    fileLabel.textContent = "Select Image";
-    fileInput.accept = "image/*";
-  }
-};
+        if (mode === "image-decrypt") {
+          extracted = await extractFromImage(file);
+        } else {
+          extracted = await decodeSSTV(file);
+        }
 
-// Trigger once on load
-modeSelect.onchange();
+        const decrypted = await decryptPayload({
+          encryptedPayload: extracted,
+          cryptoMode,
+          aesPassword,
+          pgpPrivateKey
+        });
 
-// --------------------
-// Crypto mode handling
-// --------------------
-cryptoMode.onchange = () => {
-  const val = cryptoMode.value;
-  pgpSection.classList.toggle("hidden", !val.includes("pgp"));
-};
+        document.getElementById("outputField").value = decrypted;
+      }
 
-// --------------------
-// Advanced options
-// --------------------
-advancedToggle.onclick = () => {
-  advancedPanel.classList.toggle("hidden");
-};
-
-enableDecoy.onchange = () => {
-  decoySection.classList.toggle("hidden", !enableDecoy.checked);
-};
-
-enableFragmentation.onchange = () => {
-  fragmentOptions.classList.toggle("hidden", !enableFragmentation.checked);
-};
-
-// --------------------
-// PGP logic
-// --------------------
-pgpGenerateBtn.onclick = async () => {
-  pgpGenerateBtn.disabled = true;
-  pgpGenerateBtn.textContent = "Generating…";
-
-  try {
-    const { publicKey, privateKey } = await generatePGPKeyPair();
-    pgpPublic.value = publicKey;
-    pgpPrivate.value = privateKey;
-  } catch (err) {
-    alert("PGP key generation failed");
-    console.error(err);
-  } finally {
-    pgpGenerateBtn.disabled = false;
-    pgpGenerateBtn.textContent = "Generate PGP Keys";
-  }
-};
-
-pgpEncryptBtn.onclick = async () => {
-  if (!pgpPublic.value.trim()) {
-    alert("Public key required");
-    return;
-  }
-
-  try {
-    const encrypted = await encryptWithPGP(
-      payloadField.value,
-      pgpPublic.value
-    );
-    payloadField.value = encrypted;
-  } catch (err) {
-    alert("PGP encryption failed");
-    console.error(err);
-  }
-};
-
-pgpDownloadBtn.onclick = () => {
-  const pubBlob = new Blob([pgpPublic.value], { type: "text/plain" });
-  const privBlob = new Blob([pgpPrivate.value], { type: "text/plain" });
-
-  downloadFile(pubBlob, "steggy-public.asc");
-  downloadFile(privBlob, "steggy-private.asc");
-};
-
-function downloadFile(blob, filename) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// --------------------
-// Run placeholder (core wiring next)
-// --------------------
-document.getElementById("runBtn").onclick = () => {
-  document.getElementById("output").textContent =
-    "PGP logic active. Ready to wire steggy-core.";
-};
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Operation failed.");
+    }
+  });
+});
