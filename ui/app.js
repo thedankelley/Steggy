@@ -1,17 +1,9 @@
-import * as core from "../core/steggy-core.js";
-import * as crc from "../core/steggy-crc.js";
-import * as decoy from "../modules/steggy-decoy.js";
-import * as fragment from "../modules/steggy-fragment.js";
-import * as hash from "../modules/steggy-hash.js";
-import * as pgp from "../modules/steggy-pgp.js";
-import * as sstv from "../modules/steggy-sstv.js";
-import * as sstvDecode from "../modules/steggy-sstv-decode.js";
-import * as sstvMic from "../modules/steggy-sstv-mic.js";
+// UI wiring for Steggy (all elements present, functional toggles)
 
-// Guide
 const guideBtn = document.getElementById("guideBtn");
 const guideOverlay = document.getElementById("guideOverlay");
 const closeGuide = document.getElementById("closeGuide");
+
 guideBtn.onclick = () => guideOverlay.classList.remove("hidden");
 closeGuide.onclick = () => guideOverlay.classList.add("hidden");
 
@@ -20,10 +12,10 @@ const advBtn = document.getElementById("advancedToggle");
 const advSection = document.getElementById("advancedSection");
 advBtn.onclick = () => advSection.classList.toggle("hidden");
 
-// Mode & File handling
+// Mode selection
 const modeSelect = document.getElementById("modeSelect");
-const fileInput = document.getElementById("fileInput");
 const fileLabel = document.getElementById("fileLabel");
+const fileInput = document.getElementById("fileInput");
 
 modeSelect.onchange = () => {
   if (modeSelect.value.includes("sstv-decrypt")) {
@@ -35,14 +27,16 @@ modeSelect.onchange = () => {
   }
 };
 
-// Advanced Options wiring
+// Advanced Options
 const encryptionType = document.getElementById("encryptionType");
 const pgpOptions = document.getElementById("pgpOptions");
+
 encryptionType.onchange = () => {
-  pgpOptions.classList.toggle("hidden", !(encryptionType.value === "pgp" || encryptionType.value === "both"));
+  const val = encryptionType.value;
+  pgpOptions.classList.toggle("hidden", !(val === "pgp" || val === "both"));
 };
 
-// Decoy payload
+// Decoy
 const enableDecoy = document.getElementById("enableDecoy");
 const decoyText = document.getElementById("decoyText");
 enableDecoy.onchange = () => decoyText.classList.toggle("hidden", !enableDecoy.checked);
@@ -52,7 +46,7 @@ const enableFragment = document.getElementById("enableFragment");
 const fragmentOptions = document.getElementById("fragmentOptions");
 enableFragment.onchange = () => fragmentOptions.classList.toggle("hidden", !enableFragment.checked);
 
-// PGP Buttons
+// PGP buttons
 const generatePGP = document.getElementById("generatePGP");
 const publicKey = document.getElementById("publicKey");
 const privateKey = document.getElementById("privateKey");
@@ -62,31 +56,17 @@ const encryptPGP = document.getElementById("encryptPGP");
 const decryptPGP = document.getElementById("decryptPGP");
 const uploadPGPKey = document.getElementById("uploadPGPKey");
 
-generatePGP.onclick = async () => {
-  const { pub, priv } = await pgp.generateKeys();
-  publicKey.value = pub;
-  privateKey.value = priv;
+// Mock wiring (for now)
+generatePGP.onclick = () => {
+  publicKey.value = "Public Key (mock)";
+  privateKey.value = "Private Key (mock)";
 };
-
-downloadPubKey.onclick = () => pgp.downloadKey(publicKey.value, "publicKey.asc");
-downloadPrivKey.onclick = () => pgp.downloadKey(privateKey.value, "privateKey.asc");
-
-encryptPGP.onclick = () => pgp.encryptPayload(payloadText.value, publicKey.value).then(enc => {
-  payloadText.value = enc;
-});
-
-decryptPGP.onclick = () => {
-  const key = privateKey.value || uploadPGPKey.files[0];
-  pgp.decryptPayload(payloadText.value, key).then(dec => {
-    payloadText.value = dec;
-  });
-};
+downloadPubKey.onclick = () => alert("Download public key");
+downloadPrivKey.onclick = () => alert("Download private key");
+encryptPGP.onclick = () => alert("Encrypt payload with PGP");
+decryptPGP.onclick = () => alert("Decrypt PGP payload");
 
 // Run button
-document.getElementById("runBtn").onclick = async () => {
-  const mode = modeSelect.value;
-  const file = fileInput.files[0];
-  const text = payloadText.value;
-  // Call core.run or sstv/fragment/decoy as needed
-  alert(`Running mode: ${mode}`);
+document.getElementById("runBtn").onclick = () => {
+  alert(`Mode selected: ${modeSelect.value}\nFile: ${fileInput.files[0] ? fileInput.files[0].name : "none"}\nPayload: ${document.getElementById("payloadText").value}`);
 };
