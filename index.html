@@ -2,108 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Steggy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link rel="stylesheet" href="./ui/styles.css" />
+  <!-- Material 3 -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+
+  <link rel="stylesheet" href="ui/styles.css">
 </head>
-<body>
 
+<body>
 <header class="top-bar">
-  <img src="./icons/icon-512.png" class="logo" />
-  <h1>Steggy</h1>
+  <div class="title-block">
+    <img src="icons/icon-512.png" class="logo">
+    <div class="title-text">
+      <h1>Steggy</h1>
+      <div class="subtitle">秘密通信ステガノグラフィ</div>
+    </div>
+  </div>
+
   <button id="guideBtn" class="icon-btn">📘</button>
 </header>
 
 <main class="container">
 
   <!-- MODE -->
-  <section class="card">
-    <label>Mode</label>
-    <select id="modeSelect">
-      <option value="image-encrypt">Image Encrypt</option>
-      <option value="image-decrypt">Image Decrypt</option>
-      <option value="sstv-encode">SSTV Encode</option>
-      <option value="sstv-decode">SSTV Decode</option>
-    </select>
-  </section>
+  <label>Mode</label>
+  <select id="modeSelect">
+    <option value="image-encrypt">Image Encrypt</option>
+    <option value="image-decrypt">Image Decrypt</option>
+    <option value="sstv-encode">SSTV Encode</option>
+    <option value="sstv-decode">SSTV Decode</option>
+  </select>
 
   <!-- FILE INPUT -->
-  <section class="card">
+  <div id="fileInputBlock">
     <label id="fileLabel">Select Image</label>
-    <input type="file" id="fileInput" />
-  </section>
-
-  <!-- CRYPTO -->
-  <section class="card">
-    <label>Encryption</label>
-    <select id="cryptoMode">
-      <option value="none">None</option>
-      <option value="aes">AES</option>
-      <option value="pgp">PGP</option>
-      <option value="aes+pgp">AES + PGP</option>
-    </select>
-  </section>
-
-  <!-- DECOY -->
-  <section id="decoySection" class="card hidden">
-    <label>Decoy Payload</label>
-    <textarea id="decoyPayload" rows="3"></textarea>
-  </section>
+    <input type="file" id="fileInput">
+  </div>
 
   <!-- PAYLOAD -->
-  <section class="card">
-    <label>Protected Payload</label>
-    <textarea id="payload" rows="4"></textarea>
+  <label>Payload</label>
+  <textarea id="payloadInput"></textarea>
 
-    <button id="advancedToggle" class="text-btn">
-      Advanced Options
-    </button>
-  </section>
+  <!-- CRYPTO -->
+  <label>Encryption</label>
+  <select id="cryptoSelect">
+    <option value="aes">AES</option>
+    <option value="pgp">PGP</option>
+    <option value="pgp+a">PGP + AES</option>
+  </select>
 
-  <!-- PGP -->
-  <section id="pgpSection" class="card hidden">
-    <h3>PGP Options</h3>
-
+  <!-- PGP OPTIONS -->
+  <div id="pgpOptions" class="panel hidden">
     <label>Public Key</label>
-    <textarea id="pgpPublic" rows="3"></textarea>
+    <textarea id="pgpPublicKey"></textarea>
 
     <label>Private Key</label>
-    <textarea id="pgpPrivate" rows="3"></textarea>
+    <textarea id="pgpPrivateKey"></textarea>
 
-    <button id="pgpGenerate">Generate PGP Keys</button>
-    <button id="pgpEncrypt">Encrypt Payload with PGP</button>
-    <button id="pgpDownload">Download Keys</button>
-  </section>
+    <button id="generatePGPBtn">Generate PGP Keys</button>
+    <button id="downloadPubKeyBtn">Download Public Key</button>
+    <button id="downloadPrivKeyBtn">Download Private Key</button>
+    <button id="encryptWithPGPBtn">Encrypt Payload with PGP</button>
+  </div>
 
   <!-- ADVANCED -->
-  <section id="advancedPanel" class="card hidden">
+  <button id="advancedToggle" class="secondary">
+    Advanced Options
+  </button>
+
+  <div id="advancedPanel" class="panel hidden">
     <label>
-      <input type="checkbox" id="enableDecoy" />
+      <input type="checkbox" id="enableDecoy">
       Enable Decoy Payload
     </label>
+    <textarea id="decoyPayload" class="hidden"></textarea>
 
     <label>
-      <input type="checkbox" id="enableFragmentation" />
+      <input type="checkbox" id="enableFragmentation">
       Enable Fragmentation
     </label>
-
-    <div id="fragmentOptions" class="hidden">
-      <label>Fragments</label>
-      <input type="number" id="fragmentCount" min="2" value="2"/>
-    </div>
-  </section>
+    <input type="number" id="fragmentCount" class="hidden" min="2" max="20">
+  </div>
 
   <!-- RUN -->
-  <section class="card">
-    <button id="runBtn" class="primary">Run</button>
-  </section>
-
-  <!-- OUTPUT -->
-  <section class="card">
-    <h3>Output</h3>
-    <pre id="output"></pre>
-  </section>
+  <button id="runBtn" class="primary">Run</button>
 
 </main>
 
@@ -111,14 +95,11 @@
 <div id="guideModal" class="modal hidden">
   <div class="modal-content">
     <h2>Steggy Guide</h2>
-    <p>
-      Steggy hides encrypted messages inside images or SSTV audio.
-      Choose a mode, select encryption, and embed your message.
-    </p>
-    <button id="closeGuide" class="primary">Close</button>
+    <p>Steggy allows secure steganographic messaging using images and SSTV.</p>
+    <button id="closeGuideBtn">Close</button>
   </div>
 </div>
 
-<script type="module" src="./ui/app.js"></script>
+<script type="module" src="ui/app.js"></script>
 </body>
 </html>
