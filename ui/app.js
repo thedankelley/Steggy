@@ -1,79 +1,99 @@
-import { encryptPayload, decryptPayload } from "./core/steggy-core.js";
-import { embedInImage, extractFromImage } from "./modules/steggy-image.js";
-import { encodeSSTV, decodeSSTV } from "./modules/steggy-sstv.js";
+import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const runBtn = document.getElementById("runBtn");
+  // =========================
+  // ELEMENT REFERENCES
+  // =========================
+  const cryptoSelect = document.getElementById("cryptoSelect");
+  const pgpContainer = document.getElementById("pgpOptions");
+  const advancedBtn = document.getElementById("advancedToggle");
+  const advancedPanel = document.getElementById("advancedPanel");
 
-  runBtn.addEventListener("click", async () => {
-    try {
-      const mode = document.getElementById("modeSelect").value;
-      const cryptoMode = document.getElementById("cryptoSelect").value;
+  const generatePGPBtn = document.getElementById("generatePGPBtn");
+  const downloadPubBtn = document.getElementById("downloadPubKeyBtn");
+  const downloadPrivBtn = document.getElementById("downloadPrivKeyBtn");
 
-      const payload = document.getElementById("payloadInput").value;
-      const aesPassword = document.getElementById("aesPassword")?.value || "";
+  const pubKeyField = document.getElementById("pgpPublicKey");
+  const privKeyField = document.getElementById("pgpPrivateKey");
 
-      const pgpPublicKey =
-        document.getElementById("pgpPublicKey")?.value || "";
-      const pgpPrivateKey =
-        document.getElementById("pgpPrivateKey")?.value || "";
+  // =========================
+  // VISIBILITY HELPERS
+  // =========================
+  function hide(el) {
+    if (el) el.style.display = "none";
+  }
 
-      const fileInput = document.getElementById("carrierFile");
-      const file = fileInput?.files?.[0];
+  function show(el) {
+    if (el) el.style.display = "block";
+  }
 
-      if (!file && mode !== "decryptText") {
-        alert("Please select a carrier file.");
-        return;
-      }
+  // =========================
+  // INITIAL STATE
+  // =========================
+  hide(pgpContainer);
+  hide(advancedPanel);
 
-      // -------------------------
-      // ENCRYPT MODES
-      // -------------------------
-      if (mode === "image-encrypt" || mode === "sstv-encrypt") {
-        if (!payload) {
-          alert("Payload is empty.");
-          return;
-        }
+  // =========================
+  // CRYPTO MODE TOGGLING
+  // =========================
+  cryptoSelect.addEventListener("change", () => {
+    const mode = cryptoSelect.value;
 
-        const encryptedPayload = await encryptPayload({
-          payload,
-          cryptoMode,
-          aesPassword,
-          pgpPublicKey
-        });
-
-        if (mode === "image-encrypt") {
-          await embedInImage(file, encryptedPayload);
-        } else {
-          await encodeSSTV(file, encryptedPayload);
-        }
-      }
-
-      // -------------------------
-      // DECRYPT MODES
-      // -------------------------
-      else if (mode === "image-decrypt" || mode === "sstv-decrypt") {
-        let extracted;
-
-        if (mode === "image-decrypt") {
-          extracted = await extractFromImage(file);
-        } else {
-          extracted = await decodeSSTV(file);
-        }
-
-        const decrypted = await decryptPayload({
-          encryptedPayload: extracted,
-          cryptoMode,
-          aesPassword,
-          pgpPrivateKey
-        });
-
-        document.getElementById("outputField").value = decrypted;
-      }
-
-    } catch (err) {
-      console.error(err);
-      alert(err.message || "Operation failed.");
+    if (mode === "pgp" || mode === "pgp+a") {
+      show(pgpContainer);
+    } else {
+      hide(pgpContainer);
     }
+  });
+
+  // =========================
+  // ADVANCED OPTIONS TOGGLE
+  // =========================
+  advancedBtn.addEventListener("click", () => {
+    const isVisible = advancedPanel.style.display === "block";
+    advancedPanel.style.display = isVisible ? "none" : "block";
+  });
+
+  // =========================
+  // PGP KEY GENERATION
+  // =========================
+  generatePGPBtn.addEventListener("click", async () => {
+    try {
+      const { publicKey, privateKey } = await generatePGPKeyPair();
+      pubKeyField.value = publicKey;
+      privKeyField.value = privateKey;
+      alert("PGP keys generated successfully.");
+    } catch (err) {
+      alert("PGP generation failed.");
+      console.error(err);
+    }
+  });
+
+  // =========================
+  // DOWNLOAD HELPERS
+  // =========================
+  function download(filename, content) {
+    const blob = new Blob([content], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  downloadPubBtn.addEventListener("click", () => {
+    if (!pubKeyField.value) {
+      alert("No public key to download.");
+      return;
+    }
+    download("public.key", pubKeyField.value);
+  });
+
+  downloadPrivBtn.addEventListener("click", () => {
+    if (!privKeyField.value) {
+      alert("No private key to download.");
+      return;
+    }
+    download("private.key", privKeyField.value);
   });
 });
