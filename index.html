@@ -10,13 +10,16 @@
 
 <header>
   <img src="./icons/icon-512.png" alt="Stegosaurus Icon" id="appIcon">
-  <h1>Steggy</h1>
-  <small>ステギー</small>
-  <button id="guideBtn">Guide</button>
+  <div class="header-text">
+    <h1>Steggy</h1>
+    <small>ステギー</small>
+  </div>
+  <button id="guideBtn" class="material-button">Guide</button>
 </header>
 
 <main>
   <section id="modeSection">
+    <label for="modeSelect">Select Mode:</label>
     <select id="modeSelect">
       <option value="image-encrypt">Encrypt Image</option>
       <option value="image-decrypt">Decrypt Image</option>
@@ -25,22 +28,70 @@
     </select>
   </section>
 
-  <section id="payloadSection">
+  <section id="fileSection">
+    <label id="fileLabel" for="fileInput">Select Image</label>
     <input type="file" id="fileInput">
-    <textarea id="payloadText" placeholder="Enter text to hide"></textarea>
+  </section>
+
+  <section id="payloadSection">
+    <textarea id="payloadText" placeholder="Enter text or leave blank for file payload"></textarea>
   </section>
 
   <section id="advancedSection" class="hidden">
-    <!-- Advanced Options: AES, PGP, Decoy, Fragmentation -->
+    <div>
+      <label for="encryptionType">Encryption Type:</label>
+      <select id="encryptionType">
+        <option value="aes">AES-GCM</option>
+        <option value="pgp">PGP</option>
+        <option value="both">AES + PGP</option>
+      </select>
+    </div>
+
+    <div id="pgpOptions" class="hidden">
+      <button id="generatePGP" class="material-button">Generate PGP Keys</button>
+      <div>
+        <label for="publicKey">Public Key</label>
+        <textarea id="publicKey" readonly></textarea>
+        <button id="downloadPubKey" class="material-button">Download Public Key</button>
+      </div>
+      <div>
+        <label for="privateKey">Private Key</label>
+        <textarea id="privateKey" readonly></textarea>
+        <button id="downloadPrivKey" class="material-button">Download Private Key</button>
+      </div>
+      <button id="encryptPGP" class="material-button">Encrypt Payload with PGP</button>
+      <button id="decryptPGP" class="material-button">Decrypt PGP Payload</button>
+      <input type="file" id="uploadPGPKey" />
+    </div>
+
+    <div>
+      <input type="checkbox" id="enableDecoy">
+      <label for="enableDecoy">Enable Decoy Payload</label>
+      <textarea id="decoyText" placeholder="Enter decoy payload" class="hidden"></textarea>
+    </div>
+
+    <div>
+      <input type="checkbox" id="enableFragment">
+      <label for="enableFragment">Enable Fragmentation</label>
+      <div id="fragmentOptions" class="hidden">
+        <label for="fragmentCount">Fragments:</label>
+        <input type="number" id="fragmentCount" min="2" max="10" value="2">
+      </div>
+    </div>
   </section>
 
-  <button id="advancedToggle">Advanced Options</button>
-  <button id="runBtn">Run</button>
+  <button id="advancedToggle" class="material-button">Advanced Options</button>
+  <button id="runBtn" class="material-button">Run</button>
 </main>
 
 <div id="guideOverlay" class="hidden">
-  <button id="closeGuide">Close Guide</button>
-  <div id="guideContent"></div>
+  <div id="guideContent">
+    <button id="closeGuide" class="material-button">Close Guide</button>
+    <div id="guideText">
+      <h2>Steggy Guide</h2>
+      <p>All features explained clearly...</p>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="./ui/app.js"></script>
