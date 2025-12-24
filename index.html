@@ -4,97 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Steggy ステギー</title>
-<link rel="stylesheet" href="./ui/styles.css">
+<link rel="stylesheet" href="ui/styles.css">
+<script type="module" src="ui/app.js" defer></script>
+<link rel="icon" href="icons/icon-512.png">
 </head>
 <body>
-
-<header>
-  <img src="./icons/icon-512.png" alt="Stegosaurus Icon" id="appIcon">
-  <div class="header-text">
+  <header>
+    <img src="icons/icon-512.png" alt="Stegosaurus Logo" id="logo">
     <h1>Steggy</h1>
-    <small>ステギー</small>
-  </div>
-  <button id="guideBtn">Guide</button>
-</header>
+    <p class="subtitle">ステギー</p>
+    <button id="guide-btn">Guide</button>
+  </header>
 
-<main>
-  <section id="modeSection">
-    <label for="modeSelect">Mode:</label>
-    <select id="modeSelect">
-      <option value="image-encrypt">Encrypt Image</option>
-      <option value="image-decrypt">Decrypt Image</option>
-      <option value="sstv-encrypt">Encrypt SSTV</option>
-      <option value="sstv-decrypt">Decrypt SSTV</option>
-    </select>
-  </section>
-
-  <section id="fileSection">
-    <label id="fileLabel" for="fileInput">Select Image</label>
-    <input type="file" id="fileInput">
-  </section>
-
-  <section id="payloadSection">
-    <textarea id="payloadText" placeholder="Enter text or leave blank for file payload"></textarea>
-  </section>
-
-  <button id="advancedToggle">Advanced Options</button>
-
-  <section id="advancedSection" class="hidden">
-    <div>
-      <label for="encryptionType">Encryption Type:</label>
-      <select id="encryptionType">
-        <option value="aes">AES-GCM</option>
-        <option value="pgp">PGP</option>
-        <option value="both">AES + PGP</option>
+  <main>
+    <section id="mode-section">
+      <label for="mode-select">Mode:</label>
+      <select id="mode-select">
+        <option value="encrypt-image">Encrypt Image</option>
+        <option value="decrypt-image">Decrypt Image</option>
+        <option value="encrypt-sstv">Encrypt SSTV</option>
+        <option value="decrypt-sstv">Decrypt SSTV</option>
       </select>
-    </div>
+    </section>
 
-    <div id="pgpOptions" class="hidden">
-      <button id="generatePGP">Generate PGP Keys</button>
-      <div>
-        <label for="publicKey">Public Key</label>
-        <textarea id="publicKey" readonly></textarea>
-        <button id="downloadPubKey">Download Public Key</button>
+    <section id="file-section">
+      <label id="file-label" for="file-input">Select Image</label>
+      <input type="file" id="file-input" accept="image/*">
+    </section>
+
+    <section id="payload-section">
+      <textarea id="payload-input" placeholder="Enter text to hide"></textarea>
+    </section>
+
+    <section id="advanced-options" class="collapsed">
+      <button id="advanced-toggle">Advanced Options</button>
+      <div id="advanced-content">
+        <div id="fragment-options">
+          <input type="checkbox" id="enable-fragment" />
+          <label for="enable-fragment">Enable Fragmentation</label>
+          <input type="number" id="fragment-count" min="2" max="10" placeholder="Fragments" />
+        </div>
+        <div id="decoy-options">
+          <input type="checkbox" id="enable-decoy" />
+          <label for="enable-decoy">Enable Decoy Payload</label>
+          <textarea id="decoy-input" placeholder="Enter decoy message"></textarea>
+        </div>
+        <div id="encryption-options">
+          <label for="encryption-mode">Encryption Mode:</label>
+          <select id="encryption-mode">
+            <option value="aes">AES-GCM</option>
+            <option value="pgp">PGP</option>
+            <option value="both">AES + PGP</option>
+          </select>
+          <div id="pgp-options">
+            <textarea id="pgp-public" placeholder="Public Key"></textarea>
+            <textarea id="pgp-private" placeholder="Private Key"></textarea>
+            <button id="generate-pgp">Generate PGP Keys</button>
+            <button id="download-pgp-public">Download Public Key</button>
+            <button id="download-pgp-private">Download Private Key</button>
+            <button id="encrypt-pgp-payload">Encrypt Payload with PGP</button>
+          </div>
+        </div>
       </div>
-      <div>
-        <label for="privateKey">Private Key</label>
-        <textarea id="privateKey" readonly></textarea>
-        <button id="downloadPrivKey">Download Private Key</button>
+    </section>
+
+    <section id="actions">
+      <button id="run-btn">Run</button>
+      <div id="output-section">
+        <canvas id="output-canvas"></canvas>
+        <a id="download-link" href="" download="steg-image.png">Download Image</a>
       </div>
-      <button id="encryptPGP">Encrypt Payload with PGP</button>
-      <button id="decryptPGP">Decrypt PGP Payload</button>
-      <input type="file" id="uploadPGPKey" />
-    </div>
+    </section>
 
-    <div>
-      <input type="checkbox" id="enableDecoy">
-      <label for="enableDecoy">Enable Decoy Payload</label>
-      <textarea id="decoyText" class="hidden"></textarea>
-    </div>
+  </main>
 
-    <div>
-      <input type="checkbox" id="enableFragment">
-      <label for="enableFragment">Enable Fragmentation</label>
-      <div id="fragmentOptions" class="hidden">
-        <label for="fragmentCount">Fragments:</label>
-        <input type="number" id="fragmentCount" min="2" max="10" value="2">
-      </div>
-    </div>
-  </section>
-
-  <button id="runBtn">Run</button>
-</main>
-
-<div id="guideOverlay" class="hidden">
-  <div id="guideContent">
-    <button id="closeGuide">Close Guide</button>
-    <div id="guideText">
-      <h2>Steggy Guide</h2>
-      <p>All features explained for secure messaging and hidden payloads.</p>
+  <div id="guide-modal" class="hidden">
+    <div id="guide-content">
+      <h2>Guide</h2>
+      <p>All app features and instructions will be displayed here.</p>
+      <button id="close-guide">Close</button>
     </div>
   </div>
-</div>
 
-<script type="module" src="./ui/app.js"></script>
 </body>
 </html>
