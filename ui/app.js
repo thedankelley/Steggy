@@ -1,99 +1,98 @@
-import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
+import { generatePGPKeyPair, encryptPGP } from "../modules/steggy-pgp.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-  // =========================
-  // ELEMENT REFERENCES
-  // =========================
+
+  // -------- Elements --------
+  const modeSelect = document.getElementById("modeSelect");
+  const fileInput = document.getElementById("fileInput");
+  const fileLabel = document.getElementById("fileLabel");
+
   const cryptoSelect = document.getElementById("cryptoSelect");
-  const pgpContainer = document.getElementById("pgpOptions");
-  const advancedBtn = document.getElementById("advancedToggle");
-  const advancedPanel = document.getElementById("advancedPanel");
+  const pgpOptions = document.getElementById("pgpOptions");
 
   const generatePGPBtn = document.getElementById("generatePGPBtn");
-  const downloadPubBtn = document.getElementById("downloadPubKeyBtn");
-  const downloadPrivBtn = document.getElementById("downloadPrivKeyBtn");
+  const downloadPubKeyBtn = document.getElementById("downloadPubKeyBtn");
+  const downloadPrivKeyBtn = document.getElementById("downloadPrivKeyBtn");
+  const encryptWithPGPBtn = document.getElementById("encryptWithPGPBtn");
 
   const pubKeyField = document.getElementById("pgpPublicKey");
   const privKeyField = document.getElementById("pgpPrivateKey");
+  const payloadInput = document.getElementById("payloadInput");
 
-  // =========================
-  // VISIBILITY HELPERS
-  // =========================
-  function hide(el) {
-    if (el) el.style.display = "none";
-  }
+  const advancedToggle = document.getElementById("advancedToggle");
+  const advancedPanel = document.getElementById("advancedPanel");
 
-  function show(el) {
-    if (el) el.style.display = "block";
-  }
+  const enableDecoy = document.getElementById("enableDecoy");
+  const decoyPayload = document.getElementById("decoyPayload");
 
-  // =========================
-  // INITIAL STATE
-  // =========================
-  hide(pgpContainer);
-  hide(advancedPanel);
+  const enableFragmentation = document.getElementById("enableFragmentation");
+  const fragmentCount = document.getElementById("fragmentCount");
 
-  // =========================
-  // CRYPTO MODE TOGGLING
-  // =========================
-  cryptoSelect.addEventListener("change", () => {
-    const mode = cryptoSelect.value;
+  const guideBtn = document.getElementById("guideBtn");
+  const guideModal = document.getElementById("guideModal");
+  const closeGuideBtn = document.getElementById("closeGuideBtn");
 
-    if (mode === "pgp" || mode === "pgp+a") {
-      show(pgpContainer);
+  // -------- Helpers --------
+  const show = el => el.classList.remove("hidden");
+  const hide = el => el.classList.add("hidden");
+
+  // -------- Mode Logic --------
+  modeSelect.addEventListener("change", () => {
+    if (modeSelect.value === "sstv-decode") {
+      fileLabel.textContent = "Select WAV";
+      fileInput.accept = ".wav";
     } else {
-      hide(pgpContainer);
+      fileLabel.textContent = "Select Image";
+      fileInput.accept = "image/*";
     }
   });
 
-  // =========================
-  // ADVANCED OPTIONS TOGGLE
-  // =========================
-  advancedBtn.addEventListener("click", () => {
-    const isVisible = advancedPanel.style.display === "block";
-    advancedPanel.style.display = isVisible ? "none" : "block";
-  });
-
-  // =========================
-  // PGP KEY GENERATION
-  // =========================
-  generatePGPBtn.addEventListener("click", async () => {
-    try {
-      const { publicKey, privateKey } = await generatePGPKeyPair();
-      pubKeyField.value = publicKey;
-      privKeyField.value = privateKey;
-      alert("PGP keys generated successfully.");
-    } catch (err) {
-      alert("PGP generation failed.");
-      console.error(err);
+  // -------- Crypto Logic --------
+  cryptoSelect.addEventListener("change", () => {
+    if (cryptoSelect.value === "pgp" || cryptoSelect.value === "pgp+a") {
+      show(pgpOptions);
+    } else {
+      hide(pgpOptions);
     }
   });
 
-  // =========================
-  // DOWNLOAD HELPERS
-  // =========================
-  function download(filename, content) {
-    const blob = new Blob([content], { type: "text/plain" });
+  // -------- PGP --------
+  generatePGPBtn.onclick = async () => {
+    const { publicKey, privateKey } = await generatePGPKeyPair();
+    pubKeyField.value = publicKey;
+    privKeyField.value = privateKey;
+  };
+
+  downloadPubKeyBtn.onclick = () => download("public.key", pubKeyField.value);
+  downloadPrivKeyBtn.onclick = () => download("private.key", privKeyField.value);
+
+  encryptWithPGPBtn.onclick = async () => {
+    payloadInput.value = await encryptPGP(payloadInput.value, pubKeyField.value);
+  };
+
+  // -------- Advanced --------
+  advancedToggle.onclick = () => {
+    advancedPanel.classList.toggle("hidden");
+  };
+
+  enableDecoy.onchange = () => {
+    enableDecoy.checked ? show(decoyPayload) : hide(decoyPayload);
+  };
+
+  enableFragmentation.onchange = () => {
+    enableFragmentation.checked ? show(fragmentCount) : hide(fragmentCount);
+  };
+
+  // -------- Guide --------
+  guideBtn.onclick = () => show(guideModal);
+  closeGuideBtn.onclick = () => hide(guideModal);
+
+  // -------- Utils --------
+  function download(name, content) {
+    if (!content) return;
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = filename;
+    a.href = URL.createObjectURL(new Blob([content]));
+    a.download = name;
     a.click();
-    URL.revokeObjectURL(a.href);
   }
-
-  downloadPubBtn.addEventListener("click", () => {
-    if (!pubKeyField.value) {
-      alert("No public key to download.");
-      return;
-    }
-    download("public.key", pubKeyField.value);
-  });
-
-  downloadPrivBtn.addEventListener("click", () => {
-    if (!privKeyField.value) {
-      alert("No private key to download.");
-      return;
-    }
-    download("private.key", privKeyField.value);
-  });
 });
