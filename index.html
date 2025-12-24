@@ -1,154 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Steggy</title>
-
-  <!-- Mobile / PWA sanity -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#121212" />
-
-  <!-- Icon -->
-  <link rel="icon" href="/icons/icon-512.png" />
-
-  <!-- UI styles live in /ui -->
-  <link rel="stylesheet" href="/ui/styles.css" />
+  <link rel="stylesheet" href="ui/styles.css">
+  <link rel="icon" href="icons/icon-512.png" sizes="512x512">
 </head>
-
 <body>
-  <!-- HEADER -->
-  <header class="app-header">
-    <div class="title-block">
-      <img
-        src="/icons/icon-512.png"
-        class="logo"
-        alt="Steggy logo"
-      />
+  <header>
+    <div id="logo-container">
+      <img src="icons/icon-512.png" alt="Steggy Logo" id="logo">
       <h1>Steggy</h1>
+      <small>ステギー</small>
     </div>
-
-    <!-- Guide button -->
-    <button
-      id="guideBtn"
-      class="icon-btn"
-      title="Guide"
-      aria-label="Open guide"
-    >
-      📘
-    </button>
+    <button id="guide-btn">Guide</button>
   </header>
 
-  <!-- GUIDE MODAL -->
-  <div id="guideModal" class="modal hidden">
-    <div class="modal-content">
-      <h2>Steggy Guide</h2>
-      <p>
-        Steggy hides messages inside images or SSTV signals using encryption,
-        fragmentation, and other sneaky stuff.
-      </p>
-      <button id="closeGuideBtn">Close</button>
-    </div>
-  </div>
-
-  <!-- MAIN APP -->
-  <main class="container">
-
-    <!-- MODE -->
-    <section class="card">
-      <label for="modeSelect">Mode</label>
-      <select id="modeSelect">
-        <option value="image-encrypt">Image → Encrypt</option>
-        <option value="image-decrypt">Image → Decrypt</option>
-        <option value="sstv-encode">SSTV → Encode</option>
-        <option value="sstv-decode">SSTV → Decode</option>
+  <main>
+    <section id="mode-section">
+      <label for="mode-select">Mode:</label>
+      <select id="mode-select">
+        <option value="encrypt-image">Encrypt Image</option>
+        <option value="decrypt-image">Decrypt Image</option>
+        <option value="sstv-encode">SSTV Encode</option>
+        <option value="sstv-decode">SSTV Decode</option>
       </select>
     </section>
 
-    <!-- FILE INPUT -->
-    <section class="card">
-      <label id="fileLabel" for="fileInput">Select Image</label>
-      <input type="file" id="fileInput" />
+    <section id="file-section">
+      <label id="file-label" for="file-input">Select File:</label>
+      <input type="file" id="file-input">
     </section>
 
-    <!-- PAYLOAD -->
-    <section class="card">
-      <label for="payloadInput">Payload</label>
-      <textarea
-        id="payloadInput"
-        placeholder="Your secret message..."
-      ></textarea>
+    <section id="payload-section">
+      <label for="payload-input">Payload:</label>
+      <textarea id="payload-input"></textarea>
     </section>
 
-    <!-- ENCRYPTION -->
-    <section class="card">
-      <label for="cryptoSelect">Encryption</label>
-      <select id="cryptoSelect">
-        <option value="aes">AES</option>
-        <option value="pgp">PGP</option>
-        <option value="both">AES + PGP</option>
-      </select>
-    </section>
+    <section id="advanced-section">
+      <button id="advanced-toggle">Advanced Options</button>
+      <div id="advanced-options" hidden>
+        <label for="crypto-select">Crypto Method:</label>
+        <select id="crypto-select">
+          <option value="aes">AES</option>
+          <option value="pgp">PGP</option>
+          <option value="both">AES + PGP</option>
+        </select>
 
-    <!-- PGP OPTIONS -->
-    <section id="pgpOptions" class="card hidden">
-      <h3>PGP Keys</h3>
-
-      <textarea
-        id="pgpPublicKey"
-        placeholder="Public key"
-      ></textarea>
-
-      <textarea
-        id="pgpPrivateKey"
-        placeholder="Private key"
-      ></textarea>
-
-      <div class="row">
-        <button id="generatePgpBtn">Generate Keys</button>
-        <button id="downloadPgpBtn">Download Keys</button>
-      </div>
-    </section>
-
-    <!-- ADVANCED OPTIONS -->
-    <section class="card">
-      <button id="advancedToggle">Advanced Options</button>
-
-      <div id="advancedOptions" class="hidden">
-
-        <label>
-          <input type="checkbox" id="enableFragmentation" />
-          Enable Fragmentation
-        </label>
-
-        <div id="fragmentationOptions" class="hidden">
-          <input
-            type="number"
-            id="fragmentSize"
-            placeholder="Fragment size"
-          />
+        <div id="pgp-fields" hidden>
+          <textarea id="pgp-public"></textarea>
+          <textarea id="pgp-private"></textarea>
+          <button id="pgp-generate">Generate Keys</button>
+          <button id="pgp-download-public">Download Public Key</button>
+          <button id="pgp-download-private">Download Private Key</button>
+          <button id="pgp-encrypt-payload">Encrypt Payload</button>
         </div>
 
         <label>
-          <input type="checkbox" id="enableDecoy" />
+          <input type="checkbox" id="decoy-toggle">
           Enable Decoy Payload
         </label>
+        <textarea id="decoy-payload" hidden></textarea>
 
-        <textarea
-          id="decoyPayload"
-          class="hidden"
-          placeholder="Decoy payload..."
-        ></textarea>
+        <label>
+          <input type="checkbox" id="fragment-toggle">
+          Enable Fragmentation
+        </label>
+        <div id="fragment-options" hidden>
+          <label for="fragment-count">Fragments:</label>
+          <input type="number" id="fragment-count" min="2" max="16" value="2">
+        </div>
       </div>
     </section>
 
-    <!-- RUN -->
-    <section class="card">
-      <button id="runBtn" class="primary">Run</button>
-    </section>
-
+    <button id="run-btn">Run</button>
+    <div id="output-section"></div>
   </main>
 
-  <!-- IMPORTANT: app.js is in /ui -->
-  <script type="module" src="/ui/app.js"></script>
+  <script type="module" src="ui/app.js"></script>
 </body>
 </html>
