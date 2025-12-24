@@ -20,13 +20,28 @@ closeGuide.onclick = () => guideOverlay.classList.add("hidden");
 // Advanced options toggle
 const advBtn = document.getElementById("advancedToggle");
 const advSection = document.getElementById("advancedSection");
-advBtn?.addEventListener("click", () => advSection.classList.toggle("hidden"));
 
-// Run button placeholder
+advBtn.addEventListener("click", () => advSection.classList.toggle("hidden"));
+
+// Mode selection
+const modeSelect = document.getElementById("modeSelect");
+const fileInput = document.getElementById("fileInput");
+const payloadText = document.getElementById("payloadText");
+
+modeSelect.addEventListener("change", () => {
+  const mode = modeSelect.value;
+  if (mode.includes("sstv")) {
+    fileInput.accept = mode.includes("decrypt") ? ".wav" : "image/*";
+  } else {
+    fileInput.accept = "image/*";
+  }
+});
+
+// Run button
 const runBtn = document.getElementById("runBtn");
 runBtn.onclick = () => {
-  alert("Run clicked — logic will be linked here");
+  const mode = modeSelect.value;
+  alert(`Run clicked for mode: ${mode}`);
 };
 
-// Other UI wiring placeholders
-// Decoy, Fragmentation, PGP, SSTV logic should be wired from here
+// TODO: Wire Advanced Options, PGP, SSTV, Fragmentation fully
