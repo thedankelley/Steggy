@@ -1,21 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Steggy Test</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
+<html>
 <body>
+<h1 id="s">Loading…</h1>
 
-<h1 id="status">JavaScript NOT running</h1>
-
-<button id="testBtn">Tap me</button>
-
-<script>
-  document.getElementById("status").textContent = "JavaScript IS running";
-  document.getElementById("testBtn").onclick = () => {
-    alert("Button works");
-  };
+<script type="module">
+  document.getElementById("s").textContent = "Module JS running";
 </script>
 
 </body>
