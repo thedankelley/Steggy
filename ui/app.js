@@ -1,45 +1,67 @@
-// app.js - handles UI interactions for Steggy
-document.addEventListener('DOMContentLoaded', () => {
-  const advancedToggle = document.getElementById('advanced-toggle');
-  const advancedOptions = document.getElementById('advanced-options');
-  const cryptoSelect = document.getElementById('crypto-select');
-  const pgpFields = document.getElementById('pgp-fields');
-  const decoyToggle = document.getElementById('decoy-toggle');
-  const decoyPayload = document.getElementById('decoy-payload');
-  const fragmentToggle = document.getElementById('fragment-toggle');
-  const fragmentOptions = document.getElementById('fragment-options');
-  const guideBtn = document.getElementById('guide-btn');
+document.addEventListener('DOMContentLoaded', async () => {
+  const modeSelect = document.getElementById('modeSelect');
+  const fileLabel = document.getElementById('fileLabel');
+  const fileInput = document.getElementById('fileInput');
 
-  // Toggle Advanced Options
-  advancedToggle.addEventListener('click', () => {
-    advancedOptions.hidden = !advancedOptions.hidden;
-  });
+  const guideBtn = document.getElementById('guideBtn');
+  const guideOverlay = document.getElementById('guideOverlay');
+  const closeGuideBtn = document.getElementById('closeGuideBtn');
 
-  // Toggle PGP fields
-  cryptoSelect.addEventListener('change', () => {
-    pgpFields.hidden = !(cryptoSelect.value === 'pgp' || cryptoSelect.value === 'both');
-  });
+  const runBtn = document.getElementById('runBtn');
+  const payloadInput = document.getElementById('payloadInput');
 
-  // Toggle Decoy Payload
-  decoyToggle.addEventListener('change', () => {
-    decoyPayload.hidden = !decoyToggle.checked;
-  });
+  function updateFileLabel() {
+    if (modeSelect.value === 'sstv-decode') {
+      fileLabel.textContent = 'Select WAV';
+      fileInput.accept = '.wav';
+    } else {
+      fileLabel.textContent = 'Select Image';
+      fileInput.accept = 'image/*';
+    }
+  }
 
-  // Toggle Fragmentation options
-  fragmentToggle.addEventListener('change', () => {
-    fragmentOptions.hidden = !fragmentToggle.checked;
-  });
+  modeSelect.addEventListener('change', updateFileLabel);
 
-  // Guide button - just toggle a placeholder alert for now
   guideBtn.addEventListener('click', () => {
-    alert('Guide opened! (placeholder, will implement full guide later)');
+    guideOverlay.classList.add('active');
   });
 
-  // Run button placeholder
-  document.getElementById('run-btn').addEventListener('click', () => {
-    const mode = document.getElementById('mode-select').value;
-    const file = document.getElementById('file-input').files[0];
-    const payload = document.getElementById('payload-input').value;
-    alert(`Run clicked with mode: ${mode}, file: ${file ? file.name : 'none'}, payload length: ${payload.length}`);
+  closeGuideBtn.addEventListener('click', () => {
+    guideOverlay.classList.remove('active');
   });
+
+  // 🔌 Phase 3: Run → steggy-core
+  runBtn.addEventListener('click', async () => {
+    try {
+      const file = fileInput.files[0];
+      const payload = payloadInput.value;
+      const mode = modeSelect.value;
+
+      if (!file) {
+        alert('Please select a file first.');
+        return;
+      }
+
+      // Lazy-load core to avoid breaking UI if module fails
+      const core = await import('../core/steggy-core.js');
+
+      if (!core.runSteggy) {
+        alert('Steggy core not available.');
+        return;
+      }
+
+      await core.runSteggy({
+        mode,
+        file,
+        payload
+      });
+
+      alert('Operation complete.');
+    } catch (err) {
+      console.error(err);
+      alert('An error occurred while running Steggy.');
+    }
+  });
+
+  updateFileLabel();
 });
