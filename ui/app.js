@@ -1,94 +1,45 @@
-// ui/app.js
-// UI controller only.
-// If crypto breaks, it’s not this file’s fault.
+// app.js - handles UI interactions for Steggy
+document.addEventListener('DOMContentLoaded', () => {
+  const advancedToggle = document.getElementById('advanced-toggle');
+  const advancedOptions = document.getElementById('advanced-options');
+  const cryptoSelect = document.getElementById('crypto-select');
+  const pgpFields = document.getElementById('pgp-fields');
+  const decoyToggle = document.getElementById('decoy-toggle');
+  const decoyPayload = document.getElementById('decoy-payload');
+  const fragmentToggle = document.getElementById('fragment-toggle');
+  const fragmentOptions = document.getElementById('fragment-options');
+  const guideBtn = document.getElementById('guide-btn');
 
-const guideBtn = document.getElementById("guideBtn");
-const guideModal = document.getElementById("guideModal");
-const closeGuideBtn = document.getElementById("closeGuideBtn");
+  // Toggle Advanced Options
+  advancedToggle.addEventListener('click', () => {
+    advancedOptions.hidden = !advancedOptions.hidden;
+  });
 
-const modeSelect = document.getElementById("modeSelect");
-const fileInput = document.getElementById("fileInput");
-const fileLabel = document.getElementById("fileLabel");
+  // Toggle PGP fields
+  cryptoSelect.addEventListener('change', () => {
+    pgpFields.hidden = !(cryptoSelect.value === 'pgp' || cryptoSelect.value === 'both');
+  });
 
-const cryptoSelect = document.getElementById("cryptoSelect");
-const pgpOptions = document.getElementById("pgpOptions");
+  // Toggle Decoy Payload
+  decoyToggle.addEventListener('change', () => {
+    decoyPayload.hidden = !decoyToggle.checked;
+  });
 
-const advancedToggle = document.getElementById("advancedToggle");
-const advancedOptions = document.getElementById("advancedOptions");
+  // Toggle Fragmentation options
+  fragmentToggle.addEventListener('change', () => {
+    fragmentOptions.hidden = !fragmentToggle.checked;
+  });
 
-const enableFragmentation = document.getElementById("enableFragmentation");
-const fragmentationOptions = document.getElementById("fragmentationOptions");
+  // Guide button - just toggle a placeholder alert for now
+  guideBtn.addEventListener('click', () => {
+    alert('Guide opened! (placeholder, will implement full guide later)');
+  });
 
-const enableDecoy = document.getElementById("enableDecoy");
-const decoyPayload = document.getElementById("decoyPayload");
-
-const runBtn = document.getElementById("runBtn");
-
-/* ---------------- GUIDE ---------------- */
-
-// Never auto-open. Ever. Again.
-guideBtn.addEventListener("click", () => {
-  guideModal.classList.remove("hidden");
-});
-
-closeGuideBtn.addEventListener("click", () => {
-  guideModal.classList.add("hidden");
-});
-
-/* ---------------- MODE ---------------- */
-
-modeSelect.addEventListener("change", () => {
-  const mode = modeSelect.value;
-
-  if (mode === "sstv-decode") {
-    fileLabel.textContent = "Select WAV";
-    fileInput.accept = ".wav";
-  } else {
-    fileLabel.textContent = "Select Image";
-    fileInput.accept = "image/*";
-  }
-});
-
-/* ---------------- CRYPTO ---------------- */
-
-cryptoSelect.addEventListener("change", () => {
-  const crypto = cryptoSelect.value;
-
-  if (crypto === "pgp" || crypto === "both") {
-    pgpOptions.classList.remove("hidden");
-  } else {
-    pgpOptions.classList.add("hidden");
-  }
-});
-
-/* ---------------- ADVANCED OPTIONS ---------------- */
-
-advancedToggle.addEventListener("click", () => {
-  advancedOptions.classList.toggle("hidden");
-});
-
-enableFragmentation.addEventListener("change", () => {
-  fragmentationOptions.classList.toggle(
-    "hidden",
-    !enableFragmentation.checked
-  );
-});
-
-enableDecoy.addEventListener("change", () => {
-  decoyPayload.classList.toggle(
-    "hidden",
-    !enableDecoy.checked
-  );
-});
-
-/* ---------------- RUN ---------------- */
-
-runBtn.addEventListener("click", async () => {
-  try {
-    // Core wiring happens later — this is intentional for now.
-    alert("UI is wired correctly. Core execution comes next.");
-  } catch (err) {
-    console.error("Run error:", err);
-    alert("An error occurred while running Steggy.");
-  }
+  // Run button placeholder
+  document.getElementById('run-btn').addEventListener('click', () => {
+    const mode = document.getElementById('mode-select').value;
+    const file = document.getElementById('file-input').files[0];
+    const payload = document.getElementById('payload-input').value;
+    alert(`Run clicked with mode: ${mode}, file: ${file ? file.name : 'none'}, payload length: ${payload.length}`);
+  });
 });
