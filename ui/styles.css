@@ -38,7 +38,7 @@ textarea {
   resize: vertical;
 }
 
-.material-button {
+button {
   padding: 8px 15px;
   margin: 5px 0;
   background-color: #6200ee;
@@ -48,7 +48,7 @@ textarea {
   cursor: pointer;
 }
 
-.material-button:hover {
+button:hover {
   background-color: #3700b3;
 }
 
