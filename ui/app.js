@@ -8,7 +8,7 @@ import * as sstv from "../modules/steggy-sstv.js";
 import * as sstvDecode from "../modules/steggy-sstv-decode.js";
 import * as sstvMic from "../modules/steggy-sstv-mic.js";
 
-// DOM elements
+// DOM
 const guideBtn = document.getElementById("guideBtn");
 const guideOverlay = document.getElementById("guideOverlay");
 const closeGuide = document.getElementById("closeGuide");
@@ -29,10 +29,10 @@ const runBtn = document.getElementById("runBtn");
 guideBtn.onclick = () => guideOverlay.classList.remove("hidden");
 closeGuide.onclick = () => guideOverlay.classList.add("hidden");
 
-// Advanced Options toggle
+// Advanced toggle
 advBtn.onclick = () => advSection.classList.toggle("hidden");
 
-// Mode change
+// Mode selection
 modeSelect.onchange = () => {
   if (modeSelect.value.includes("sstv-decrypt")) {
     fileLabel.textContent = "Select WAV";
