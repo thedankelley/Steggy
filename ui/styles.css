@@ -1,71 +1,74 @@
 body {
-  font-family: Roboto, sans-serif;
+  font-family: 'Roboto', sans-serif;
   margin: 0;
-  background: #fafafa;
+  padding: 0;
+  background-color: #121212;
+  color: #fff;
 }
 
-.top-bar {
+header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 12px;
+  padding: 10px 20px;
+  background-color: #1f1f1f;
 }
 
-.title-block {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
+header img#appIcon {
   width: 48px;
-  margin-right: 12px;
+  height: 48px;
 }
 
-.subtitle {
-  font-size: 0.75rem;
-  opacity: 0.7;
+header .header-text {
+  text-align: center;
+  flex: 1;
 }
 
-.container {
-  max-width: 640px;
-  margin: auto;
-  padding: 16px;
+main {
+  padding: 20px;
 }
 
-button {
-  margin-top: 8px;
-  padding: 10px;
+section {
+  margin-bottom: 15px;
 }
 
-.primary {
-  background: #6750a4;
-  color: white;
+textarea {
+  width: 100%;
+  min-height: 60px;
+  resize: vertical;
 }
 
-.secondary {
-  background: #ddd;
+.material-button {
+  padding: 10px 20px;
+  margin: 5px 0;
+  background-color: #6200ee;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-.panel {
-  margin-top: 12px;
-  padding: 12px;
-  background: #eee;
+.material-button:hover {
+  background-color: #3700b3;
 }
 
 .hidden {
   display: none;
 }
 
-.modal {
+#guideOverlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.4);
+  top:0; left:0; right:0; bottom:0;
+  background-color: rgba(0,0,0,0.8);
+  z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.modal-content {
-  background: white;
+#guideContent {
+  background-color: #222;
   padding: 20px;
+  border-radius: 8px;
+  max-width: 90%;
 }
