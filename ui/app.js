@@ -1,67 +1,94 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const modeSelect = document.getElementById('modeSelect');
-  const fileLabel = document.getElementById('fileLabel');
-  const fileInput = document.getElementById('fileInput');
+// ui/app.js
+// UI controller only.
+// If crypto breaks, it’s not this file’s fault.
 
-  const guideBtn = document.getElementById('guideBtn');
-  const guideOverlay = document.getElementById('guideOverlay');
-  const closeGuideBtn = document.getElementById('closeGuideBtn');
+const guideBtn = document.getElementById("guideBtn");
+const guideModal = document.getElementById("guideModal");
+const closeGuideBtn = document.getElementById("closeGuideBtn");
 
-  const runBtn = document.getElementById('runBtn');
-  const payloadInput = document.getElementById('payloadInput');
+const modeSelect = document.getElementById("modeSelect");
+const fileInput = document.getElementById("fileInput");
+const fileLabel = document.getElementById("fileLabel");
 
-  function updateFileLabel() {
-    if (modeSelect.value === 'sstv-decode') {
-      fileLabel.textContent = 'Select WAV';
-      fileInput.accept = '.wav';
-    } else {
-      fileLabel.textContent = 'Select Image';
-      fileInput.accept = 'image/*';
-    }
+const cryptoSelect = document.getElementById("cryptoSelect");
+const pgpOptions = document.getElementById("pgpOptions");
+
+const advancedToggle = document.getElementById("advancedToggle");
+const advancedOptions = document.getElementById("advancedOptions");
+
+const enableFragmentation = document.getElementById("enableFragmentation");
+const fragmentationOptions = document.getElementById("fragmentationOptions");
+
+const enableDecoy = document.getElementById("enableDecoy");
+const decoyPayload = document.getElementById("decoyPayload");
+
+const runBtn = document.getElementById("runBtn");
+
+/* ---------------- GUIDE ---------------- */
+
+// Never auto-open. Ever. Again.
+guideBtn.addEventListener("click", () => {
+  guideModal.classList.remove("hidden");
+});
+
+closeGuideBtn.addEventListener("click", () => {
+  guideModal.classList.add("hidden");
+});
+
+/* ---------------- MODE ---------------- */
+
+modeSelect.addEventListener("change", () => {
+  const mode = modeSelect.value;
+
+  if (mode === "sstv-decode") {
+    fileLabel.textContent = "Select WAV";
+    fileInput.accept = ".wav";
+  } else {
+    fileLabel.textContent = "Select Image";
+    fileInput.accept = "image/*";
   }
+});
 
-  modeSelect.addEventListener('change', updateFileLabel);
+/* ---------------- CRYPTO ---------------- */
 
-  guideBtn.addEventListener('click', () => {
-    guideOverlay.classList.add('active');
-  });
+cryptoSelect.addEventListener("change", () => {
+  const crypto = cryptoSelect.value;
 
-  closeGuideBtn.addEventListener('click', () => {
-    guideOverlay.classList.remove('active');
-  });
+  if (crypto === "pgp" || crypto === "both") {
+    pgpOptions.classList.remove("hidden");
+  } else {
+    pgpOptions.classList.add("hidden");
+  }
+});
 
-  // 🔌 Phase 3: Run → steggy-core
-  runBtn.addEventListener('click', async () => {
-    try {
-      const file = fileInput.files[0];
-      const payload = payloadInput.value;
-      const mode = modeSelect.value;
+/* ---------------- ADVANCED OPTIONS ---------------- */
 
-      if (!file) {
-        alert('Please select a file first.');
-        return;
-      }
+advancedToggle.addEventListener("click", () => {
+  advancedOptions.classList.toggle("hidden");
+});
 
-      // Lazy-load core to avoid breaking UI if module fails
-      const core = await import('../core/steggy-core.js');
+enableFragmentation.addEventListener("change", () => {
+  fragmentationOptions.classList.toggle(
+    "hidden",
+    !enableFragmentation.checked
+  );
+});
 
-      if (!core.runSteggy) {
-        alert('Steggy core not available.');
-        return;
-      }
+enableDecoy.addEventListener("change", () => {
+  decoyPayload.classList.toggle(
+    "hidden",
+    !enableDecoy.checked
+  );
+});
 
-      await core.runSteggy({
-        mode,
-        file,
-        payload
-      });
+/* ---------------- RUN ---------------- */
 
-      alert('Operation complete.');
-    } catch (err) {
-      console.error(err);
-      alert('An error occurred while running Steggy.');
-    }
-  });
-
-  updateFileLabel();
+runBtn.addEventListener("click", async () => {
+  try {
+    // Core wiring happens later — this is intentional for now.
+    alert("UI is wired correctly. Core execution comes next.");
+  } catch (err) {
+    console.error("Run error:", err);
+    alert("An error occurred while running Steggy.");
+  }
 });
