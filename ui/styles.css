@@ -10,7 +10,7 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
+  padding: 10px 15px;
   background-color: #1f1f1f;
 }
 
@@ -25,11 +25,11 @@ header .header-text {
 }
 
 main {
-  padding: 20px;
+  padding: 15px;
 }
 
 section {
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 textarea {
@@ -39,7 +39,7 @@ textarea {
 }
 
 .material-button {
-  padding: 10px 20px;
+  padding: 8px 15px;
   margin: 5px 0;
   background-color: #6200ee;
   color: #fff;
@@ -59,7 +59,7 @@ textarea {
 #guideOverlay {
   position: fixed;
   top:0; left:0; right:0; bottom:0;
-  background-color: rgba(0,0,0,0.8);
+  background-color: rgba(0,0,0,0.85);
   z-index: 1000;
   display: flex;
   justify-content: center;
@@ -70,5 +70,5 @@ textarea {
   background-color: #222;
   padding: 20px;
   border-radius: 8px;
-  max-width: 90%;
+  max-width: 95%;
 }
