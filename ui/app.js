@@ -1,64 +1,59 @@
 /*
   app.js
-  UI-only logic for now.
-  Core wiring happens in Phase 4.
+  Phase 4A: UI → Core handshake
+
+  This file should stay boring.
+  If it starts looking smart, we fucked up.
 */
 
-const modeSelect = document.getElementById("modeSelect");
-const fileLabel = document.getElementById("fileLabel");
-const cryptoSelect = document.getElementById("cryptoSelect");
-const pgpSection = document.getElementById("pgpSection");
+import { runSteggy } from "../core/steggy-core.js";
 
-const guideBtn = document.getElementById("guideBtn");
-const guideModal = document.getElementById("guideModal");
-const closeGuideBtn = document.getElementById("closeGuideBtn");
+const modeSelect = document.getElementById("modeSelect");
+const fileInput = document.getElementById("fileInput");
+const payloadInput = document.getElementById("payloadInput");
+const cryptoSelect = document.getElementById("cryptoSelect");
+
+const pgpSection = document.getElementById("pgpSection");
+const pgpPublicKey = document.getElementById("pgpPublicKey");
+const pgpPrivateKey = document.getElementById("pgpPrivateKey");
 
 const runBtn = document.getElementById("runBtn");
 
 /* -----------------------------
-   Guide Modal
+   Run Button
    ----------------------------- */
 
-guideBtn.addEventListener("click", () => {
-  guideModal.classList.remove("hidden");
-});
+runBtn.addEventListener("click", async () => {
+  try {
+    if (!fileInput.files.length) {
+      alert("Please select a file first.");
+      return;
+    }
 
-closeGuideBtn.addEventListener("click", () => {
-  guideModal.classList.add("hidden");
-});
+    const inputFile = fileInput.files[0];
 
-/* -----------------------------
-   Mode Handling
-   ----------------------------- */
+    const options = {
+      mode: modeSelect.value,
+      payload: payloadInput.value,
+      crypto: cryptoSelect.value,
+      pgp: {
+        publicKey: pgpPublicKey.value,
+        privateKey: pgpPrivateKey.value
+      }
+    };
 
-modeSelect.addEventListener("change", () => {
-  const mode = modeSelect.value;
+    // This is the big moment.
+    const result = await runSteggy(inputFile, options);
 
-  if (mode === "sstv-decrypt") {
-    fileLabel.textContent = "Select WAV";
-  } else {
-    fileLabel.textContent = "Select Image";
+    alert("Steggy completed successfully.");
+
+    // Later: preview / download result here
+
+  } catch (err) {
+    console.error(err);
+    alert(
+      "An error occurred while running Steggy.\n\n" +
+      (err.message || "Unknown error")
+    );
   }
-});
-
-/* -----------------------------
-   Crypto Selection
-   ----------------------------- */
-
-cryptoSelect.addEventListener("change", () => {
-  const crypto = cryptoSelect.value;
-
-  if (crypto === "pgp" || crypto === "aes+pgp") {
-    pgpSection.classList.remove("hidden");
-  } else {
-    pgpSection.classList.add("hidden");
-  }
-});
-
-/* -----------------------------
-   Run (stub)
-   ----------------------------- */
-
-runBtn.addEventListener("click", () => {
-  alert("Steggy run invoked (core not wired yet)");
 });
