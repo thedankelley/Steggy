@@ -4,36 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- PWA-ish metadata -->
+  <!-- PWA meta -->
   <meta name="theme-color" content="#121212" />
 
   <title>Steggy</title>
 
-  <!-- UI styles live in /ui — do not move this again -->
+  <!-- Styles MUST stay in /ui -->
   <link rel="stylesheet" href="./ui/styles.css" />
 
-  <!-- Material Icons (used sparingly) -->
+  <!-- Material Icons -->
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 
 <body>
-  <!-- App Container -->
   <div id="app">
 
-    <!-- Header -->
+    <!-- HEADER -->
     <header class="app-header">
-      <h1>Steggy</h1>
+      <div class="header-left">
+        <h1 class="app-title">Steggy</h1>
+      </div>
 
-      <!-- Guide button lives here so it doesn't float into hell -->
-      <button id="guideBtn" class="icon-button" aria-label="Guide">
+      <!-- Guide button: icon-only, no layout stretching -->
+      <button
+        id="guideBtn"
+        class="icon-button"
+        aria-label="Open Guide"
+      >
         <span class="material-icons">help_outline</span>
       </button>
     </header>
 
-    <!-- Main Controls -->
+    <!-- MAIN CONTENT -->
     <main>
 
-      <!-- Mode Selection -->
       <section class="card">
         <label for="modeSelect">Mode</label>
         <select id="modeSelect">
@@ -44,23 +48,20 @@
         </select>
       </section>
 
-      <!-- File Input -->
       <section class="card">
         <label id="fileLabel" for="fileInput">Select Image</label>
         <input type="file" id="fileInput" />
       </section>
 
-      <!-- Payload -->
       <section class="card">
         <label for="payloadInput">Payload</label>
         <textarea
           id="payloadInput"
           rows="4"
-          placeholder="Enter secret message here"
+          placeholder="Enter secret message"
         ></textarea>
       </section>
 
-      <!-- Encryption Method -->
       <section class="card">
         <label for="cryptoSelect">Encryption</label>
         <select id="cryptoSelect">
@@ -70,21 +71,11 @@
         </select>
       </section>
 
-      <!-- PGP UI (hidden unless selected) -->
       <section id="pgpSection" class="card hidden">
         <label>PGP Keys</label>
 
-        <textarea
-          id="pgpPublicKey"
-          rows="3"
-          placeholder="Public Key"
-        ></textarea>
-
-        <textarea
-          id="pgpPrivateKey"
-          rows="3"
-          placeholder="Private Key"
-        ></textarea>
+        <textarea id="pgpPublicKey" rows="3" placeholder="Public Key"></textarea>
+        <textarea id="pgpPrivateKey" rows="3" placeholder="Private Key"></textarea>
 
         <div class="button-row">
           <button id="generatePgpBtn">Generate Keys</button>
@@ -92,7 +83,6 @@
         </div>
       </section>
 
-      <!-- Run -->
       <section class="card">
         <button id="runBtn" class="primary">Run Steggy</button>
       </section>
@@ -100,19 +90,28 @@
     </main>
   </div>
 
-  <!-- Guide Modal -->
+  <!-- GUIDE MODAL (detached from layout flow) -->
   <div id="guideModal" class="modal hidden">
     <div class="modal-content">
-      <h2>Guide</h2>
+      <h2>Steggy Guide</h2>
+
       <p>
         Steggy hides encrypted payloads inside images or SSTV audio.
-        All processing happens client-side.
+        All operations are performed locally in your browser.
       </p>
-      <button id="closeGuideBtn">Close</button>
+
+      <ul>
+        <li>Image modes embed data into PNG/JPEG images</li>
+        <li>SSTV modes encode payloads into audio signals</li>
+        <li>AES and PGP can be used independently or together</li>
+        <li>No data is uploaded anywhere. Ever.</li>
+      </ul>
+
+      <button id="closeGuideBtn" class="primary">Close Guide</button>
     </div>
   </div>
 
-  <!-- App logic (also locked to /ui) -->
+  <!-- App logic -->
   <script type="module" src="./ui/app.js"></script>
 </body>
 </html>
