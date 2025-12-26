@@ -1,132 +1,70 @@
-/* -----------------------------
-   Global Layout
-   ----------------------------- */
-
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #121212;
-  color: #ffffff;
+  background: #111;
+  color: #eee;
 }
-
-#app {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-/* -----------------------------
-   Header
-   ----------------------------- */
 
 .app-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  padding: 12px;
 }
 
-/* Prevent title from stretching layout */
-.app-title {
+.title-block h1 {
   margin: 0;
-  font-size: 1.5rem;
 }
 
-/* Icon-only button — NO layout growth */
+.subtitle {
+  font-size: 0.8em;
+  opacity: 0.7;
+}
+
 .icon-button {
+  font-size: 20px;
   background: none;
   border: none;
-  padding: 0.25rem;
-  margin: 0;
-  color: white;
-  cursor: pointer;
+  color: inherit;
+}
+
+.app {
+  padding: 16px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0; /* CRITICAL */
-}
-
-.icon-button .material-icons {
-  font-size: 24px; /* Locks icon size */
-}
-
-/* -----------------------------
-   Cards
-   ----------------------------- */
-
-.card {
-  background: #1e1e1e;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  flex-direction: column;
+  gap: 12px;
 }
 
 textarea,
 select,
-input[type="file"] {
-  width: 100%;
-  background: #2a2a2a;
-  border: none;
-  color: white;
-  padding: 0.5rem;
-  border-radius: 4px;
-}
-
-/* -----------------------------
-   Buttons
-   ----------------------------- */
-
+input,
 button {
-  background: #2a2a2a;
-  border: none;
-  color: white;
-  padding: 0.6rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
 }
 
-button.primary {
+button.run {
   background: #4caf50;
+  color: black;
   font-weight: bold;
 }
 
-.button-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-/* -----------------------------
-   Modal (Guide)
-   ----------------------------- */
-
-.modal {
-  position: fixed; /* KEY FIX */
-  inset: 0;
-  background: rgba(0, 0, 0, 0.75);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal-content {
-  background: #1e1e1e;
-  padding: 1.25rem;
-  border-radius: 10px;
-  max-width: 90%;
-  max-height: 85%;
-  overflow-y: auto;
-}
-
-/* -----------------------------
-   Utility
-   ----------------------------- */
-
 .hidden {
   display: none;
+}
+
+.guide {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #222;
+  padding: 16px;
+  border-top: 1px solid #333;
+}
+
+.advanced {
+  border: 1px solid #333;
+  padding: 12px;
 }
