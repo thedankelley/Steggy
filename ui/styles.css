@@ -1,125 +1,100 @@
-:root {
-  --bg: #0f172a;
-  --card: #111827;
-  --text: #e5e7eb;
-  --accent: #6366f1;
-}
-
-* {
-  box-sizing: border-box;
-}
+/* 
+  Core layout styles.
+  If something breaks visually, it is probably because
+  someone moved this file again. Don't do that.
+*/
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
   font-family: system-ui, sans-serif;
+  background: #121212;
+  color: #ffffff;
 }
 
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: #020617;
-}
-
-.title {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.title img {
-  width: 40px;
-  height: 40px;
-}
-
-.title h1 {
-  margin: 0;
-}
-
-.title small {
-  display: block;
-  font-size: 0.7rem;
-  opacity: 0.75;
-  text-align: center;
-}
-
-/* 🔧 FIX: guide button sizing */
-.app-header button {
-  width: auto;
-  min-width: 40px;
-  height: 40px;
-  padding: 0;
-  font-size: 1.2rem;
-  border-radius: 50%;
-}
-
-.container {
+#app {
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 1rem;
 }
 
+/* Header */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Icon-only button (guide) */
+.icon-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+/* Card-style sections */
 .card {
-  background: var(--card);
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 12px;
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
 }
 
 label {
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
 textarea,
 select,
 input[type="file"] {
   width: 100%;
-  background: #020617;
-  color: var(--text);
-  border: 1px solid #1e293b;
-  padding: 10px;
-  border-radius: 8px;
+  background: #2a2a2a;
+  border: none;
+  color: white;
+  padding: 0.5rem;
+  border-radius: 4px;
 }
 
+/* Buttons */
 button {
-  background: #1e293b;
-  color: var(--text);
+  background: #2a2a2a;
   border: none;
-  padding: 12px;
-  border-radius: 10px;
-  width: 100%;
+  color: white;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 button.primary {
-  background: var(--accent);
+  background: #4caf50;
+  font-weight: bold;
 }
 
-/* Overlay hidden by default */
-.overlay {
-  display: none;
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Modal */
+.modal {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.75);
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-.overlay.active {
+  background: rgba(0,0,0,0.7);
   display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.overlay-content {
-  background: var(--card);
-  padding: 24px;
-  border-radius: 14px;
+.modal-content {
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
   max-width: 90%;
 }
 
+/* Utility */
 .hidden {
   display: none;
 }
