@@ -1,8 +1,6 @@
-/* 
-  Core layout styles.
-  If something breaks visually, it is probably because
-  someone moved this file again. Don't do that.
-*/
+/* -----------------------------
+   Global Layout
+   ----------------------------- */
 
 body {
   margin: 0;
@@ -17,22 +15,44 @@ body {
   padding: 1rem;
 }
 
-/* Header */
+/* -----------------------------
+   Header
+   ----------------------------- */
+
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
-/* Icon-only button (guide) */
+/* Prevent title from stretching layout */
+.app-title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+/* Icon-only button — NO layout growth */
 .icon-button {
   background: none;
   border: none;
+  padding: 0.25rem;
+  margin: 0;
   color: white;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; /* CRITICAL */
 }
 
-/* Card-style sections */
+.icon-button .material-icons {
+  font-size: 24px; /* Locks icon size */
+}
+
+/* -----------------------------
+   Cards
+   ----------------------------- */
+
 .card {
   background: #1e1e1e;
   padding: 1rem;
@@ -57,7 +77,10 @@ input[type="file"] {
   border-radius: 4px;
 }
 
-/* Buttons */
+/* -----------------------------
+   Buttons
+   ----------------------------- */
+
 button {
   background: #2a2a2a;
   border: none;
@@ -77,24 +100,33 @@ button.primary {
   gap: 0.5rem;
 }
 
-/* Modal */
+/* -----------------------------
+   Modal (Guide)
+   ----------------------------- */
+
 .modal {
-  position: fixed;
+  position: fixed; /* KEY FIX */
   inset: 0;
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 1000;
 }
 
 .modal-content {
   background: #1e1e1e;
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 1.25rem;
+  border-radius: 10px;
   max-width: 90%;
+  max-height: 85%;
+  overflow-y: auto;
 }
 
-/* Utility */
+/* -----------------------------
+   Utility
+   ----------------------------- */
+
 .hidden {
   display: none;
 }
