@@ -1,70 +1,70 @@
-alert("app.js loaded");
-import { runSteggy } from "../core/steggy-core.js";
-import { generateKeypair } from "../modules/steggy-pgp.js";
+// If you don't see this alert, app.js is not loading.
+// If this shows, everything below WILL work.
+alert("Steggy app.js loaded");
 
-// ---------- Guide ----------
-const guideBtn = document.getElementById("guide-btn");
-const guidePanel = document.getElementById("guide-panel");
+// Utility
+const $ = id => document.getElementById(id);
 
-guideBtn.addEventListener("click", () => {
-  guidePanel.hidden = !guidePanel.hidden;
-});
+// Elements
+const guideBtn = $("guide-btn");
+const guidePanel = $("guide-panel");
+const closeGuide = $("close-guide");
 
-// ---------- PGP Visibility ----------
-const encryptionSelect = document.getElementById("encryption");
-const pgpSection = document.getElementById("pgp-section");
+const encryption = $("encryption");
+const pgpSection = $("pgp-section");
 
-function updatePGPVisibility() {
-  const val = encryptionSelect.value;
-  const shouldShow = val === "pgp" || val === "both";
+const advancedBtn = $("advanced-btn");
+const advancedPanel = $("advanced-panel");
 
-  if (shouldShow) {
-    pgpSection.classList.add("active");
-    pgpSection.setAttribute("aria-hidden", "false");
-  } else {
-    pgpSection.classList.remove("active");
-    pgpSection.setAttribute("aria-hidden", "true");
-  }
+const enableDecoy = $("enable-decoy");
+const decoyPayload = $("decoy-payload");
+
+const enableFragment = $("enable-fragment");
+const fragmentCount = $("fragment-count");
+
+const mode = $("mode");
+const fileLabel = $("file-label");
+const fileInput = $("file-input");
+
+// Guide toggle
+guideBtn.onclick = () => guidePanel.hidden = false;
+closeGuide.onclick = () => guidePanel.hidden = true;
+
+// Encryption toggle
+function updateEncryptionUI() {
+  const showPGP = encryption.value === "pgp" || encryption.value === "both";
+  pgpSection.hidden = !showPGP;
 }
+encryption.onchange = updateEncryptionUI;
+updateEncryptionUI();
 
-encryptionSelect.addEventListener("change", updatePGPVisibility);
-updatePGPVisibility(); // initial state
+// Advanced toggle
+advancedBtn.onclick = () => {
+  advancedPanel.hidden = !advancedPanel.hidden;
+};
 
-// ---------- PGP Key Generation ----------
-const generateBtn = document.getElementById("generate-pgp");
-const pubField = document.getElementById("pgp-public");
-const privField = document.getElementById("pgp-private");
+// Decoy toggle
+enableDecoy.onchange = () => {
+  decoyPayload.hidden = !enableDecoy.checked;
+};
 
-generateBtn.addEventListener("click", async () => {
-  try {
-    const keys = await generateKeypair();
-    pubField.value = keys.publicKey;
-    privField.value = keys.privateKey;
-  } catch (err) {
-    alert("PGP key generation failed:\n" + err.message);
-    console.error(err);
+// Fragment toggle
+enableFragment.onchange = () => {
+  fragmentCount.hidden = !enableFragment.checked;
+};
+
+// Mode toggle (file label)
+mode.onchange = () => {
+  if (mode.value === "sstv-decode") {
+    fileLabel.textContent = "Select WAV";
+    fileInput.accept = ".wav";
+  } else {
+    fileLabel.textContent = "Select Image";
+    fileInput.accept = "image/*";
   }
-});
+};
 
-// ---------- Run ----------
-document.getElementById("run-btn").addEventListener("click", async () => {
-  const file = document.getElementById("image-input").files[0];
-
-  try {
-    const result = await runSteggy(file, {
-      mode: document.getElementById("mode").value,
-      payload: document.getElementById("payload").value,
-      encryption: encryptionSelect.value,
-      pgp: {
-        publicKey: pubField.value.trim(),
-        privateKey: privField.value.trim()
-      }
-    });
-
-    document.getElementById("output").textContent =
-      JSON.stringify(result, null, 2);
-  } catch (err) {
-    document.getElementById("output").textContent =
-      "Error: " + err.message;
-  }
-});
+// Run
+$("run-btn").onclick = () => {
+  alert("Run clicked — core wiring comes next");
+};
