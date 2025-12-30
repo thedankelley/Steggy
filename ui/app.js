@@ -1,33 +1,118 @@
+// ui/app.js
+// UI controller for Steggy
+// This file should never import core logic directly except where noted
+// If something breaks again, start reading here
+
 import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
 
-// PGP elements
-const pgpGenerateBtn = document.getElementById("pgp-generate");
-const pgpPublicField = document.getElementById("pgp-public");
-const pgpPrivateField = document.getElementById("pgp-private");
-const downloadPubBtn = document.getElementById("pgp-download-public");
-const downloadPrivBtn = document.getElementById("pgp-download-private");
+document.addEventListener("DOMContentLoaded", () => {
+  cacheElements();
+  bindEvents();
+  updateUI();
+});
 
-// Generate keys
-pgpGenerateBtn.onclick = async () => {
-  pgpGenerateBtn.disabled = true;
-  pgpGenerateBtn.textContent = "Generating…";
+/* --------------------------------------------------
+   Element cache
+   -------------------------------------------------- */
 
-  try {
-    const keys = await generatePGPKeyPair();
+let els = {};
 
-    pgpPublicField.value = keys.publicKey;
-    pgpPrivateField.value = keys.privateKey;
+function cacheElements() {
+  els.mode = document.getElementById("mode");
+  els.encryption = document.getElementById("encryption");
 
-  } catch (err) {
-    alert(err.message || "PGP generation failed");
-  } finally {
-    pgpGenerateBtn.disabled = false;
-    pgpGenerateBtn.textContent = "Generate Keys";
+  els.runBtn = document.getElementById("run-btn");
+
+  // Guide
+  els.guideBtn = document.getElementById("guide-btn");
+  els.guidePanel = document.getElementById("guide-panel");
+  els.guideClose = document.getElementById("guide-close");
+
+  // PGP
+  els.pgpSection = document.getElementById("pgp-section");
+  els.pgpGenerate = document.getElementById("pgp-generate");
+  els.pgpPublic = document.getElementById("pgp-public");
+  els.pgpPrivate = document.getElementById("pgp-private");
+  els.pgpDownloadPub = document.getElementById("pgp-download-public");
+  els.pgpDownloadPriv = document.getElementById("pgp-download-private");
+}
+
+/* --------------------------------------------------
+   Event binding (ONCE)
+   -------------------------------------------------- */
+
+function bindEvents() {
+  els.mode.addEventListener("change", updateUI);
+  els.encryption.addEventListener("change", updateUI);
+
+  // Guide
+  els.guideBtn.addEventListener("click", () => {
+    els.guidePanel.hidden = false;
+  });
+
+  els.guideClose.addEventListener("click", () => {
+    els.guidePanel.hidden = true;
+  });
+
+  // PGP key generation
+  els.pgpGenerate.addEventListener("click", async () => {
+    els.pgpGenerate.disabled = true;
+    els.pgpGenerate.textContent = "Generating…";
+
+    try {
+      const keys = await generatePGPKeyPair();
+      els.pgpPublic.value = keys.publicKey;
+      els.pgpPrivate.value = keys.privateKey;
+    } catch (err) {
+      alert("PGP key generation failed");
+      console.error(err);
+    } finally {
+      els.pgpGenerate.disabled = false;
+      els.pgpGenerate.textContent = "Generate PGP Keys";
+    }
+  });
+
+  // Downloads
+  els.pgpDownloadPub.addEventListener("click", () => {
+    downloadText("steggy-public.key", els.pgpPublic.value);
+  });
+
+  els.pgpDownloadPriv.addEventListener("click", () => {
+    downloadText("steggy-private.key", els.pgpPrivate.value);
+  });
+
+  // Run (stub for now)
+  els.runBtn.addEventListener("click", () => {
+    alert("Run wired correctly. Core execution comes next.");
+  });
+}
+
+/* --------------------------------------------------
+   UI State Controller
+   -------------------------------------------------- */
+
+function updateUI() {
+  const encryption = els.encryption.value;
+
+  // Hide everything first
+  els.pgpSection.hidden = true;
+
+  // Show PGP UI only when relevant
+  if (encryption === "pgp" || encryption === "pgp+aes") {
+    els.pgpSection.hidden = false;
   }
-};
+}
 
-// Download helper
+/* --------------------------------------------------
+   Utilities
+   -------------------------------------------------- */
+
 function downloadText(filename, text) {
+  if (!text) {
+    alert("Nothing to download");
+    return;
+  }
+
   const blob = new Blob([text], { type: "text/plain" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -35,20 +120,3 @@ function downloadText(filename, text) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
-
-// Download buttons
-downloadPubBtn.onclick = () => {
-  if (!pgpPublicField.value) {
-    alert("No public key to download");
-    return;
-  }
-  downloadText("steggy-public.key", pgpPublicField.value);
-};
-
-downloadPrivBtn.onclick = () => {
-  if (!pgpPrivateField.value) {
-    alert("No private key to download");
-    return;
-  }
-  downloadText("steggy-private.key", pgpPrivateField.value);
-};
