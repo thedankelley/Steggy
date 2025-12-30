@@ -2,98 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Steggy</title>
 
+  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="ui/styles.css" />
 </head>
 
 <body>
-  <header class="app-header">
-    <div class="title-block">
-      <h1>Steggy</h1>
-      <div class="subtitle">ステギー</div>
-    </div>
+  <!-- Guide Button -->
+  <button id="guide-btn" aria-label="Guide">?</button>
 
-    <!-- Guide button -->
-    <button id="guideToggle" class="icon-button" aria-label="Guide">
-      📘
-    </button>
-  </header>
-
-  <!-- Guide panel (hidden by default) -->
-  <section id="guidePanel" class="guide hidden">
+  <!-- Guide Panel -->
+  <section id="guide-panel" hidden>
     <h2>Guide</h2>
-    <p>
-      Steggy lets you hide messages or files inside images or SSTV signals.
-      Everything runs locally in your browser. No servers. No logs.
-    </p>
-    <button id="closeGuide">Close</button>
+    <p>Steggy hides encrypted data inside images using client-side crypto.</p>
+    <p>No uploads. No servers. No bullshit.</p>
   </section>
 
-  <main class="app">
+  <main id="app">
+    <h1>Steggy</h1>
 
-    <!-- MODE -->
     <label>
       Mode
-      <select id="modeSelect">
+      <select id="mode">
         <option value="encrypt-image">Encrypt Image</option>
         <option value="decrypt-image">Decrypt Image</option>
-        <option value="encrypt-sstv">Encrypt SSTV</option>
-        <option value="decrypt-sstv">Decrypt SSTV</option>
       </select>
     </label>
 
-    <!-- FILE INPUT -->
-    <label id="fileLabel">
-      Select Image
-      <input type="file" id="fileInput" />
+    <label>
+      Encryption
+      <select id="encryption">
+        <option value="none">None</option>
+        <option value="aes">AES</option>
+        <option value="pgp">PGP</option>
+        <option value="both">AES + PGP</option>
+      </select>
     </label>
 
-    <!-- PAYLOAD -->
+    <label>
+      Image
+      <input type="file" id="image-input" accept="image/*" />
+    </label>
+
     <label>
       Payload
-      <textarea id="payload" rows="5"
-        placeholder="Message or data to hide"></textarea>
+      <textarea id="payload" rows="4"></textarea>
     </label>
 
-    <!-- ADVANCED OPTIONS -->
-    <button id="advancedToggle">Advanced Options</button>
+    <!-- PGP SECTION -->
+    <section id="pgp-section">
+      <h3>PGP</h3>
 
-    <section id="advancedPanel" class="advanced hidden">
+      <button id="generate-pgp">Generate PGP Keypair</button>
+
       <label>
-        Encryption
-        <select id="encryptionSelect">
-          <option value="none">None</option>
-          <option value="aes">AES-GCM</option>
-          <option value="pgp">PGP</option>
-          <option value="both">PGP + AES</option>
-        </select>
+        Public Key
+        <textarea id="pgp-public" rows="4"></textarea>
       </label>
 
-      <!-- PGP UI -->
-      <div id="pgpPanel" class="hidden">
-        <label>Public Key
-          <textarea id="pgpPublic" rows="3"></textarea>
-        </label>
-
-        <label>Private Key
-          <textarea id="pgpPrivate" rows="3"></textarea>
-        </label>
-
-        <button id="generatePGP">Generate PGP Keys</button>
-        <button id="downloadPublic">Download Public Key</button>
-        <button id="downloadPrivate">Download Private Key</button>
-        <button id="encryptWithPGP">Encrypt Payload with PGP</button>
-      </div>
+      <label>
+        Private Key / Password
+        <textarea id="pgp-private" rows="4"></textarea>
+      </label>
     </section>
 
-    <!-- RUN -->
-    <button id="runButton" class="run">Run</button>
+    <button id="run-btn">Run</button>
 
-    <!-- OUTPUT -->
-    <section id="output"></section>
-
+    <pre id="output"></pre>
   </main>
 
   <script type="module" src="ui/app.js"></script>
