@@ -5,19 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Steggy</title>
 
-  <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="ui/styles.css" />
 </head>
 
 <body>
+
   <!-- Guide Button -->
   <button id="guide-btn" aria-label="Guide">?</button>
 
   <!-- Guide Panel -->
   <section id="guide-panel" hidden>
     <h2>Guide</h2>
-    <p>Steggy hides encrypted data inside images using client-side crypto.</p>
-    <p>No uploads. No servers. No bullshit.</p>
+    <p>Steggy hides encrypted data inside images.</p>
+    <p>Client-side only. No uploads. No tracking.</p>
   </section>
 
   <main id="app">
@@ -51,11 +51,13 @@
       <textarea id="payload" rows="4"></textarea>
     </label>
 
-    <!-- PGP SECTION -->
-    <section id="pgp-section">
-      <h3>PGP</h3>
+    <!-- PGP SECTION (always mounted) -->
+    <section id="pgp-section" aria-hidden="true">
+      <h3>PGP Options</h3>
 
-      <button id="generate-pgp">Generate PGP Keypair</button>
+      <button id="generate-pgp" class="btn-pgp">
+        Generate PGP Keypair
+      </button>
 
       <label>
         Public Key
@@ -63,12 +65,12 @@
       </label>
 
       <label>
-        Private Key / Password
+        Private Key / Passphrase
         <textarea id="pgp-private" rows="4"></textarea>
       </label>
     </section>
 
-    <button id="run-btn">Run</button>
+    <button id="run-btn" class="btn-primary">Run</button>
 
     <pre id="output"></pre>
   </main>
