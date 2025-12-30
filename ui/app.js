@@ -1,70 +1,54 @@
-// If you don't see this alert, app.js is not loading.
-// If this shows, everything below WILL work.
-alert("Steggy app.js loaded");
+import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
 
-// Utility
-const $ = id => document.getElementById(id);
+// PGP elements
+const pgpGenerateBtn = document.getElementById("pgp-generate");
+const pgpPublicField = document.getElementById("pgp-public");
+const pgpPrivateField = document.getElementById("pgp-private");
+const downloadPubBtn = document.getElementById("pgp-download-public");
+const downloadPrivBtn = document.getElementById("pgp-download-private");
 
-// Elements
-const guideBtn = $("guide-btn");
-const guidePanel = $("guide-panel");
-const closeGuide = $("close-guide");
+// Generate keys
+pgpGenerateBtn.onclick = async () => {
+  pgpGenerateBtn.disabled = true;
+  pgpGenerateBtn.textContent = "Generating…";
 
-const encryption = $("encryption");
-const pgpSection = $("pgp-section");
+  try {
+    const keys = await generatePGPKeyPair();
 
-const advancedBtn = $("advanced-btn");
-const advancedPanel = $("advanced-panel");
+    pgpPublicField.value = keys.publicKey;
+    pgpPrivateField.value = keys.privateKey;
 
-const enableDecoy = $("enable-decoy");
-const decoyPayload = $("decoy-payload");
-
-const enableFragment = $("enable-fragment");
-const fragmentCount = $("fragment-count");
-
-const mode = $("mode");
-const fileLabel = $("file-label");
-const fileInput = $("file-input");
-
-// Guide toggle
-guideBtn.onclick = () => guidePanel.hidden = false;
-closeGuide.onclick = () => guidePanel.hidden = true;
-
-// Encryption toggle
-function updateEncryptionUI() {
-  const showPGP = encryption.value === "pgp" || encryption.value === "both";
-  pgpSection.hidden = !showPGP;
-}
-encryption.onchange = updateEncryptionUI;
-updateEncryptionUI();
-
-// Advanced toggle
-advancedBtn.onclick = () => {
-  advancedPanel.hidden = !advancedPanel.hidden;
-};
-
-// Decoy toggle
-enableDecoy.onchange = () => {
-  decoyPayload.hidden = !enableDecoy.checked;
-};
-
-// Fragment toggle
-enableFragment.onchange = () => {
-  fragmentCount.hidden = !enableFragment.checked;
-};
-
-// Mode toggle (file label)
-mode.onchange = () => {
-  if (mode.value === "sstv-decode") {
-    fileLabel.textContent = "Select WAV";
-    fileInput.accept = ".wav";
-  } else {
-    fileLabel.textContent = "Select Image";
-    fileInput.accept = "image/*";
+  } catch (err) {
+    alert(err.message || "PGP generation failed");
+  } finally {
+    pgpGenerateBtn.disabled = false;
+    pgpGenerateBtn.textContent = "Generate Keys";
   }
 };
 
-// Run
-$("run-btn").onclick = () => {
-  alert("Run clicked — core wiring comes next");
+// Download helper
+function downloadText(filename, text) {
+  const blob = new Blob([text], { type: "text/plain" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Download buttons
+downloadPubBtn.onclick = () => {
+  if (!pgpPublicField.value) {
+    alert("No public key to download");
+    return;
+  }
+  downloadText("steggy-public.key", pgpPublicField.value);
+};
+
+downloadPrivBtn.onclick = () => {
+  if (!pgpPrivateField.value) {
+    alert("No private key to download");
+    return;
+  }
+  downloadText("steggy-private.key", pgpPrivateField.value);
 };
