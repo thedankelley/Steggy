@@ -1,70 +1,95 @@
+/* Global reset */
+* {
+  box-sizing: border-box;
+}
+
+/* Base */
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #111;
-  color: #eee;
+  background: #1e1e1e;
+  color: #f0f0f0;
 }
 
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-}
-
-.title-block h1 {
-  margin: 0;
-}
-
-.subtitle {
-  font-size: 0.8em;
-  opacity: 0.7;
-}
-
-.icon-button {
-  font-size: 20px;
-  background: none;
-  border: none;
-  color: inherit;
-}
-
-.app {
+/* App container */
+#app {
   padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  max-width: 480px;
+  margin: 0 auto;
 }
 
-textarea,
-select,
+/* Headings */
+h1, h3 {
+  margin-top: 0;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* Inputs */
 input,
+select,
+textarea,
 button {
   width: 100%;
-  padding: 8px;
+  margin-top: 6px;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
   font-size: 16px;
 }
 
-button.run {
-  background: #4caf50;
-  color: black;
-  font-weight: bold;
+textarea {
+  resize: vertical;
 }
 
-.hidden {
-  display: none;
+/* Buttons */
+button {
+  background: #3a3a3a;
+  color: white;
 }
 
-.guide {
+button:active {
+  background: #555;
+}
+
+/* Guide button */
+#guide-btn {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #222;
-  padding: 16px;
-  border-top: 1px solid #333;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 20px;
+  z-index: 1000;
 }
 
-.advanced {
-  border: 1px solid #333;
+/* Guide panel */
+#guide-panel {
+  position: fixed;
+  top: 60px;
+  right: 12px;
+  left: 12px;
+  background: #2a2a2a;
+  padding: 16px;
+  border-radius: 12px;
+  z-index: 999;
+}
+
+/* PGP section */
+#pgp-section {
+  margin-top: 16px;
+}
+
+/* Output */
+#output {
+  margin-top: 16px;
+  background: #111;
   padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
 }
