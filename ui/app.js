@@ -1,3 +1,4 @@
+alert("app.js loaded");
 import { runSteggy } from "../core/steggy-core.js";
 import { generateKeypair } from "../modules/steggy-pgp.js";
 
