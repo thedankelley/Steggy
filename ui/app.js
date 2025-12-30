@@ -1,112 +1,138 @@
 // ui/app.js
-// UI controller for Steggy
-// This file should never import core logic directly except where noted
-// If something breaks again, start reading here
-
 import { generatePGPKeyPair } from "../modules/steggy-pgp.js";
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", init);
+
+/* --------------------------------------------------
+   App State
+-------------------------------------------------- */
+const state = {
+  advancedOpen: false
+};
+
+/* --------------------------------------------------
+   Cached elements
+-------------------------------------------------- */
+let els = {};
+
+function init() {
   cacheElements();
   bindEvents();
   updateUI();
-});
+}
 
 /* --------------------------------------------------
-   Element cache
-   -------------------------------------------------- */
-
-let els = {};
-
+   Cache + validate
+-------------------------------------------------- */
 function cacheElements() {
-  els.mode = document.getElementById("mode");
-  els.encryption = document.getElementById("encryption");
+  const ids = [
+    "mode",
+    "encryption",
+    "run-btn",
 
-  els.runBtn = document.getElementById("run-btn");
+    "guide-btn",
+    "guide-panel",
+    "guide-close",
 
-  // Guide
-  els.guideBtn = document.getElementById("guide-btn");
-  els.guidePanel = document.getElementById("guide-panel");
-  els.guideClose = document.getElementById("guide-close");
+    "advanced-btn",
+    "advanced-panel",
 
-  // PGP
-  els.pgpSection = document.getElementById("pgp-section");
-  els.pgpGenerate = document.getElementById("pgp-generate");
-  els.pgpPublic = document.getElementById("pgp-public");
-  els.pgpPrivate = document.getElementById("pgp-private");
-  els.pgpDownloadPub = document.getElementById("pgp-download-public");
-  els.pgpDownloadPriv = document.getElementById("pgp-download-private");
+    "pgp-section",
+    "pgp-generate",
+    "pgp-public",
+    "pgp-private",
+    "pgp-download-public",
+    "pgp-download-private"
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) {
+      throw new Error(`UI element missing: #${id}`);
+    }
+    els[id] = el;
+  });
 }
 
 /* --------------------------------------------------
    Event binding (ONCE)
-   -------------------------------------------------- */
-
+-------------------------------------------------- */
 function bindEvents() {
-  els.mode.addEventListener("change", updateUI);
-  els.encryption.addEventListener("change", updateUI);
+  els["encryption"].addEventListener("change", updateUI);
 
   // Guide
-  els.guideBtn.addEventListener("click", () => {
-    els.guidePanel.hidden = false;
+  els["guide-btn"].addEventListener("click", () => {
+    els["guide-panel"].hidden = false;
   });
 
-  els.guideClose.addEventListener("click", () => {
-    els.guidePanel.hidden = true;
+  els["guide-close"].addEventListener("click", (e) => {
+    e.stopPropagation();
+    els["guide-panel"].hidden = true;
   });
 
-  // PGP key generation
-  els.pgpGenerate.addEventListener("click", async () => {
-    els.pgpGenerate.disabled = true;
-    els.pgpGenerate.textContent = "Generating…";
+  // Advanced Options
+  els["advanced-btn"].addEventListener("click", () => {
+    state.advancedOpen = !state.advancedOpen;
+    updateUI();
+  });
+
+  // PGP generation
+  els["pgp-generate"].addEventListener("click", async () => {
+    els["pgp-generate"].disabled = true;
+    els["pgp-generate"].textContent = "Generating…";
 
     try {
       const keys = await generatePGPKeyPair();
-      els.pgpPublic.value = keys.publicKey;
-      els.pgpPrivate.value = keys.privateKey;
+      els["pgp-public"].value = keys.publicKey;
+      els["pgp-private"].value = keys.privateKey;
     } catch (err) {
       alert("PGP key generation failed");
       console.error(err);
     } finally {
-      els.pgpGenerate.disabled = false;
-      els.pgpGenerate.textContent = "Generate PGP Keys";
+      els["pgp-generate"].disabled = false;
+      els["pgp-generate"].textContent = "Generate PGP Keys";
     }
   });
 
   // Downloads
-  els.pgpDownloadPub.addEventListener("click", () => {
-    downloadText("steggy-public.key", els.pgpPublic.value);
+  els["pgp-download-public"].addEventListener("click", () => {
+    downloadText("steggy-public.key", els["pgp-public"].value);
   });
 
-  els.pgpDownloadPriv.addEventListener("click", () => {
-    downloadText("steggy-private.key", els.pgpPrivate.value);
+  els["pgp-download-private"].addEventListener("click", () => {
+    downloadText("steggy-private.key", els["pgp-private"].value);
   });
 
-  // Run (stub for now)
-  els.runBtn.addEventListener("click", () => {
-    alert("Run wired correctly. Core execution comes next.");
+  // Run
+  els["run-btn"].addEventListener("click", () => {
+    alert("Run button works. Core wiring next.");
   });
 }
 
 /* --------------------------------------------------
-   UI State Controller
-   -------------------------------------------------- */
-
+   UI Controller
+-------------------------------------------------- */
 function updateUI() {
-  const encryption = els.encryption.value;
+  const enc = els["encryption"].value;
 
-  // Hide everything first
-  els.pgpSection.hidden = true;
+  // Hide sections first
+  els["pgp-section"].hidden = true;
+  els["advanced-panel"].hidden = true;
 
-  // Show PGP UI only when relevant
-  if (encryption === "pgp" || encryption === "pgp+aes") {
-    els.pgpSection.hidden = false;
+  // Encryption modes that require PGP UI
+  if (enc === "pgp" || enc === "pgp_aes") {
+    els["pgp-section"].hidden = false;
+  }
+
+  // Advanced Options
+  if (state.advancedOpen) {
+    els["advanced-panel"].hidden = false;
   }
 }
 
 /* --------------------------------------------------
    Utilities
-   -------------------------------------------------- */
-
+-------------------------------------------------- */
 function downloadText(filename, text) {
   if (!text) {
     alert("Nothing to download");
