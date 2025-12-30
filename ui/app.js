@@ -1,129 +1,52 @@
-// UI controller for Steggy
-// If something breaks here, it's almost always wiring or state,
-// not crypto. Crypto lives elsewhere and scares us all equally.
-
 import { runSteggy } from "../core/steggy-core.js";
-import * as pgp from "../modules/steggy-pgp.js";
+import { generateKeypair } from "../modules/steggy-pgp.js";
 
-const modeSelect = document.getElementById("modeSelect");
-const fileInput = document.getElementById("fileInput");
-const fileLabel = document.getElementById("fileLabel");
-const payloadField = document.getElementById("payload");
-const runButton = document.getElementById("runButton");
-const output = document.getElementById("output");
+const guideBtn = document.getElementById("guide-btn");
+const guidePanel = document.getElementById("guide-panel");
 
-// Guide
-const guideToggle = document.getElementById("guideToggle");
-const guidePanel = document.getElementById("guidePanel");
-const closeGuide = document.getElementById("closeGuide");
+guideBtn.addEventListener("click", () => {
+  guidePanel.hidden = !guidePanel.hidden;
+});
 
-// Advanced
-const advancedToggle = document.getElementById("advancedToggle");
-const advancedPanel = document.getElementById("advancedPanel");
-const encryptionSelect = document.getElementById("encryptionSelect");
+const generateBtn = document.getElementById("generate-pgp");
+const pubField = document.getElementById("pgp-public");
+const privField = document.getElementById("pgp-private");
 
-// PGP
-const pgpPanel = document.getElementById("pgpPanel");
-const pgpPublic = document.getElementById("pgpPublic");
-const pgpPrivate = document.getElementById("pgpPrivate");
-
-const generatePGP = document.getElementById("generatePGP");
-const downloadPublic = document.getElementById("downloadPublic");
-const downloadPrivate = document.getElementById("downloadPrivate");
-const encryptWithPGP = document.getElementById("encryptWithPGP");
-
-/* ---------------- GUIDE ---------------- */
-
-guideToggle.onclick = () => guidePanel.classList.toggle("hidden");
-closeGuide.onclick = () => guidePanel.classList.add("hidden");
-
-/* -------------- ADVANCED --------------- */
-
-advancedToggle.onclick = () =>
-  advancedPanel.classList.toggle("hidden");
-
-encryptionSelect.onchange = () => {
-  pgpPanel.classList.toggle(
-    "hidden",
-    !["pgp", "both"].includes(encryptionSelect.value)
-  );
-};
-
-/* ---------------- MODE ---------------- */
-
-modeSelect.onchange = () => {
-  const mode = modeSelect.value;
-
-  // Update file label dynamically
-  if (mode === "decrypt-sstv") {
-    fileLabel.firstChild.textContent = "Select WAV ";
-  } else {
-    fileLabel.firstChild.textContent = "Select Image ";
-  }
-};
-
-/* ---------------- PGP ---------------- */
-
-// Yes this is async.
-// Yes it blocks.
-// Yes it scares people.
-// Welcome to cryptography.
-generatePGP.onclick = async () => {
-  const keys = await pgp.generateKeyPair();
-  pgpPublic.value = keys.publicKey;
-  pgpPrivate.value = keys.privateKey;
-};
-
-downloadPublic.onclick = () =>
-  download("public.asc", pgpPublic.value);
-
-downloadPrivate.onclick = () =>
-  download("private.asc", pgpPrivate.value);
-
-encryptWithPGP.onclick = async () => {
-  payloadField.value = await pgp.encryptMessage(
-    payloadField.value,
-    pgpPublic.value
-  );
-};
-
-/* ---------------- RUN ---------------- */
-
-runButton.onclick = async () => {
+generateBtn.addEventListener("click", async () => {
   try {
-    const file = fileInput.files[0];
-    if (!file) throw new Error("No file selected");
+    const keys = await generateKeypair();
+    pubField.value = keys.publicKey;
+    privField.value = keys.privateKey;
+  } catch (err) {
+    alert("PGP key generation failed: " + err.message);
+  }
+});
 
-    const mode = modeSelect.value;
+document.getElementById("run-btn").addEventListener("click", async () => {
+  const mode = document.getElementById("mode").value;
+  const encryption = document.getElementById("encryption").value;
+  const payload = document.getElementById("payload").value;
 
+  const fileInput = document.getElementById("image-input");
+  const file = fileInput.files[0];
+
+  const pgp = {
+    publicKey: pubField.value.trim(),
+    privateKey: privField.value.trim()
+  };
+
+  try {
     const result = await runSteggy(file, {
       mode,
-      payload: payloadField.value,
-      encryption: encryptionSelect.value,
-      pgp: {
-        publicKey: pgpPublic.value,
-        privateKey: pgpPrivate.value
-      }
+      payload,
+      encryption,
+      pgp
     });
 
-    output.textContent = "Success";
-    if (result?.blob) {
-      const url = URL.createObjectURL(result.blob);
-      const img = document.createElement("img");
-      img.src = url;
-      output.appendChild(img);
-    }
-
+    document.getElementById("output").textContent =
+      JSON.stringify(result, null, 2);
   } catch (err) {
-    alert("An error occurred while running Steggy.\n\n" + err.message);
+    document.getElementById("output").textContent =
+      "Error: " + err.message;
   }
-};
-
-/* ------------- HELPERS ---------------- */
-
-function download(name, text) {
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text]));
-  a.download = name;
-  a.click();
-}
+});
