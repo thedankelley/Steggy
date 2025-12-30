@@ -2,79 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Steggy</title>
 
-  <link rel="stylesheet" href="ui/styles.css" />
-</head>
+  <!-- Styles -->
+  <link rel="stylesheet" href="ui/styles.css">
 
+  <!-- PWA-friendly -->
+  <meta name="theme-color" content="#2b2b2b">
+</head>
 <body>
 
-  <!-- Guide Button -->
-  <button id="guide-btn" aria-label="Guide">?</button>
+<header class="top-bar">
+  <div class="title">
+    <img src="icons/icon-512.png" alt="Steggy logo" class="app-icon">
+    <div>
+      <h1>Steggy</h1>
+      <div class="subtitle">ステガノグラフィー</div>
+    </div>
+  </div>
 
-  <!-- Guide Panel -->
-  <section id="guide-panel" hidden>
-    <h2>Guide</h2>
-    <p>Steggy hides encrypted data inside images.</p>
-    <p>Client-side only. No uploads. No tracking.</p>
+  <button id="guide-btn" class="icon-btn">📖</button>
+</header>
+
+<!-- GUIDE PANEL -->
+<section id="guide-panel" class="guide" hidden>
+  <h2>Guide</h2>
+  <p>
+    Steggy hides messages inside images or audio.
+    Use AES, PGP, or both depending on your threat model.
+  </p>
+  <button id="close-guide">Close</button>
+</section>
+
+<main>
+
+  <label>Mode</label>
+  <select id="mode">
+    <option value="image-encrypt">Image Encrypt</option>
+    <option value="image-decrypt">Image Decrypt</option>
+    <option value="sstv-encode">SSTV Encode</option>
+    <option value="sstv-decode">SSTV Decode</option>
+  </select>
+
+  <label id="file-label">Select Image</label>
+  <input type="file" id="file-input">
+
+  <label>Payload</label>
+  <textarea id="payload" placeholder="Secret message"></textarea>
+
+  <label>Encryption</label>
+  <select id="encryption">
+    <option value="aes">AES</option>
+    <option value="pgp">PGP</option>
+    <option value="both">PGP + AES</option>
+  </select>
+
+  <!-- PGP UI -->
+  <section id="pgp-section" hidden>
+    <h3>PGP</h3>
+
+    <textarea id="pgp-public" placeholder="Public Key"></textarea>
+    <textarea id="pgp-private" placeholder="Private Key"></textarea>
+
+    <button id="pgp-generate">Generate Keys</button>
+    <button id="pgp-download-public">Download Public</button>
+    <button id="pgp-download-private">Download Private</button>
+
+    <button id="pgp-encrypt-payload">Encrypt Payload with PGP</button>
   </section>
 
-  <main id="app">
-    <h1>Steggy</h1>
+  <!-- ADVANCED -->
+  <button id="advanced-btn">Advanced Options</button>
+
+  <section id="advanced-panel" hidden>
+    <label>
+      <input type="checkbox" id="enable-decoy">
+      Enable Decoy Payload
+    </label>
+    <textarea id="decoy-payload" hidden placeholder="Decoy message"></textarea>
 
     <label>
-      Mode
-      <select id="mode">
-        <option value="encrypt-image">Encrypt Image</option>
-        <option value="decrypt-image">Decrypt Image</option>
-      </select>
+      <input type="checkbox" id="enable-fragment">
+      Enable Fragmentation
     </label>
+    <input type="number" id="fragment-count" hidden min="2" value="2">
+  </section>
 
-    <label>
-      Encryption
-      <select id="encryption">
-        <option value="none">None</option>
-        <option value="aes">AES</option>
-        <option value="pgp">PGP</option>
-        <option value="both">AES + PGP</option>
-      </select>
-    </label>
+  <button id="run-btn" class="run">Run</button>
 
-    <label>
-      Image
-      <input type="file" id="image-input" accept="image/*" />
-    </label>
+</main>
 
-    <label>
-      Payload
-      <textarea id="payload" rows="4"></textarea>
-    </label>
+<!-- ⚠️ THIS MUST BE LAST AND EXACT -->
+<script type="module" src="ui/app.js"></script>
 
-    <!-- PGP SECTION (always mounted) -->
-    <section id="pgp-section" aria-hidden="true">
-      <h3>PGP Options</h3>
-
-      <button id="generate-pgp" class="btn-pgp">
-        Generate PGP Keypair
-      </button>
-
-      <label>
-        Public Key
-        <textarea id="pgp-public" rows="4"></textarea>
-      </label>
-
-      <label>
-        Private Key / Passphrase
-        <textarea id="pgp-private" rows="4"></textarea>
-      </label>
-    </section>
-
-    <button id="run-btn" class="btn-primary">Run</button>
-
-    <pre id="output"></pre>
-  </main>
-
-  <script type="module" src="ui/app.js"></script>
 </body>
 </html>
