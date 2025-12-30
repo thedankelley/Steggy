@@ -1,9 +1,7 @@
-/* Global reset */
 * {
   box-sizing: border-box;
 }
 
-/* Base */
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
@@ -11,33 +9,31 @@ body {
   color: #f0f0f0;
 }
 
-/* App container */
+/* Layout */
 #app {
   padding: 16px;
   max-width: 480px;
   margin: 0 auto;
 }
 
-/* Headings */
 h1, h3 {
   margin-top: 0;
 }
 
-/* Labels */
+/* Inputs */
 label {
   display: block;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-/* Inputs */
 input,
 select,
 textarea,
 button {
   width: 100%;
   margin-top: 6px;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   border: none;
   font-size: 16px;
 }
@@ -48,15 +44,22 @@ textarea {
 
 /* Buttons */
 button {
-  background: #3a3a3a;
-  color: white;
+  color: #fff;
+  background: #444;
 }
 
 button:active {
-  background: #555;
+  opacity: 0.85;
 }
 
-/* Guide button */
+.btn-primary {
+  background: #2979ff;
+}
+
+.btn-pgp {
+  background: #7c4dff;
+}
+
 #guide-btn {
   position: fixed;
   top: 12px;
@@ -64,25 +67,34 @@ button:active {
   width: 40px;
   height: 40px;
   border-radius: 50%;
+  background: #26c6da;
   font-size: 20px;
   z-index: 1000;
 }
 
-/* Guide panel */
+/* Guide */
 #guide-panel {
   position: fixed;
   top: 60px;
-  right: 12px;
   left: 12px;
+  right: 12px;
   background: #2a2a2a;
   padding: 16px;
-  border-radius: 12px;
+  border-radius: 14px;
   z-index: 999;
 }
 
-/* PGP section */
+/* PGP section (NO display:none) */
 #pgp-section {
-  margin-top: 16px;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+
+#pgp-section.active {
+  max-height: 1000px;
+  opacity: 1;
 }
 
 /* Output */
