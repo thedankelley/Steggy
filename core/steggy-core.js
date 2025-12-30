@@ -1,120 +1,210 @@
 /*
   steggy-core.js
-  Phase 4B — Image encode/decode
 
-  This is the central brain.
-  If something breaks, it’s probably our fault in here.
+  This is the brain.
+  UI talks to this file.
+  This file talks to crypto.
+  Everyone else shuts the fuck up.
+
+  All modes, encryption layers, and validation live here.
 */
 
-export async function runSteggy(inputFile, options) {
-  const { mode, payload } = options;
+import { crc32 } from "./steggy-crc.js";
+import * as pgp from "../modules/steggy-pgp.js";
 
-  if (!inputFile.type.startsWith("image/")) {
-    throw new Error("Selected file is not an image.");
-  }
+/* =======================
+   AES-GCM helpers
+   ======================= */
 
-  const imageBitmap = await createImageBitmap(inputFile);
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+// Derive a key from a password.
+// Yes PBKDF2 is slow.
+// That is the point.
+async function deriveAESKey(password, salt) {
+  const enc = new TextEncoder();
 
-  canvas.width = imageBitmap.width;
-  canvas.height = imageBitmap.height;
-  ctx.drawImage(imageBitmap, 0, 0);
-
-  const imageData = ctx.getImageData(
-    0,
-    0,
-    canvas.width,
-    canvas.height
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw",
+    enc.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
   );
 
+  return crypto.subtle.deriveKey(
+    {
+      name: "PBKDF2",
+      salt,
+      iterations: 100000,
+      hash: "SHA-256"
+    },
+    keyMaterial,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function aesEncrypt(plaintext, password) {
+  const enc = new TextEncoder();
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+
+  const key = await deriveAESKey(password, salt);
+
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    enc.encode(plaintext)
+  );
+
+  return {
+    iv: Array.from(iv),
+    salt: Array.from(salt),
+    data: Array.from(new Uint8Array(ciphertext))
+  };
+}
+
+async function aesDecrypt(payload, password) {
+  const enc = new TextDecoder();
+
+  const key = await deriveAESKey(
+    password,
+    new Uint8Array(payload.salt)
+  );
+
+  const plaintext = await crypto.subtle.decrypt(
+    {
+      name: "AES-GCM",
+      iv: new Uint8Array(payload.iv)
+    },
+    key,
+    new Uint8Array(payload.data)
+  );
+
+  return enc.decode(plaintext);
+}
+
+/* =======================
+   Payload packaging
+   ======================= */
+
+// Wrap payload with headers so future-you knows what the fuck this is
+function wrapPayload(obj) {
+  const json = JSON.stringify(obj);
+  const checksum = crc32(json);
+
+  return JSON.stringify({
+    steggy: 1,
+    crc: checksum,
+    payload: obj
+  });
+}
+
+function unwrapPayload(str) {
+  const parsed = JSON.parse(str);
+
+  if (!parsed.steggy) {
+    throw new Error("Not a Steggy payload");
+  }
+
+  const check = crc32(JSON.stringify(parsed.payload));
+  if (check !== parsed.crc) {
+    throw new Error("Payload corrupted");
+  }
+
+  return parsed.payload;
+}
+
+/* =======================
+   Core entry point
+   ======================= */
+
+export async function runSteggy(file, options) {
+  const { mode, payload, encryption, pgp: pgpOpts } = options;
+
+  if (!mode) throw new Error("Mode not specified");
+
+  // Right now only image encrypt/decrypt is wired
+  if (mode !== "encrypt-image" && mode !== "decrypt-image") {
+    throw new Error("Unsupported mode");
+  }
+
   if (mode === "encrypt-image") {
-    if (!payload) {
-      throw new Error("No payload provided for encryption.");
+    if (!payload) throw new Error("No payload provided");
+
+    let workingPayload = payload;
+
+    /* ---------- ENCRYPTION LAYERS ---------- */
+
+    if (encryption === "aes" || encryption === "both") {
+      if (!pgpOpts?.privateKey && encryption === "aes") {
+        // Using privateKey field as password input for now.
+        // We will rename this later. Yes this is ugly.
+      }
+
+      workingPayload = await aesEncrypt(
+        workingPayload,
+        pgpOpts?.privateKey || "default-password"
+      );
     }
 
-    embedPayload(imageData, payload);
-    ctx.putImageData(imageData, 0, 0);
+    if (encryption === "pgp" || encryption === "both") {
+      if (!pgpOpts?.publicKey) {
+        throw new Error("PGP public key required");
+      }
 
-    return await canvasToBlob(canvas);
+      workingPayload = await pgp.encryptMessage(
+        JSON.stringify(workingPayload),
+        pgpOpts.publicKey
+      );
+    }
+
+    const wrapped = wrapPayload({
+      encryption,
+      data: workingPayload
+    });
+
+    /*
+      At this point, wrapped is the final string to embed.
+
+      Image LSB embedding happens later.
+      Right now we just return it for testing.
+    */
+
+    return {
+      type: "text",
+      wrapped
+    };
   }
 
   if (mode === "decrypt-image") {
-    return extractPayload(imageData);
-  }
+    let extracted = payload; // placeholder for extracted data
 
-  throw new Error("Unsupported mode.");
-}
+    const unwrapped = unwrapPayload(extracted);
 
-/* --------------------------------
-   Payload Encoding
-   -------------------------------- */
+    let workingData = unwrapped.data;
 
-function embedPayload(imageData, payload) {
-  const bytes = new TextEncoder().encode(payload + "\0");
-  const data = imageData.data;
-
-  const capacity = Math.floor(data.length / 4) * 3 / 8;
-  if (bytes.length > capacity) {
-    throw new Error("Payload too large for this image.");
-  }
-
-  let bitIndex = 0;
-
-  for (let i = 0; i < data.length && bitIndex < bytes.length * 8; i += 4) {
-    for (let channel = 0; channel < 3; channel++) {
-      if (bitIndex >= bytes.length * 8) break;
-
-      const byte = bytes[Math.floor(bitIndex / 8)];
-      const bit = (byte >> (7 - (bitIndex % 8))) & 1;
-
-      data[i + channel] =
-        (data[i + channel] & 0xfe) | bit;
-
-      bitIndex++;
-    }
-  }
-}
-
-/* --------------------------------
-   Payload Decoding
-   -------------------------------- */
-
-function extractPayload(imageData) {
-  const data = imageData.data;
-  const bytes = [];
-
-  let currentByte = 0;
-  let bitCount = 0;
-
-  for (let i = 0; i < data.length; i += 4) {
-    for (let channel = 0; channel < 3; channel++) {
-      const bit = data[i + channel] & 1;
-      currentByte = (currentByte << 1) | bit;
-      bitCount++;
-
-      if (bitCount === 8) {
-        if (currentByte === 0) {
-          return new TextDecoder().decode(
-            new Uint8Array(bytes)
-          );
-        }
-        bytes.push(currentByte);
-        currentByte = 0;
-        bitCount = 0;
+    if (unwrapped.encryption === "pgp" || unwrapped.encryption === "both") {
+      if (!pgpOpts?.privateKey) {
+        throw new Error("PGP private key required");
       }
+
+      workingData = await pgp.decryptMessage(
+        workingData,
+        pgpOpts.privateKey
+      );
     }
+
+    if (unwrapped.encryption === "aes" || unwrapped.encryption === "both") {
+      workingData = await aesDecrypt(
+        JSON.parse(workingData),
+        pgpOpts?.privateKey || "default-password"
+      );
+    }
+
+    return {
+      type: "text",
+      plaintext: workingData
+    };
   }
-
-  throw new Error("No payload found in image.");
-}
-
-/* --------------------------------
-   Helpers
-   -------------------------------- */
-
-function canvasToBlob(canvas) {
-  return new Promise(resolve => {
-    canvas.toBlob(blob => resolve(blob), "image/png");
-  });
 }
