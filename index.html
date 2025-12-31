@@ -2,99 +2,109 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Steggy</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="ui/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- PWA-friendly -->
+  <!-- PWA basics (can expand later) -->
   <meta name="theme-color" content="#2b2b2b">
+
+  <link rel="stylesheet" href="./ui/styles.css" />
 </head>
+
 <body>
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <h1 class="title">
+      Steggy
+      <span class="subtitle">ステガノグラフィ暗号</span>
+    </h1>
 
-<header class="top-bar">
-  <div class="title">
-    <img src="icons/icon-512.png" alt="Steggy logo" class="app-icon">
-    <div>
-      <h1>Steggy</h1>
-      <div class="subtitle">ステガノグラフィー</div>
-    </div>
-  </div>
+    <button id="guideBtn" class="icon-btn" aria-label="Guide">
+      ❔
+    </button>
+  </header>
 
-  <button id="guide-btn" class="icon-btn">📖</button>
-</header>
-
-<!-- GUIDE PANEL -->
-<section id="guide-panel" class="guide" hidden>
-  <h2>Guide</h2>
-  <p>
-    Steggy hides messages inside images or audio.
-    Use AES, PGP, or both depending on your threat model.
-  </p>
-  <button id="close-guide">Close</button>
-</section>
-
-<main>
-
-  <label>Mode</label>
-  <select id="mode">
-    <option value="image-encrypt">Image Encrypt</option>
-    <option value="image-decrypt">Image Decrypt</option>
-    <option value="sstv-encode">SSTV Encode</option>
-    <option value="sstv-decode">SSTV Decode</option>
-  </select>
-
-  <label id="file-label">Select Image</label>
-  <input type="file" id="file-input">
-
-  <label>Payload</label>
-  <textarea id="payload" placeholder="Secret message"></textarea>
-
-  <label>Encryption</label>
-  <select id="encryption">
-    <option value="aes">AES</option>
-    <option value="pgp">PGP</option>
-    <option value="both">PGP + AES</option>
-  </select>
-
-  <!-- PGP UI -->
-  <section id="pgp-section" hidden>
-    <h3>PGP</h3>
-
-    <textarea id="pgp-public" placeholder="Public Key"></textarea>
-    <textarea id="pgp-private" placeholder="Private Key"></textarea>
-
-    <button id="pgp-generate">Generate Keys</button>
-    <button id="pgp-download-public">Download Public</button>
-    <button id="pgp-download-private">Download Private</button>
-
-    <button id="pgp-encrypt-payload">Encrypt Payload with PGP</button>
+  <!-- Guide Panel -->
+  <section id="guidePanel" class="guide hidden">
+    <h2>Guide</h2>
+    <p>
+      Steggy is a client-side steganography tool supporting image and SSTV
+      payloads with AES and PGP encryption.
+    </p>
+    <button id="closeGuideBtn" class="btn">Close</button>
   </section>
 
-  <!-- ADVANCED -->
-  <button id="advanced-btn">Advanced Options</button>
+  <!-- Main App -->
+  <main class="container">
 
-  <section id="advanced-panel" hidden>
-    <label>
-      <input type="checkbox" id="enable-decoy">
-      Enable Decoy Payload
-    </label>
-    <textarea id="decoy-payload" hidden placeholder="Decoy message"></textarea>
+    <!-- Mode -->
+    <label>Mode</label>
+    <select id="mode">
+      <option value="image-encrypt">Image Encrypt</option>
+      <option value="image-decrypt">Image Decrypt</option>
+      <option value="sstv-encrypt">SSTV Encrypt</option>
+      <option value="sstv-decrypt">SSTV Decrypt</option>
+    </select>
 
-    <label>
-      <input type="checkbox" id="enable-fragment">
-      Enable Fragmentation
-    </label>
-    <input type="number" id="fragment-count" hidden min="2" value="2">
-  </section>
+    <!-- Encryption -->
+    <label>Encryption</label>
+    <select id="encryption">
+      <option value="aes">AES</option>
+      <option value="pgp">PGP</option>
+      <option value="both">PGP + AES</option>
+    </select>
 
-  <button id="run-btn" class="run">Run</button>
+    <!-- File Input -->
+    <label id="fileLabel">Select Image</label>
+    <input type="file" id="fileInput" />
 
-</main>
+    <!-- Payload -->
+    <label>Payload</label>
+    <textarea id="payload" rows="4"></textarea>
 
-<!-- ⚠️ THIS MUST BE LAST AND EXACT -->
-<script type="module" src="ui/app.js"></script>
+    <!-- PGP Section -->
+    <section id="pgpSection" class="hidden">
+      <h3>PGP Options</h3>
 
+      <label>Public Key</label>
+      <textarea id="pgpPublicKey" rows="4"></textarea>
+
+      <label>Private Key</label>
+      <textarea id="pgpPrivateKey" rows="4"></textarea>
+
+      <div class="row">
+        <button id="generatePGP" class="btn colorful">Generate Keys</button>
+        <button id="downloadPGP" class="btn colorful">Download Keys</button>
+      </div>
+    </section>
+
+    <!-- Advanced -->
+    <details id="advanced">
+      <summary>Advanced Options</summary>
+
+      <label>
+        <input type="checkbox" id="enableDecoy">
+        Enable Decoy Payload
+      </label>
+
+      <textarea id="decoyPayload" class="hidden" rows="3"></textarea>
+
+      <label>
+        <input type="checkbox" id="enableFragmentation">
+        Enable Fragmentation
+      </label>
+
+      <div id="fragmentOptions" class="hidden">
+        <label>Fragment Size</label>
+        <input type="number" id="fragmentSize" value="512" />
+      </div>
+    </details>
+
+    <!-- Run -->
+    <button id="runBtn" class="btn primary">Run</button>
+  </main>
+
+  <script src="./ui/app.js" type="module"></script>
 </body>
 </html>
