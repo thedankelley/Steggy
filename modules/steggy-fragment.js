@@ -1,20 +1,16 @@
 /*
   steggy-fragment.js
 
-  Payload fragmentation logic.
-  This exists so large payloads don’t blow up images.
-
-  Why is this harder than it should be?
-  Because computers hate us.
+  Fragmentation + reassembly.
+  Because sometimes payloads are thicc.
 */
 
-const DEFAULT_CHUNK_SIZE = 512;
+const CHUNK_SIZE = 512;
 
-export function fragmentPayload(payload, chunkSize = DEFAULT_CHUNK_SIZE) {
+export function fragmentPayload(payload) {
   const chunks = [];
-
-  for (let i = 0; i < payload.length; i += chunkSize) {
-    chunks.push(payload.slice(i, i + chunkSize));
+  for (let i = 0; i < payload.length; i += CHUNK_SIZE) {
+    chunks.push(payload.slice(i, i + CHUNK_SIZE));
   }
 
   return JSON.stringify({
@@ -22,4 +18,12 @@ export function fragmentPayload(payload, chunkSize = DEFAULT_CHUNK_SIZE) {
     total: chunks.length,
     chunks
   });
+}
+
+export function reassemblePayload(obj) {
+  if (!obj.fragmented || !obj.chunks) {
+    throw new Error('Invalid fragment container');
+  }
+
+  return obj.chunks.join('');
 }
