@@ -1,62 +1,97 @@
-body {
-  margin: 0;
-  background: #2e2e2e;
-  color: #f0f0f0;
-  font-family: system-ui, sans-serif;
+/* Reset */
+* {
+  box-sizing: border-box;
 }
 
+/* Body */
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #2f2f2f;
+  color: #fff;
+}
+
+/* Top Bar */
 .top-bar {
+  position: sticky;
+  top: 0;
+  background: #3a3a3a;
+  padding: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
 }
 
 .title {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.app-icon {
-  width: 48px;
-  height: 48px;
+  margin: 0;
+  text-align: center;
 }
 
 .subtitle {
-  font-size: 0.75em;
+  display: block;
+  font-size: 0.7em;
   opacity: 0.7;
 }
 
-main {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-button {
+/* Buttons */
+.btn {
+  padding: 10px 14px;
   border-radius: 12px;
-  padding: 10px;
   border: none;
-  background: #4caf50;
-  color: white;
+  cursor: pointer;
 }
 
-button.run {
-  background: #2196f3;
+.btn.primary {
+  background: #4cafef;
+  color: #000;
+}
+
+.btn.colorful {
+  background: #6fdc8c;
 }
 
 .icon-btn {
-  width: 44px;
-  height: 44px;
-  font-size: 20px;
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
 }
 
+/* Layout */
+.container {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Guide */
 .guide {
   position: fixed;
   inset: 10%;
-  background: #1e1e1e;
+  background: #444;
   padding: 16px;
-  z-index: 1000;
+  border-radius: 12px;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+.hidden {
+  display: none;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+/* Inputs */
+select,
+textarea,
+input[type="file"],
+input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
 }
