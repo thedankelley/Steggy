@@ -1,107 +1,105 @@
 /*
   steggy-core.js
 
-  Central execution pipeline.
-  This is where all features finally meet and either work or explode.
+  This is the brain.
+  If this breaks, everything breaks.
 */
 
-import { fragmentPayload } from '../modules/steggy-fragment.js';
+import { fragmentPayload, reassemblePayload } from '../modules/steggy-fragment.js';
 import { encryptPGPPayload } from '../modules/steggy-pgp.js';
+import { crc32 } from './steggy-crc.js';
 
-/* ---------- AES-GCM HELPERS ---------- */
+/* ---------- IMAGE STEGO ---------- */
 
-async function aesEncrypt(plaintext, password) {
-  const enc = new TextEncoder();
+function embedLSB(imageData, payload) {
+  const bytes = new TextEncoder().encode(payload);
+  const totalBits = bytes.length * 8;
 
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(password),
-    { name: 'PBKDF2' },
-    false,
-    ['deriveKey']
-  );
+  if (totalBits > imageData.data.length) {
+    throw new Error('Payload exceeds image capacity');
+  }
 
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const iv = crypto.getRandomValues(new Uint8Array(12));
+  let bitIndex = 0;
 
-  const key = await crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 },
-    false,
-    ['encrypt']
-  );
+  for (let i = 0; i < imageData.data.length && bitIndex < totalBits; i++) {
+    const byte = bytes[Math.floor(bitIndex / 8)];
+    const bit = (byte >> (7 - (bitIndex % 8))) & 1;
 
-  const encrypted = await crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
-    key,
-    enc.encode(plaintext)
-  );
+    imageData.data[i] = (imageData.data[i] & 0xfe) | bit;
+    bitIndex++;
+  }
 
-  return {
-    type: 'aes-gcm',
-    salt: btoa(String.fromCharCode(...salt)),
-    iv: btoa(String.fromCharCode(...iv)),
-    data: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
-  };
+  return imageData;
 }
 
-/* ---------- MAIN ENTRY ---------- */
+function extractLSB(imageData) {
+  const bits = [];
+
+  for (let i = 0; i < imageData.data.length; i++) {
+    bits.push(imageData.data[i] & 1);
+  }
+
+  const bytes = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    let byte = 0;
+    for (let b = 0; b < 8; b++) {
+      byte = (byte << 1) | (bits[i + b] || 0);
+    }
+    bytes.push(byte);
+  }
+
+  return new TextDecoder().decode(new Uint8Array(bytes)).replace(/\0+$/, '');
+}
+
+/* ---------- MAIN ---------- */
 
 export async function runSteggy(config) {
   const {
     mode,
-    encryption,
+    imageData,
     payload,
+    encryption,
     password,
     publicKey,
     enableFragmentation
   } = config;
 
-  if (!payload) throw new Error('Missing payload');
+  if (mode === 'encrypt') {
+    let workingPayload = payload;
 
-  let workingPayload = payload;
+    if (encryption === 'pgp' || encryption === 'both') {
+      workingPayload = await encryptPGPPayload(workingPayload, publicKey);
+    }
 
-  /* ---- PGP LAYER ---- */
-  if (encryption === 'pgp' || encryption === 'both') {
-    if (!publicKey) throw new Error('PGP selected but no public key');
+    if (enableFragmentation) {
+      workingPayload = fragmentPayload(workingPayload);
+    }
 
-    workingPayload = await encryptPGPPayload(
-      workingPayload,
-      publicKey
-    );
+    const container = JSON.stringify({
+      crc: crc32(workingPayload),
+      data: workingPayload
+    });
+
+    const encoded = embedLSB(imageData, container);
+    return encoded;
   }
 
-  /* ---- AES LAYER ---- */
-  if (encryption === 'aes' || encryption === 'both') {
-    if (!password) throw new Error('AES selected but no password');
+  if (mode === 'decrypt') {
+    const raw = extractLSB(imageData);
+    const parsed = JSON.parse(raw);
 
-    const aesResult = await aesEncrypt(
-      workingPayload,
-      password
-    );
+    if (crc32(parsed.data) !== parsed.crc) {
+      throw new Error('CRC mismatch. Data corrupted.');
+    }
 
-    workingPayload = JSON.stringify(aesResult);
+    let result = parsed.data;
+
+    if (result.startsWith('{') && result.includes('fragmented')) {
+      result = reassemblePayload(JSON.parse(result));
+    }
+
+    return result;
   }
 
-  /* ---- FRAGMENTATION ---- */
-  if (enableFragmentation) {
-    workingPayload = fragmentPayload(workingPayload);
-  }
-
-  /*
-    At this point:
-    - Payload is encrypted
-    - Fragmented if requested
-    - Ready for stego or SSTV
-  */
-
-  console.log('Final payload:', workingPayload);
-
-  return workingPayload;
+  throw new Error('Unsupported mode');
 }
