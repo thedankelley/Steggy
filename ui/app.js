@@ -1,39 +1,81 @@
 /*
   app.js
-
-  UI glue.
-  This is where bugs come to die.
+  UI controller only.
+  No crypto. No stego. Just state and buttons.
 */
 
-import { runSteggy } from '../core/steggy-core.js';
+document.addEventListener('DOMContentLoaded', () => {
 
-const runBtn = document.getElementById('runBtn');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+  // Elements
+  const guideBtn = document.getElementById('guideBtn');
+  const closeGuideBtn = document.getElementById('closeGuideBtn');
+  const guidePanel = document.getElementById('guidePanel');
 
-runBtn.addEventListener('click', async () => {
-  try {
-    const img = document.getElementById('inputImage');
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    ctx.drawImage(img, 0, 0);
+  const encryptionSelect = document.getElementById('encryption');
+  const pgpSection = document.getElementById('pgpSection');
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const advancedToggleBtn = document.getElementById('advancedToggleBtn');
+  const advancedOptions = document.getElementById('advancedOptions');
 
-    const result = await runSteggy({
-      mode: document.getElementById('mode').value,
-      imageData,
-      payload: document.getElementById('payload').value,
-      encryption: document.getElementById('encryption').value,
-      publicKey: document.getElementById('pgpPublicKey')?.value || null,
-      enableFragmentation: document.getElementById('enableFragmentation').checked
-    });
+  const enableDecoy = document.getElementById('enableDecoy');
+  const decoyLabel = document.getElementById('decoyLabel');
 
-    ctx.putImageData(result, 0, 0);
-    alert('Steggy operation complete');
+  const modeSelect = document.getElementById('mode');
+  const fileLabel = document.getElementById('fileLabel');
+  const fileInput = document.getElementById('fileInput');
 
-  } catch (e) {
-    console.error(e);
-    alert(e.message);
+  /* ---------------- Guide ---------------- */
+
+  guideBtn.addEventListener('click', () => {
+    guidePanel.classList.toggle('hidden');
+  });
+
+  closeGuideBtn.addEventListener('click', () => {
+    guidePanel.classList.add('hidden');
+  });
+
+  /* ---------------- Encryption UI ---------------- */
+
+  function updateEncryptionUI() {
+    const value = encryptionSelect.value;
+    if (value === 'pgp' || value === 'both') {
+      pgpSection.classList.remove('hidden');
+    } else {
+      pgpSection.classList.add('hidden');
+    }
   }
+
+  encryptionSelect.addEventListener('change', updateEncryptionUI);
+  updateEncryptionUI();
+
+  /* ---------------- Advanced Options ---------------- */
+
+  advancedToggleBtn.addEventListener('click', () => {
+    advancedOptions.classList.toggle('hidden');
+  });
+
+  enableDecoy.addEventListener('change', () => {
+    if (enableDecoy.checked) {
+      decoyLabel.classList.remove('hidden');
+    } else {
+      decoyLabel.classList.add('hidden');
+    }
+  });
+
+  /* ---------------- Mode UI ---------------- */
+
+  function updateModeUI() {
+    if (modeSelect.value === 'sstv-decode') {
+      fileLabel.textContent = 'Select WAV';
+      fileInput.accept = '.wav';
+    } else {
+      fileLabel.textContent = 'Select Image';
+      fileInput.accept = 'image/*';
+    }
+    fileLabel.appendChild(fileInput);
+  }
+
+  modeSelect.addEventListener('change', updateModeUI);
+  updateModeUI();
+
 });
