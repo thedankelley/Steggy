@@ -1,21 +1,26 @@
 import * as openpgp from 'https://cdn.jsdelivr.net/npm/openpgp@5.10.1/+esm';
+import { runSteggy } from '../core/steggy-core.js';
 
 /*
-  If this file breaks again, we riot.
+  app.js
+  If this file breaks again, we burn the repo and move to a cabin.
 */
 
+// ---------- DOM ----------
 const modeSelect = document.getElementById('mode');
 const encryptionSelect = document.getElementById('encryption');
 const fileInput = document.getElementById('fileInput');
 const fileLabel = document.getElementById('fileLabel');
-
 const payloadInput = document.getElementById('payload');
 
 const pgpSection = document.getElementById('pgpSection');
 const pgpPublicKey = document.getElementById('pgpPublicKey');
 const pgpPrivateKey = document.getElementById('pgpPrivateKey');
+
 const generatePGPBtn = document.getElementById('generatePGP');
-const downloadPGPBtn = document.getElementById('downloadPGP');
+const encryptPGPBtn = document.getElementById('encryptPGP');
+const downloadPublicBtn = document.getElementById('downloadPublicPGP');
+const downloadPrivateBtn = document.getElementById('downloadPrivatePGP');
 
 const runBtn = document.getElementById('runBtn');
 
@@ -29,52 +34,42 @@ const decoyPayload = document.getElementById('decoyPayload');
 const enableFragmentation = document.getElementById('enableFragmentation');
 const fragmentOptions = document.getElementById('fragmentOptions');
 
-/* ---------- UI STATE ---------- */
+// ---------- STATE ----------
+let encryptedPayloadCache = null;
+
+// ---------- UI HELPERS ----------
 
 function updateEncryptionUI() {
   const val = encryptionSelect.value;
-
-  // Show PGP UI only when needed
-  if (val === 'pgp' || val === 'both') {
-    pgpSection.classList.remove('hidden');
-  } else {
-    pgpSection.classList.add('hidden');
-  }
+  pgpSection.classList.toggle(
+    'hidden',
+    !(val === 'pgp' || val === 'both')
+  );
 }
 
 function updateModeUI() {
-  const mode = modeSelect.value;
-
-  if (mode === 'sstv-decrypt') {
-    fileLabel.textContent = 'Select WAV';
-  } else {
-    fileLabel.textContent = 'Select Image';
-  }
+  fileLabel.textContent =
+    modeSelect.value === 'sstv-decrypt'
+      ? 'Select WAV'
+      : 'Select Image';
 }
 
-/* ---------- GUIDE ---------- */
+// ---------- GUIDE ----------
 
-guideBtn.addEventListener('click', () => {
-  guidePanel.classList.remove('hidden');
-});
+guideBtn.onclick = () => guidePanel.classList.remove('hidden');
+closeGuideBtn.onclick = () => guidePanel.classList.add('hidden');
 
-closeGuideBtn.addEventListener('click', () => {
-  guidePanel.classList.add('hidden');
-});
+// ---------- ADVANCED ----------
 
-/* ---------- ADVANCED ---------- */
-
-enableDecoy.addEventListener('change', () => {
+enableDecoy.onchange = () =>
   decoyPayload.classList.toggle('hidden', !enableDecoy.checked);
-});
 
-enableFragmentation.addEventListener('change', () => {
+enableFragmentation.onchange = () =>
   fragmentOptions.classList.toggle('hidden', !enableFragmentation.checked);
-});
 
-/* ---------- PGP ---------- */
+// ---------- PGP ----------
 
-generatePGPBtn.addEventListener('click', async () => {
+generatePGPBtn.onclick = async () => {
   try {
     const keys = await openpgp.generateKey({
       type: 'rsa',
@@ -84,43 +79,78 @@ generatePGPBtn.addEventListener('click', async () => {
 
     pgpPublicKey.value = keys.publicKey;
     pgpPrivateKey.value = keys.privateKey;
-  } catch (err) {
-    console.error(err);
+  } catch (e) {
+    console.error(e);
     alert('PGP key generation failed');
   }
-});
+};
 
-downloadPGPBtn.addEventListener('click', () => {
-  const blob = new Blob(
-    [
-      'PUBLIC KEY\n\n',
-      pgpPublicKey.value,
-      '\n\nPRIVATE KEY\n\n',
-      pgpPrivateKey.value
-    ],
-    { type: 'text/plain' }
-  );
+encryptPGPBtn.onclick = async () => {
+  try {
+    const message = await openpgp.createMessage({
+      text: payloadInput.value
+    });
 
+    const publicKey = await openpgp.readKey({
+      armoredKey: pgpPublicKey.value
+    });
+
+    encryptedPayloadCache = await openpgp.encrypt({
+      message,
+      encryptionKeys: publicKey
+    });
+
+    alert('Payload encrypted with PGP');
+  } catch (e) {
+    console.error(e);
+    alert('PGP encryption failed');
+  }
+};
+
+function downloadKey(text, filename) {
+  const blob = new Blob([text], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'steggy-pgp-keys.txt';
+  a.download = filename;
   a.click();
-});
+}
 
-/* ---------- RUN ---------- */
+downloadPublicBtn.onclick = () =>
+  downloadKey(pgpPublicKey.value, 'steggy-public-key.asc');
 
-runBtn.addEventListener('click', () => {
+downloadPrivateBtn.onclick = () =>
+  downloadKey(pgpPrivateKey.value, 'steggy-private-key.asc');
+
+// ---------- RUN ----------
+
+runBtn.onclick = async () => {
   try {
-    alert('Phase 4 stub: core wiring next');
-  } catch {
+    const payload =
+      encryptedPayloadCache ??
+      payloadInput.value;
+
+    const file = fileInput.files[0];
+    if (!file) throw new Error('No file selected');
+
+    await runSteggy({
+      mode: modeSelect.value,
+      encryption: encryptionSelect.value,
+      payload,
+      file,
+      decoy: enableDecoy.checked ? decoyPayload.value : null,
+      fragmentation: enableFragmentation.checked
+    });
+
+    alert('Steggy completed successfully');
+  } catch (e) {
+    console.error(e);
     alert('An error occurred while running Steggy');
   }
-});
+};
 
-/* ---------- INIT ---------- */
-
-encryptionSelect.addEventListener('change', updateEncryptionUI);
-modeSelect.addEventListener('change', updateModeUI);
+// ---------- INIT ----------
+encryptionSelect.onchange = updateEncryptionUI;
+modeSelect.onchange = updateModeUI;
 
 updateEncryptionUI();
 updateModeUI();
