@@ -1,41 +1,39 @@
 /*
   app.js
 
-  UI glue layer.
-  If something breaks here, the UI just stares at you blankly.
+  UI glue.
+  This is where bugs come to die.
 */
 
 import { runSteggy } from '../core/steggy-core.js';
 
-/* ---------- DOM ---------- */
-
 const runBtn = document.getElementById('runBtn');
-const payloadField = document.getElementById('payload');
-const encryptionSelect = document.getElementById('encryption');
-const passwordField = document.getElementById('aesPassword');
-const pgpPublicKeyField = document.getElementById('pgpPublicKey');
-const fragmentToggle = document.getElementById('enableFragmentation');
-
-/* ---------- RUN ---------- */
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
 runBtn.addEventListener('click', async () => {
   try {
-    const config = {
+    const img = document.getElementById('inputImage');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    ctx.drawImage(img, 0, 0);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const result = await runSteggy({
       mode: document.getElementById('mode').value,
-      encryption: encryptionSelect.value,
-      payload: payloadField.value,
-      password: passwordField?.value || null,
-      publicKey: pgpPublicKeyField?.value || null,
-      enableFragmentation: fragmentToggle.checked
-    };
+      imageData,
+      payload: document.getElementById('payload').value,
+      encryption: document.getElementById('encryption').value,
+      publicKey: document.getElementById('pgpPublicKey')?.value || null,
+      enableFragmentation: document.getElementById('enableFragmentation').checked
+    });
 
-    const result = await runSteggy(config);
+    ctx.putImageData(result, 0, 0);
+    alert('Steggy operation complete');
 
-    alert('Encryption complete.\nPayload ready for embedding.');
-    console.log(result);
-
-  } catch (err) {
-    console.error(err);
-    alert(err.message || 'An error occurred while running Steggy');
+  } catch (e) {
+    console.error(e);
+    alert(e.message);
   }
 });
