@@ -1,97 +1,99 @@
-/* Reset */
+/* General reset */
 * {
   box-sizing: border-box;
+  font-family: system-ui, sans-serif;
 }
 
 /* Body */
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #2f2f2f;
-  color: #fff;
+  background: #2b2b2b;
+  color: #eee;
 }
 
-/* Top Bar */
-.top-bar {
+/* Header */
+.app-header {
   position: sticky;
   top: 0;
-  background: #3a3a3a;
-  padding: 12px;
+  background: #1f1f1f;
+  padding: 0.75rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.title {
-  margin: 0;
-  text-align: center;
+.app-title {
+  font-size: 1.4rem;
+  font-weight: bold;
 }
 
-.subtitle {
-  display: block;
-  font-size: 0.7em;
-  opacity: 0.7;
-}
-
-/* Buttons */
-.btn {
-  padding: 10px 14px;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-}
-
-.btn.primary {
-  background: #4cafef;
-  color: #000;
-}
-
-.btn.colorful {
-  background: #6fdc8c;
-}
-
+/* Guide button */
 .icon-btn {
-  background: transparent;
+  background: #444;
   border: none;
-  font-size: 22px;
-  cursor: pointer;
+  color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
 }
 
 /* Layout */
 .container {
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  padding: 1rem;
+  max-width: 600px;
+  margin: auto;
 }
 
-/* Guide */
-.guide {
-  position: fixed;
-  inset: 10%;
-  background: #444;
-  padding: 16px;
+/* Panels */
+.panel {
+  background: #3a3a3a;
+  padding: 1rem;
   border-radius: 12px;
-  z-index: 10;
-  overflow-y: auto;
+  margin-top: 1rem;
 }
 
+/* Hidden */
 .hidden {
   display: none;
 }
 
-.row {
-  display: flex;
-  gap: 8px;
+/* Inputs */
+label {
+  display: block;
+  margin-top: 1rem;
 }
 
-/* Inputs */
-select,
 textarea,
-input[type="file"],
-input[type="number"] {
+select,
+input[type="file"] {
   width: 100%;
-  padding: 8px;
-  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+/* Buttons */
+button {
+  margin-top: 1rem;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
   border: none;
+  background: #5a8dee;
+  color: #fff;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.run-btn {
+  width: 100%;
+  font-size: 1.1rem;
+  background: #4caf50;
 }
